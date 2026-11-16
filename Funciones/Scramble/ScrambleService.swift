@@ -2,20 +2,17 @@ import Foundation
 
 /// Cola de scrambles por categoría con generación en segundo plano.
 ///
-/// Los scrambles se piden a un servidor TNoodle (ver `TNoodleClient`).
+/// Los scrambles los genera TNoodle en el propio dispositivo (ver `TNoodleScrambler`).
 /// `siguiente(categoria:)` es **síncrona y nunca bloquea**: devuelve al instante el
-/// siguiente scramble de la cola. Si la cola está vacía (primer arranque) o el servidor
-/// no responde, devuelve una cadena vacía: la app simplemente no muestra scramble en
-/// ese momento, sin inventarse ninguno.
+/// siguiente scramble de la cola. Si la cola está vacía (primer arranque) o el motor
+/// falla, devuelve una cadena vacía: la app simplemente no muestra scramble en ese
+/// momento, sin inventarse ninguno.
 final class ScrambleService: @unchecked Sendable {
 
     static let shared = ScrambleService()
 
     /// Cuántos scrambles mantener listos por categoría.
     private let objetivo = 5
-
-    /// Reintentos ante un fallo del servidor TNoodle (red caída, servidor dormido…).
-    private let esperaReintento: UInt64 = 5_000_000_000
 
     private let lock = NSLock()
     private var colas: [String: [String]] = [:]
@@ -31,7 +28,7 @@ final class ScrambleService: @unchecked Sendable {
 
     // MARK: - API
 
-    /// Comprueba el servidor TNoodle y empieza a precargar la categoría actual.
+    /// Calienta el motor y empieza a precargar la categoría actual.
     func iniciar(categoria: String) {
         Task { @MainActor in
             ScrambleEngine.shared.warmUp()
@@ -44,7 +41,7 @@ final class ScrambleService: @unchecked Sendable {
     /// Si todavía no hay ninguno listo (o el motor no está disponible) devuelve una
     /// cadena vacía.
     func siguiente(categoria: String) -> String {
-        guard let eventID = Self.eventID(para: categoria) else {
+        guard let puzzle = TNoodlePuzzle.paraCategoria(categoria) else {
             return ""
         }
 
@@ -58,20 +55,20 @@ final class ScrambleService: @unchecked Sendable {
         }
 
         // Reponemos lo que acabamos de consumir.
-        reponer(categoria: categoria, eventID: eventID)
+        reponer(categoria: categoria, puzzle: puzzle)
 
         return resultado ?? ""
     }
 
     /// Asegura que haya scrambles en cola para una categoría.
     func precargar(categoria: String) {
-        guard let eventID = Self.eventID(para: categoria) else { return }
-        reponer(categoria: categoria, eventID: eventID)
+        guard let puzzle = TNoodlePuzzle.paraCategoria(categoria) else { return }
+        reponer(categoria: categoria, puzzle: puzzle)
     }
 
     // MARK: - Generación
 
-    private func reponer(categoria: String, eventID: String) {
+    private func reponer(categoria: String, puzzle: TNoodlePuzzle) {
         let debeGenerar: Bool = lock.withLock {
             categoriaActiva = categoria
 
@@ -86,8 +83,6 @@ final class ScrambleService: @unchecked Sendable {
         guard debeGenerar else { return }
 
         Task.detached(priority: .utility) { [self] in
-            var fallos = 0
-
             while true {
                 // Si cambiamos de categoría o la cola ya se llenó, este bucle sobra.
                 let seguir: Bool = lock.withLock {
@@ -101,8 +96,7 @@ final class ScrambleService: @unchecked Sendable {
                 guard seguir else { return }
 
                 do {
-                    let scramble = try await ScrambleEngine.shared.scramble(eventID: eventID, timeout: 25)
-                    fallos = 0
+                    let scramble = try await ScrambleEngine.shared.scramble(puzzle: puzzle)
 
                     let (llena, eraVacia): (Bool, Bool) = lock.withLock {
                         var cola = colas[categoria] ?? []
@@ -117,7 +111,7 @@ final class ScrambleService: @unchecked Sendable {
                     }
 
                     #if DEBUG
-                    NSLog("[Scramble] \(eventID) → \(scramble)")
+                    NSLog("[Scramble] \(categoria) → \(scramble)")
                     #endif
 
                     if eraVacia {
@@ -131,43 +125,18 @@ final class ScrambleService: @unchecked Sendable {
                         return
                     }
                 } catch {
-                    fallos += 1
-
-                    // Con el servidor TNoodle caído se reintenta mientras la categoría
-                    // siga activa, en vez de dejar la pantalla sin scrambles para siempre.
-                    if fallos <= 3 {
-                        #if DEBUG
-                        NSLog("[Scramble] fallo \(fallos) en \(eventID): \(error.localizedDescription)")
-                        #endif
+                    // El motor es local: si falla no hay nada que reintentar. La app
+                    // se queda sin scramble para esta categoría hasta que cambie.
+                    _ = lock.withLock {
+                        generando.remove(categoria)
                     }
 
-                    try? await Task.sleep(nanoseconds: esperaReintento)
+                    #if DEBUG
+                    NSLog("[Scramble] no se pudo generar \(categoria): \(error.localizedDescription)")
+                    #endif
+                    return
                 }
             }
-        }
-    }
-
-    // MARK: - Categorías
-
-    /// Traduce una categoría de la app al identificador de evento de TNoodle.
-    ///
-    /// TNoodle no tiene eventos separados para OH ni BLD: las manos libres usan `333`
-    /// y el BLD usa `333ni` (3x3 sin inspección).
-    static func eventID(para categoria: String) -> String? {
-        switch categoria {
-        case "2x2": return "222"
-        case "3x3": return "333"
-        case "4x4": return "444"
-        case "5x5": return "555"
-        case "6x6": return "666"
-        case "7x7": return "777"
-        case "3x3 OH": return "333"
-        case "3x3 BLD": return "333ni"
-        case "Pyraminx": return "pyram"
-        case "Megaminx": return "minx"
-        case "Skewb": return "skewb"
-        case "Square 1": return "sq1"
-        default: return nil
         }
     }
 }

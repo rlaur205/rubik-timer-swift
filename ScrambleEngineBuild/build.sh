@@ -7,9 +7,9 @@
 # Salida: TimeCuber/ScrambleEngine/viewer.js
 # (`viewer.html` se edita a mano y no lo toca este script.)
 #
-# Los scrambles NO se generan aquí: los sirve un servidor TNoodle (Opción B) y la app
-# se los pide por HTTP. Este build solo empaqueta el visor del diagrama 2D, que usa
-# cubing.js (`TwistyPlayer`) para dibujar el estado del puzzle.
+# Los scrambles NO se generan aquí: los genera TNoodle dentro del propio dispositivo
+# (framework nativo TNoodleLibNative). Este build solo empaqueta el visor del diagrama
+# 2D, que usa cubing.js (`TwistyPlayer`) para dibujar el estado del puzzle.
 
 set -euo pipefail
 

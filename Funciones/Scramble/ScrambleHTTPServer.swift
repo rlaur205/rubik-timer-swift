@@ -3,7 +3,7 @@ import Network
 
 /// Servidor HTTP mínimo que sirve `viewer.html` y `viewer.js` en `127.0.0.1`.
 ///
-/// Los scrambles no pasan por aquí (los da un servidor TNoodle remoto), pero el
+/// Los scrambles no pasan por aquí (los genera TNoodle dentro del dispositivo), pero el
 /// diagrama 2D sí: `WKWebView` no deja cargar módulos ES desde `file://`, y los
 /// `WKURLSchemeHandler` personalizados tampoco los soportan de forma fiable. Sirviendo
 /// en loopback el visor tiene un origen `http://127.0.0.1:<puerto>` normal.

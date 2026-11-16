@@ -10,6 +10,8 @@
 		8C7738F32F3D03A700B7F833 /* ModeloTiempos.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C7738F22F3D03A700B7F833 /* ModeloTiempos.swift */; };
 		8C7739842F3DD55F00B7F833 /* RubikAppViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C7739832F3DD55F00B7F833 /* RubikAppViewModel.swift */; };
 		8CAA10022F50000100ABCDEF /* ScrambleEngine in Resources */ = {isa = PBXBuildFile; fileRef = 8CAA10012F50000100ABCDEF /* ScrambleEngine */; };
+		8CF000022F51000000ABCDEF /* TNoodleLibNative.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8CF000012F51000000ABCDEF /* TNoodleLibNative.xcframework */; };
+		8CF000032F51000000ABCDEF /* TNoodleLibNative.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 8CF000012F51000000ABCDEF /* TNoodleLibNative.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		B61584FA2B92C6B200C20F12 /* TimeCuber.swift in Sources */ = {isa = PBXBuildFile; fileRef = B61584F92B92C6B200C20F12 /* TimeCuber.swift */; };
 		B61584FC2B92C6B200C20F12 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B61584FB2B92C6B200C20F12 /* ContentView.swift */; };
 		B61584FE2B92C6B400C20F12 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B61584FD2B92C6B400C20F12 /* Assets.xcassets */; };
@@ -20,6 +22,7 @@
 		8C7738F22F3D03A700B7F833 /* ModeloTiempos.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModeloTiempos.swift; sourceTree = "<group>"; };
 		8C7739832F3DD55F00B7F833 /* RubikAppViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RubikAppViewModel.swift; sourceTree = "<group>"; };
 		8CAA10012F50000100ABCDEF /* ScrambleEngine */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ScrambleEngine; sourceTree = "<group>"; };
+		8CF000012F51000000ABCDEF /* TNoodleLibNative.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = TNoodleLibNative.xcframework; sourceTree = "<group>"; };
 		B61584F62B92C6B200C20F12 /* TimerV3.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TimerV3.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B61584F92B92C6B200C20F12 /* TimeCuber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeCuber.swift; sourceTree = "<group>"; };
 		B61584FB2B92C6B200C20F12 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -35,11 +38,26 @@
 		8C9F12162F3B6B1500BC5C97 /* Cronometro */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Cronometro; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		8CF000042F51000000ABCDEF /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				8CF000032F51000000ABCDEF /* TNoodleLibNative.xcframework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFrameworksBuildPhase section */
 		B61584F32B92C6B200C20F12 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8CF000022F51000000ABCDEF /* TNoodleLibNative.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -55,6 +73,7 @@
 				8C9F11FD2F3B6A0800BC5C97 /* Funciones */,
 				8C9F11E52F3B640100BC5C97 /* Estadisticas */,
 				B61584F82B92C6B200C20F12 /* TimeCuber */,
+				8CF000052F51000000ABCDEF /* Frameworks */,
 				B61584F72B92C6B200C20F12 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -65,6 +84,14 @@
 				B61584F62B92C6B200C20F12 /* TimerV3.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		8CF000052F51000000ABCDEF /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				8CF000012F51000000ABCDEF /* TNoodleLibNative.xcframework */,
+			);
+			path = Frameworks;
 			sourceTree = "<group>";
 		};
 		B61584F82B92C6B200C20F12 /* TimeCuber */ = {
@@ -99,6 +126,7 @@
 				B61584F22B92C6B200C20F12 /* Sources */,
 				B61584F32B92C6B200C20F12 /* Frameworks */,
 				B61584F42B92C6B200C20F12 /* Resources */,
+				8CF000042F51000000ABCDEF /* Embed Frameworks */,
 			);
 			buildRules = (
 			);

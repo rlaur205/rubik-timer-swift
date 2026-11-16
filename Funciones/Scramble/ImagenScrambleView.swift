@@ -5,8 +5,8 @@ import WebKit
 /// un `WKWebView` transparente y sin interacción.
 ///
 /// La página del visor se sirve desde el servidor local de `ScrambleEngine`; si ese
-/// servidor no arranca, simplemente no se dibuja nada. Los scrambles vienen aparte,
-/// de un servidor TNoodle (ver `TNoodleClient`).
+/// servidor no arranca, simplemente no se dibuja nada. Los scrambles los genera
+/// TNoodle en el propio dispositivo (ver `TNoodleScrambler`).
 struct ImagenScrambleView: UIViewRepresentable {
 
     let scramble: String

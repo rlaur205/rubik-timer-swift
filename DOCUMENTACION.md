@@ -56,7 +56,7 @@ rubik-timer-swift/
 │   ├── funcionesEstadisticas.swift   # Funciones de cálculo estadístico
 │   ├── Scramble/                     # Scrambles (TNoodle) y diagrama 2D
 │   │   ├── ScrambleService.swift     # Cola y precarga de scrambles por categoría
-│   │   ├── TNoodleClient.swift       # Cliente HTTP del servidor TNoodle
+│   │   ├── TNoodleScrambler.swift    # TNoodle nativo embebido (scramble en el dispositivo)
 │   │   ├── ScrambleEngine.swift      # Fachada del motor y servidor del visor
 │   │   ├── ImagenScrambleView.swift  # Diagrama 2D del scramble (TwistyPlayer)
 │   │   └── ScrambleHTTPServer.swift  # Servidor loopback que sirve el visor
@@ -65,6 +65,9 @@ rubik-timer-swift/
 │   ├── package.json                  # Dependencia: cubing 0.66.1
 │   ├── src/viewer.js                 # Punto de entrada del diagrama 2D
 │   └── build.sh                      # Genera TimeCuber/ScrambleEngine/viewer.js
+│
+├── Frameworks/
+│   └── TNoodleLibNative.xcframework  # TNoodle compilado para iOS (arm64 + simulador)
 │
 └── TimerV3.xcodeproj/               # Proyecto Xcode
 ```
@@ -285,62 +288,69 @@ Pantalla dedicada a estadísticas profundas dividida en subvistas:
 ## 8. Generadores de Scrambles
 
 Los scrambles los genera **TNoodle**, el programa oficial de scrambles de la WCA,
-desplegado como servidor HTTP. La app no genera scrambles en el dispositivo: se los
-pide al servidor y los guarda en una cola. Si el servidor no responde, la app no
-muestra scramble (no hay generador alternativo ni mezclas inventadas).
+**dentro del propio dispositivo**. No hay servidor ni conexión a internet: TNoodle se
+incluye compilado como librería nativa de iOS, la misma solución que usa CubeTime.
 
-### 8.1 Motor TNoodle (`Funciones/Scramble/`)
+Si el motor falla (por ejemplo, si falta el framework), la app no muestra scramble: no
+hay generador alternativo ni mezclas inventadas.
 
-TNoodle está escrito en Kotlin/JVM y no tiene build para iOS ni para el navegador, así
-que la única forma de usarlo desde el iPhone es a través de su servidor. La app habla
-con su API pública (TNoodle 1.x):
+### 8.1 Motor TNoodle nativo (`Funciones/Scramble/`)
 
-```
-GET /api/v0/scramble/<evento>?numScrambles=1   →  ["R U R' U' …"]
+TNoodle está escrito en Kotlin/JVM. Para poder ejecutarlo en el iPhone se compila con
+GraalVM Native Image como una librería dinámica (`TNoodleLibNative.framework`) que
+expone una API de C:
+
+```c
+char *tnoodle_lib_scramble(graal_isolatethread_t *thread, int puzzle);
 ```
 
 |Archivo|Responsabilidad|
 |---|---|
 |`ScrambleService.swift`|Cola de scrambles por categoría y precarga en segundo plano|
-|`TNoodleClient.swift`|Cliente HTTP del servidor TNoodle (`/api/v0/scramble/…`)|
+|`TNoodleScrambler.swift`|Llama a la librería nativa de TNoodle y normaliza la salida|
 |`ScrambleEngine.swift`|Fachada del motor y servidor local del diagrama 2D|
 |`ImagenScrambleView.swift`|Diagrama 2D del scramble en un `WKWebView` transparente (ver 8.2)|
 |`ScrambleHTTPServer.swift`|Servidor HTTP en `127.0.0.1` que sirve el visor|
+
+El framework está en `Frameworks/TNoodleLibNative.xcframework` y se enlaza y embebe
+desde el proyecto de Xcode.
 
 Cómo funciona:
 
 1. `ScrambleService` mantiene hasta 5 scrambles listos por categoría y los va reponiendo en segundo plano.
 2. `siguiente(categoria:)` es **síncrona y nunca bloquea**: devuelve al instante el siguiente scramble de la cola. Si la cola está vacía (por ejemplo al arrancar) devuelve una cadena vacía y la vista no muestra nada.
-3. `ScrambleEngine` delega en `TNoodleClient`, que pide el scramble al servidor y normaliza los saltos de línea (Megaminx) a una sola línea.
+3. `ScrambleEngine` genera el scramble en una tarea de fondo para no bloquear la interfaz; `TNoodleScrambler` crea un isolate de GraalVM por llamada, genera el scramble y lo destruye (así se libera la memoria que reserva TNoodle).
 4. Cuando llega el primer scramble de la categoría, `ScrambleService` avisa y la vista lo pinta si seguía vacía.
-5. Si el servidor falla, se reintenta cada 5 s mientras esa categoría siga activa. Al cambiar de categoría se deja de reintentar la anterior.
+5. Al cambiar de categoría se deja de reponer la anterior; la nueva empieza a precargarse de inmediato.
 
-Mapeo de categorías a eventos TNoodle (en `ScrambleService.eventID(para:)`):
+Mapeo de categorías a puzzles de TNoodle (en `TNoodlePuzzle.paraCategoria`):
 
-|Categoría|Evento|
-|---|---|
-|2x2, 3x3, 4x4, 5x5, 6x6, 7x7|`222`, `333`, `444`, `555`, `666`, `777`|
-|3x3 OH|`333` (TNoodle no tiene evento propio)|
-|3x3 BLD|`333ni` (3x3 sin inspección)|
-|Pyraminx, Megaminx, Skewb, Square-1|`pyram`, `minx`, `skewb`, `sq1`|
+|Categoría|Puzzle|Índice|
+|---|---|---|
+|2x2, 3x3, 4x4, 5x5, 6x6, 7x7|`TwoByTwo`…`CubePuzzle(7)`|0–5|
+|Square-1, Megaminx, Pyraminx, Skewb|`SquareOne`, `Megaminx`, `Pyraminx`, `Skewb`|6, 7, 8, 10|
+|3x3 OH|3x3 normal|1|
+|3x3 BLD|3x3 sin inspección|12|
 
-### 8.1.1 Configurar el servidor
+TNoodle no separa OH ni BLD: OH usa el 3x3 normal y BLD el 3x3 sin inspección, igual
+que en CubeTime.
 
-La URL se define en `TNoodleClient.urlBasePorDefecto` y por defecto apunta a
-`http://127.0.0.1:2014` (un TNoodle local, útil en desarrollo). Para usar otro servidor
-sin recompilar:
+#### Procedencia del framework
 
-```bash
-xcrun simctl spawn booted defaults write com.laurencio.pruebas tnoodleURL -string "https://tnoodle.example.com"
-```
+El binario se ha tomado del proyecto de CubeTime:
 
-En un dispositivo real hay que usar **HTTPS**: el proyecto genera el `Info.plist`, así
-que no hay excepciones ATS para HTTP salvo loopback. Un TNoodle local en el Mac se
-puede levantar con:
+- `CubeLabsNZ/tnoodle-lib-native-v1`, release `v1.0` (`TNoodleLibNative.xcframework`).
+- Incluye la arquitectura de dispositivo `arm64`.
+- La arquitectura de simulador `arm64` se genera a partir de la de dispositivo con
+  [`arm64-to-sim`](https://github.com/bogo/arm64-to-sim), porque el release original
+  solo trae simulador `x86_64`.
 
-```bash
-java -jar TNoodle-WCA-1.2.3.jar
-```
+#### Licencia
+
+TNoodle es **AGPL-3.0**. Al distribuir la app con el framework dentro, el conjunto
+queda sujeto a la AGPL: hay que publicar el código fuente bajo esa licencia. El
+diagrama 2D usa cubing.js, que es **MPL-2.0** (copyleft por fichero). Ver
+`THIRD-PARTY-NOTICES.md`.
 
 ### 8.2 Diagrama 2D del scramble (`ImagenScrambleView`)
 
@@ -360,7 +370,7 @@ Cómo funciona:
 2. La vista traduce la categoría a un puzzle de cubing.js (`3x3x3`, `pyraminx`, `megaminx`, `square1`…), y al terminar la carga llama a `window.__setScramble(puzzle, alg)` con `callAsyncJavaScript`.
 3. `viewer.js` crea un `TwistyPlayer` con `visualization: "2D"`, `background: "none"`, `controlPanel: "none"` y `hintFacelets: "none"`, y le pasa el scramble como `experimentalSetupAlg` para que el diagrama muestre el estado **después** de la mezcla.
 4. El `WKWebView` va con fondo transparente, sin `scroll` y con `isUserInteractionEnabled = false`, así que se comporta como una imagen.
-5. Si no hay scramble (servidor TNoodle caído) no se crea la vista, así que tampoco se dibuja nada.
+5. Si no hay scramble (motor TNoodle sin respuesta) no se crea la vista, así que tampoco se dibuja nada.
 
 El servidor local es necesario porque `WKWebView` no permite módulos ES desde `file://`, y los `WKURLSchemeHandler` personalizados tampoco los soportan de forma fiable. Al escuchar solo en loopback no es accesible desde la red.
 
@@ -376,7 +386,7 @@ npm install
 ./build.sh
 ```
 
-Requiere Node.js y esbuild (instalado por `npm install`). El detalle está en `ScrambleEngineBuild/README.md`. Los scrambles no se compilan aquí: los sirve TNoodle.
+Requiere Node.js y esbuild (instalado por `npm install`). El detalle está en `ScrambleEngineBuild/README.md`. Los scrambles no se compilan aquí: los genera TNoodle dentro de la app.
 
 ---
 
@@ -471,7 +481,7 @@ open TimerV3.xcodeproj
 
 **4. Ejecutar:** Presionar `Cmd + R` o el botón ▶ en Xcode.
 
-> No se requieren dependencias externas ni CocoaPods/SPM. El proyecto es completamente autónomo.
+> No se requieren dependencias externas ni CocoaPods/SPM. El proyecto es completamente autónomo: el framework de TNoodle (`Frameworks/TNoodleLibNative.xcframework`) y el bundle del diagrama ya están en el repositorio.
 
 ---
 

@@ -19,9 +19,9 @@ enum ScrambleEngineError: LocalizedError {
 
 /// Motor de scrambles de la Opción B.
 ///
-/// Los scrambles los genera un **servidor TNoodle**, el programa oficial de la WCA.
-/// TNoodle solo existe para JVM (Kotlin), así que no puede ejecutarse dentro del
-/// iPhone: la app se los pide por HTTP con `TNoodleClient`.
+/// Los scrambles los genera **TNoodle**, el programa oficial de la WCA, compilado
+/// como librería nativa para iOS (igual que CubeTime). Todo ocurre en el
+/// dispositivo: no hace falta servidor ni conexión a internet.
 ///
 /// Además mantiene el servidor HTTP local que sirve `viewer.html` y `viewer.js` al
 /// `WKWebView` del diagrama 2D. Hace falta porque WebKit no puede cargar módulos ES
@@ -31,30 +31,27 @@ final class ScrambleEngine {
 
     static let shared = ScrambleEngine()
 
-    private let cliente: TNoodleClient
-
     private var server: ScrambleHTTPServer?
     private var puerto: UInt16?
     private var preparacion: Task<UInt16, Error>?
 
-    private init(cliente: TNoodleClient = TNoodleClient()) {
-        self.cliente = cliente
-    }
+    private init() {}
 
     // MARK: - Scrambles
 
-    /// Comprueba que el servidor TNoodle responde. No bloquea.
+    /// Calienta TNoodle con un scramble 2x2. No bloquea.
     func warmUp() {
-        Task { [weak self] in
-            guard let self else { return }
-            _ = try? await self.cliente.calentar()
+        Task.detached(priority: .utility) {
+            _ = try? TNoodleScrambler.shared.scramble(.twoByTwo)
         }
     }
 
-    /// Pide un scramble para un evento TNoodle (`"333"`, `"222"`, `"minx"`, …).
-    func scramble(eventID: String, timeout: TimeInterval) async throws -> String {
+    /// Genera un scramble en segundo plano (TNoodle tarda sobre todo en 3x3 y 4x4).
+    func scramble(puzzle: TNoodlePuzzle) async throws -> String {
         do {
-            return try await cliente.scramble(eventID: eventID, timeout: timeout)
+            return try await Task.detached(priority: .userInitiated) {
+                try TNoodleScrambler.shared.scramble(puzzle)
+            }.value
         } catch {
             throw ScrambleEngineError.generacion(error.localizedDescription)
         }

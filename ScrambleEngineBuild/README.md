@@ -3,10 +3,10 @@
 Proyecto npm que compila el bundle de **cubing.js** que se embebe en la app para el
 diagrama 2D del scramble.
 
-Los scrambles **no** se generan aquí: los sirve un servidor
-[TNoodle](https://github.com/thewca/tnoodle) (el programa oficial de la WCA) al que la
-app se conecta por HTTP. Este directorio solo empaqueta el visor que dibuja el estado
-del puzzle con `TwistyPlayer`.
+Los scrambles **no** se generan aquí: los genera
+[TNoodle](https://github.com/thewca/tnoodle) (el programa oficial de la WCA) dentro del
+propio dispositivo, a través del framework nativo `TNoodleLibNative.xcframework`. Este
+directorio solo empaqueta el visor que dibuja el estado del puzzle con `TwistyPlayer`.
 
 El fichero resultante se guarda en `TimeCuber/ScrambleEngine/` y se copia tal cual al
 bundle de la app (`TimerV3.app/ScrambleEngine/`).
@@ -53,5 +53,7 @@ lo hacen los bundles para navegador). Por eso `src/viewer.js` llama a
   el código fuente (basta con este directorio, que ya está en el repositorio público,
   más la versión de cubing.js fijada en `package.json`). Al ser copyleft por fichero
   **no** obliga a liberar el resto de la app.
-- **TNoodle** es **AGPL-3.0**, pero no se distribuye con la app: se ejecuta aparte como
-  servidor. Si lo despliegas o modificas, esa instalación sí queda sujeta a la AGPL.
+- **TNoodle** es **AGPL-3.0** y **sí se distribuye** dentro de la app como framework
+  nativo (`Frameworks/TNoodleLibNative.xcframework`). Eso hace que distribuir la app
+  obligue a publicar su código fuente bajo AGPL-3.0. Ver `THIRD-PARTY-NOTICES.md` en la
+  raíz del repositorio.
