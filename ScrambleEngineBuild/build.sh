@@ -4,8 +4,12 @@
 #
 #   cd ScrambleEngineBuild && npm install && ./build.sh
 #
-# Salida: TimeCuber/ScrambleEngine/{engine.js,worker.js,viewer.js}
-# (`index.html` y `viewer.html` se editan a mano y no los toca este script.)
+# Salida: TimeCuber/ScrambleEngine/viewer.js
+# (`viewer.html` se edita a mano y no lo toca este script.)
+#
+# Los scrambles NO se generan aquí: los sirve un servidor TNoodle (Opción B) y la app
+# se los pide por HTTP. Este build solo empaqueta el visor del diagrama 2D, que usa
+# cubing.js (`TwistyPlayer`) para dibujar el estado del puzzle.
 
 set -euo pipefail
 
@@ -13,22 +17,6 @@ cd "$(dirname "$0")"
 
 OUT_DIR="../TimeCuber/ScrambleEngine"
 mkdir -p "$OUT_DIR"
-
-echo "→ engine.js"
-npx esbuild src/entry.js \
-    --bundle \
-    --format=esm \
-    --minify \
-    --target=safari16 \
-    --outfile="$OUT_DIR/engine.js"
-
-echo "→ worker.js"
-npx esbuild src/worker.js \
-    --bundle \
-    --format=esm \
-    --minify \
-    --target=safari16 \
-    --outfile="$OUT_DIR/worker.js"
 
 echo "→ viewer.js"
 npx esbuild src/viewer.js \

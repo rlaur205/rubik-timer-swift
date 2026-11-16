@@ -31,8 +31,8 @@ Aplicación iOS nativa desarrollada en Swift y SwiftUI para speedcubing. Cronome
 ## Funcionalidades
 
 - **Cronómetro táctil** — inicia y deten el timer con solo tocar la pantalla
-- **Scrambles automáticos** — mezclas random-state reales para cada puzzle (vía [cubing.js](https://github.com/cubing/cubing.js)) al iniciar y después de cada solve
-- **Diagrama del scramble** — dibujo 2D del estado del puzzle tras la mezcla, con la misma librería
+- **Scrambles automáticos** — mezclas oficiales de [TNoodle](https://github.com/thewca/tnoodle) (el programa de la WCA) servidas por HTTP al iniciar y después de cada solve
+- **Diagrama del scramble** — dibujo 2D del estado del puzzle tras la mezcla, con [cubing.js](https://github.com/cubing/cubing.js)
 - **12 puzzles WCA** — 3x3, 2x2, 4x4, 5x5, 6x6, 7x7, 3x3 OH, 3x3 BLD, Pyraminx, Megaminx, Skewb, Square-1
 - **Múltiples sesiones** — crea y gestiona varias sesiones por categoría
 - **Stats en tiempo real** — Mo3, Ao5, Ao12, Ao50 siempre visibles debajo del cronómetro
@@ -51,10 +51,12 @@ Aplicación iOS nativa desarrollada en Swift y SwiftUI para speedcubing. Cronome
 ![UserDefaults](https://img.shields.io/badge/Persistencia-UserDefaults%20%2B%20JSON-lightgrey)
 ![iOS](https://img.shields.io/badge/iOS-18%2B-black?logo=apple)
 
-Los scrambles se generan con [cubing.js](https://github.com/cubing/cubing.js) (MPL-2.0)
-ejecutado en un `WKWebView` oculto. El diagrama 2D de la mezcla usa `TwistyPlayer`, la
-vista de cubing.js, en otro `WKWebView` transparente. Si el motor no está disponible, la
-app no muestra scramble en lugar de inventarse uno.
+Los scrambles los genera [TNoodle](https://github.com/thewca/tnoodle) (AGPL-3.0), el
+programa oficial de la WCA, a través de un servidor HTTP: TNoodle es Kotlin/JVM y no
+puede ejecutarse en el iPhone. El diagrama 2D de la mezcla usa `TwistyPlayer`, la vista
+de [cubing.js](https://github.com/cubing/cubing.js) (MPL-2.0), en un `WKWebView`
+transparente. Si el servidor TNoodle no responde, la app no muestra scramble en lugar
+de inventarse uno.
 
 ---
 
@@ -70,8 +72,17 @@ open TimerV3.xcodeproj
 
 Selecciona un simulador o dispositivo en Xcode y presiona `Cmd + R`.
 
-Los bundles de cubing.js que usa el motor de scrambles y el diagrama 2D ya están
-incluidos en el repositorio. Solo hace falta Node.js si quieres recompilarlos:
+La app necesita un servidor TNoodle en marcha para mostrar scrambles. En desarrollo:
+levanta `TNoodle-WCA-1.2.3.jar` en el Mac (escucha en `http://127.0.0.1:2014`, que es
+la URL por defecto) o indica otra URL:
+
+```bash
+java -jar TNoodle-WCA-1.2.3.jar
+xcrun simctl spawn booted defaults write com.laurencio.pruebas tnoodleURL -string "https://tu-servidor"
+```
+
+El bundle del diagrama (`viewer.js`, generado con cubing.js) ya está incluido en el
+repositorio. Solo hace falta Node.js si quieres recompilarlo:
 
 ```bash
 cd ScrambleEngineBuild

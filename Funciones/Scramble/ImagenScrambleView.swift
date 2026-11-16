@@ -4,8 +4,9 @@ import WebKit
 /// Diagrama 2D del scramble, dibujado con el `TwistyPlayer` de cubing.js dentro de
 /// un `WKWebView` transparente y sin interacción.
 ///
-/// Usa el mismo servidor local que el motor de scrambles (`ScrambleEngine`), así que
-/// si el motor no está disponible simplemente no se dibuja nada.
+/// La página del visor se sirve desde el servidor local de `ScrambleEngine`; si ese
+/// servidor no arranca, simplemente no se dibuja nada. Los scrambles vienen aparte,
+/// de un servidor TNoodle (ver `TNoodleClient`).
 struct ImagenScrambleView: UIViewRepresentable {
 
     let scramble: String

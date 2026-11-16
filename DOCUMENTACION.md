@@ -28,10 +28,9 @@ rubik-timer-swift/
 │   ├── ContentView.swift             # Vista raíz con TabView
 │   ├── ModeloTiempos.swift           # Modelos de datos (Sesion, Tiempo, Orden, TimerState)
 │   ├── RubikAppViewModel.swift       # ViewModel principal (RubikViewModel)
-│   └── ScrambleEngine/               # Recursos JS embebidos (generados, no editar)
-│       ├── index.html                # Carga el motor y redirige el Worker
-│       ├── engine.js                 # Bundle de cubing.js (hilo principal)
-│       └── worker.js                 # Bundle de cubing.js (Web Worker)
+│   └── ScrambleEngine/               # Recursos JS del diagrama 2D embebidos
+│       ├── viewer.html               # Página del visor (editable a mano)
+│       └── viewer.js                 # Bundle de cubing.js (generado, no editar)
 │
 ├── Cronometro/                       # Módulo del cronómetro
 │   ├── CronometroView.swift          # Vista principal del cronómetro
@@ -55,18 +54,17 @@ rubik-timer-swift/
 ├── Funciones/                        # Lógica y utilidades puras
 │   ├── funciones.swift               # Funciones de formato, ordenamiento y navegación
 │   ├── funcionesEstadisticas.swift   # Funciones de cálculo estadístico
-│   ├── Scramble/                     # Motor de scrambles random-state (cubing.js)
+│   ├── Scramble/                     # Scrambles (TNoodle) y diagrama 2D
 │   │   ├── ScrambleService.swift     # Cola y precarga de scrambles por categoría
-│   │   ├── ScrambleEngine.swift      # Puente Swift ↔ WKWebView
+│   │   ├── TNoodleClient.swift       # Cliente HTTP del servidor TNoodle
+│   │   ├── ScrambleEngine.swift      # Fachada del motor y servidor del visor
 │   │   ├── ImagenScrambleView.swift  # Diagrama 2D del scramble (TwistyPlayer)
-│   │   └── ScrambleHTTPServer.swift  # Servidor loopback que sirve los recursos JS
+│   │   └── ScrambleHTTPServer.swift  # Servidor loopback que sirve el visor
 │
-├── ScrambleEngineBuild/              # Proyecto npm que recompila el motor JS
+├── ScrambleEngineBuild/              # Proyecto npm que recompila el visor JS
 │   ├── package.json                  # Dependencia: cubing 0.66.1
-│   ├── src/entry.js                  # Punto de entrada del hilo principal
-│   ├── src/worker.js                 # Punto de entrada del Web Worker
 │   ├── src/viewer.js                 # Punto de entrada del diagrama 2D
-│   └── build.sh                      # Genera TimeCuber/ScrambleEngine/*.js
+│   └── build.sh                      # Genera TimeCuber/ScrambleEngine/viewer.js
 │
 └── TimerV3.xcodeproj/               # Proyecto Xcode
 ```
@@ -286,32 +284,69 @@ Pantalla dedicada a estadísticas profundas dividida en subvistas:
 
 ## 8. Generadores de Scrambles
 
-Los scrambles se generan con **cubing.js** (random-state real, el mismo enfoque que usa la WCA). No hay generador alternativo: si el motor no está disponible, la app simplemente no muestra scramble.
+Los scrambles los genera **TNoodle**, el programa oficial de scrambles de la WCA,
+desplegado como servidor HTTP. La app no genera scrambles en el dispositivo: se los
+pide al servidor y los guarda en una cola. Si el servidor no responde, la app no
+muestra scramble (no hay generador alternativo ni mezclas inventadas).
 
-### 8.1 Motor random-state (`Funciones/Scramble/`)
+### 8.1 Motor TNoodle (`Funciones/Scramble/`)
+
+TNoodle está escrito en Kotlin/JVM y no tiene build para iOS ni para el navegador, así
+que la única forma de usarlo desde el iPhone es a través de su servidor. La app habla
+con su API pública (TNoodle 1.x):
+
+```
+GET /api/v0/scramble/<evento>?numScrambles=1   →  ["R U R' U' …"]
+```
 
 |Archivo|Responsabilidad|
 |---|---|
 |`ScrambleService.swift`|Cola de scrambles por categoría y precarga en segundo plano|
-|`ScrambleEngine.swift`|Carga cubing.js en un `WKWebView` oculto y expone `scramble(eventID:)`|
+|`TNoodleClient.swift`|Cliente HTTP del servidor TNoodle (`/api/v0/scramble/…`)|
+|`ScrambleEngine.swift`|Fachada del motor y servidor local del diagrama 2D|
 |`ImagenScrambleView.swift`|Diagrama 2D del scramble en un `WKWebView` transparente (ver 8.2)|
-|`ScrambleHTTPServer.swift`|Servidor HTTP en `127.0.0.1` que sirve los recursos del motor|
+|`ScrambleHTTPServer.swift`|Servidor HTTP en `127.0.0.1` que sirve el visor|
 
 Cómo funciona:
 
 1. `ScrambleService` mantiene hasta 5 scrambles listos por categoría y los va reponiendo en segundo plano.
 2. `siguiente(categoria:)` es **síncrona y nunca bloquea**: devuelve al instante el siguiente scramble de la cola. Si la cola está vacía (por ejemplo al arrancar) devuelve una cadena vacía y la vista no muestra nada.
-3. `ScrambleEngine` abre un `WKWebView` oculto, sirve `TimeCuber/ScrambleEngine/` desde un servidor en loopback y llama a `window.__generateScramble(eventID)`.
-4. Cuando el motor termina el primer scramble de la categoría, `ScrambleService` avisa y la vista lo pinta si seguía vacía.
+3. `ScrambleEngine` delega en `TNoodleClient`, que pide el scramble al servidor y normaliza los saltos de línea (Megaminx) a una sola línea.
+4. Cuando llega el primer scramble de la categoría, `ScrambleService` avisa y la vista lo pinta si seguía vacía.
+5. Si el servidor falla, se reintenta cada 5 s mientras esa categoría siga activa. Al cambiar de categoría se deja de reintentar la anterior.
 
-El servidor local es necesario porque `WKWebView` no permite módulos ES ni Web Workers desde `file://`, y los `WKURLSchemeHandler` personalizados tampoco los soportan de forma fiable. Al escuchar solo en loopback no es accesible desde la red.
+Mapeo de categorías a eventos TNoodle (en `ScrambleService.eventID(para:)`):
 
-Si iOS mata el proceso `WebContent` (presión de memoria), el puente falla y el motor se reconstruye automáticamente en la siguiente llamada. Tras varios intentos fallidos se deja de intentar y, hasta que se reinicie la app, no se muestran scrambles.
+|Categoría|Evento|
+|---|---|
+|2x2, 3x3, 4x4, 5x5, 6x6, 7x7|`222`, `333`, `444`, `555`, `666`, `777`|
+|3x3 OH|`333` (TNoodle no tiene evento propio)|
+|3x3 BLD|`333ni` (3x3 sin inspección)|
+|Pyraminx, Megaminx, Skewb, Square-1|`pyram`, `minx`, `skewb`, `sq1`|
+
+### 8.1.1 Configurar el servidor
+
+La URL se define en `TNoodleClient.urlBasePorDefecto` y por defecto apunta a
+`http://127.0.0.1:2014` (un TNoodle local, útil en desarrollo). Para usar otro servidor
+sin recompilar:
+
+```bash
+xcrun simctl spawn booted defaults write com.laurencio.pruebas tnoodleURL -string "https://tnoodle.example.com"
+```
+
+En un dispositivo real hay que usar **HTTPS**: el proyecto genera el `Info.plist`, así
+que no hay excepciones ATS para HTTP salvo loopback. Un TNoodle local en el Mac se
+puede levantar con:
+
+```bash
+java -jar TNoodle-WCA-1.2.3.jar
+```
 
 ### 8.2 Diagrama 2D del scramble (`ImagenScrambleView`)
 
 Debajo del texto del scramble, la pantalla del cronómetro dibuja el estado del puzzle
-al que corresponde esa mezcla. Usa el mismo cubing.js, no una librería aparte.
+al que corresponde esa mezcla. El diagrama sí se dibuja en el dispositivo, con el
+`TwistyPlayer` de cubing.js; TNoodle solo aporta el scramble.
 
 |Pieza|Responsabilidad|
 |---|---|
@@ -321,17 +356,19 @@ al que corresponde esa mezcla. Usa el mismo cubing.js, no una librería aparte.
 
 Cómo funciona:
 
-1. `ScrambleEngine.viewerURL()` devuelve `http://127.0.0.1:<puerto>/viewer.html` (arranca el motor si hacía falta). El visor y el motor comparten el mismo servidor local.
+1. `ScrambleEngine.viewerURL()` arranca el servidor local (si hacía falta) y devuelve `http://127.0.0.1:<puerto>/viewer.html`.
 2. La vista traduce la categoría a un puzzle de cubing.js (`3x3x3`, `pyraminx`, `megaminx`, `square1`…), y al terminar la carga llama a `window.__setScramble(puzzle, alg)` con `callAsyncJavaScript`.
 3. `viewer.js` crea un `TwistyPlayer` con `visualization: "2D"`, `background: "none"`, `controlPanel: "none"` y `hintFacelets: "none"`, y le pasa el scramble como `experimentalSetupAlg` para que el diagrama muestre el estado **después** de la mezcla.
 4. El `WKWebView` va con fondo transparente, sin `scroll` y con `isUserInteractionEnabled = false`, así que se comporta como una imagen.
-5. Si el motor no está disponible, la vista deja de reintentar y simplemente no dibuja nada; el cronómetro y el texto del scramble siguen funcionando igual.
+5. Si no hay scramble (servidor TNoodle caído) no se crea la vista, así que tampoco se dibuja nada.
+
+El servidor local es necesario porque `WKWebView` no permite módulos ES desde `file://`, y los `WKURLSchemeHandler` personalizados tampoco los soportan de forma fiable. Al escuchar solo en loopback no es accesible desde la red.
 
 > Nota: el build ESM de cubing.js no registra el custom element `twisty-player`, por eso `src/viewer.js` llama a `customElements.define` antes de crear el elemento.
 
-### 8.3 Recompilar el motor
+### 8.3 Recompilar el visor
 
-Los ficheros `TimeCuber/ScrambleEngine/*.js` son bundles ya compilados y **no se editan a mano**. Para regenerarlos tras cambiar de versión de cubing.js:
+`TimeCuber/ScrambleEngine/viewer.js` es un bundle ya compilado y **no se edita a mano**. Para regenerarlo tras cambiar de versión de cubing.js:
 
 ```bash
 cd ScrambleEngineBuild
@@ -339,7 +376,7 @@ npm install
 ./build.sh
 ```
 
-Requiere Node.js y esbuild (instalado por `npm install`). El detalle está en `ScrambleEngineBuild/README.md`.
+Requiere Node.js y esbuild (instalado por `npm install`). El detalle está en `ScrambleEngineBuild/README.md`. Los scrambles no se compilan aquí: los sirve TNoodle.
 
 ---
 

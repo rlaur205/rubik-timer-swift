@@ -1,11 +1,15 @@
 # ScrambleEngineBuild
 
-Proyecto npm que compila los bundles de **cubing.js** que se embeben en la app.
+Proyecto npm que compila el bundle de **cubing.js** que se embebe en la app para el
+diagrama 2D del scramble.
 
-La app genera los scrambles con cubing.js dentro de un `WKWebView` oculto. El diagrama
-2D del scramble usa el `TwistyPlayer` de la misma librería en otro `WKWebView`
-transparente. Los ficheros JS resultantes se guardan en `TimeCuber/ScrambleEngine/` y
-se copian tal cual al bundle de la app (`TimerV3.app/ScrambleEngine/`).
+Los scrambles **no** se generan aquí: los sirve un servidor
+[TNoodle](https://github.com/thewca/tnoodle) (el programa oficial de la WCA) al que la
+app se conecta por HTTP. Este directorio solo empaqueta el visor que dibuja el estado
+del puzzle con `TwistyPlayer`.
+
+El fichero resultante se guarda en `TimeCuber/ScrambleEngine/` y se copia tal cual al
+bundle de la app (`TimerV3.app/ScrambleEngine/`).
 
 ## Compilar
 
@@ -19,38 +23,35 @@ Salida:
 
 |Fichero|Qué es|
 |---|---|
-|`../TimeCuber/ScrambleEngine/engine.js`|Bundle del hilo principal; expone `__generateScramble(eventID)`|
-|`../TimeCuber/ScrambleEngine/worker.js`|Bundle del Web Worker; hace la búsqueda random-state|
 |`../TimeCuber/ScrambleEngine/viewer.js`|Bundle del diagrama 2D; registra y configura el `TwistyPlayer`|
 
-`index.html` y `viewer.html` **no** los genera este script: se editan a mano en
+`viewer.html` **no** lo genera este script: se edita a mano en
 `TimeCuber/ScrambleEngine/`.
 
-## Por qué hay varios bundles
+## Cómo encaja
 
-cubing.js crea su Web Worker con `import.meta.resolve()` o
-`new URL("./search-worker-entry.js", import.meta.url)`. Dentro de un bundle ninguno de
-los dos apunta a un fichero real, así que:
+1. `viewer.html` define el puente `window.__setScramble(puzzle, alg)`, que espera a que
+   el módulo termine de cargar.
+2. `src/viewer.js` registra el custom element `twisty-player` y crea un `TwistyPlayer`
+   en modo 2D (`background: "none"`, `controlPanel: "none"`, `hintFacelets: "none"`).
+   El scramble se pasa como `experimentalSetupAlg` para dibujar el estado **después**
+   de la mezcla.
+3. La app sirve `viewer.html` y `viewer.js` desde un servidor en loopback
+   (`ScrambleHTTPServer`). Es necesario porque `WKWebView` no puede cargar módulos ES
+   desde `file://`, y los `WKURLSchemeHandler` personalizados no son fiables con ellos.
+4. Swift llama a `window.__setScramble` con `callAsyncJavaScript` cada vez que cambia
+   el scramble o la categoría.
 
-1. `src/worker.js` compila el entry del worker como bundle autocontenido.
-2. `index.html` intercepta `window.Worker` y redirige cualquier URL a `worker.js`.
-3. `src/entry.js` importa `cubing/scramble` y publica la función global que Swift llama.
-
-El diagrama va aparte porque necesita un contexto DOM propio y porque el build ESM de
-cubing.js **no registra** el custom element `twisty-player` (eso solo lo hacen los
-bundles para navegador). Por eso `src/viewer.js` llama a `customElements.define` antes
-de crear el elemento, y `viewer.html` le pasa el scramble con `window.__setScramble`.
-
-Los bundles van minificados y sin *splitting*, así que los módulos dinámicos
-(4x4, 6x6, 7x7, Megaminx…) quedan inline y no hace falta servir más ficheros.
+El build ESM de cubing.js **no registra** el custom element `twisty-player` (eso solo
+lo hacen los bundles para navegador). Por eso `src/viewer.js` llama a
+`customElements.define` antes de crear el elemento.
 
 ## Licencia
 
-cubing.js es **MPL-2.0**. Los bundles de `TimeCuber/ScrambleEngine/` contienen código
-suyo, así que al distribuir la app hay que:
-
-- mantener la licencia y los avisos de copyright de cubing.js, y
-- ofrecer el código fuente de esos ficheros (basta con este directorio, que ya está en
-  el repositorio público, más la versión de cubing.js fijada en `package.json`).
-
-Al ser MPL-2.0 (copyleft por fichero) **no** obliga a liberar el resto de la app.
+- **cubing.js** es **MPL-2.0**. El bundle `viewer.js` contiene código suyo, así que al
+  distribuir la app hay que mantener la licencia y los avisos de copyright, y ofrecer
+  el código fuente (basta con este directorio, que ya está en el repositorio público,
+  más la versión de cubing.js fijada en `package.json`). Al ser copyleft por fichero
+  **no** obliga a liberar el resto de la app.
+- **TNoodle** es **AGPL-3.0**, pero no se distribuye con la app: se ejecuta aparte como
+  servidor. Si lo despliegas o modificas, esa instalación sí queda sujeta a la AGPL.

@@ -1,12 +1,12 @@
 import Foundation
 import Network
 
-/// Servidor HTTP mínimo que sirve los recursos del motor de scrambles en `127.0.0.1`.
+/// Servidor HTTP mínimo que sirve `viewer.html` y `viewer.js` en `127.0.0.1`.
 ///
-/// ¿Por qué un servidor y no `file://`? Porque `WKWebView` no deja cargar módulos ES
-/// ni crear Web Workers desde `file://`, y los `WKURLSchemeHandler` personalizados
-/// tampoco los soportan de forma fiable. Sirviendo en loopback el motor tiene un
-/// origen `http://127.0.0.1:<puerto>` normal y funciona igual que en un navegador.
+/// Los scrambles no pasan por aquí (los da un servidor TNoodle remoto), pero el
+/// diagrama 2D sí: `WKWebView` no deja cargar módulos ES desde `file://`, y los
+/// `WKURLSchemeHandler` personalizados tampoco los soportan de forma fiable. Sirviendo
+/// en loopback el visor tiene un origen `http://127.0.0.1:<puerto>` normal.
 ///
 /// Solo escucha en la interfaz de loopback, así que no es accesible desde la red.
 final class ScrambleHTTPServer: @unchecked Sendable {
@@ -117,7 +117,7 @@ final class ScrambleHTTPServer: @unchecked Sendable {
             path = String(path[..<queryStart])
         }
         if path.isEmpty || path == "/" {
-            path = "/index.html"
+            path = "/viewer.html"
         }
 
         let decoded = path.removingPercentEncoding ?? path

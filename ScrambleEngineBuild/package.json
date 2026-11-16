@@ -2,7 +2,7 @@
   "name": "rubik-timer-scramble-engine",
   "version": "1.0.0",
   "private": true,
-  "description": "Genera los bundles de cubing.js que se embeben en la app.",
+  "description": "Genera los bundles de cubing.js que embebe la app (diagrama 2D del scramble).",
   "scripts": {
     "build": "./build.sh"
   },
