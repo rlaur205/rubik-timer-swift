@@ -4,8 +4,8 @@
 #
 #   cd ScrambleEngineBuild && npm install && ./build.sh
 #
-# Salida: TimeCuber/ScrambleEngine/{engine.js,worker.js}
-# (`index.html` se edita a mano y no lo toca este script.)
+# Salida: TimeCuber/ScrambleEngine/{engine.js,worker.js,viewer.js}
+# (`index.html` y `viewer.html` se editan a mano y no los toca este script.)
 
 set -euo pipefail
 
@@ -29,6 +29,14 @@ npx esbuild src/worker.js \
     --minify \
     --target=safari16 \
     --outfile="$OUT_DIR/worker.js"
+
+echo "→ viewer.js"
+npx esbuild src/viewer.js \
+    --bundle \
+    --format=esm \
+    --minify \
+    --target=safari16 \
+    --outfile="$OUT_DIR/viewer.js"
 
 echo "✓ Listo"
 ls -lh "$OUT_DIR"

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Scramble</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background: transparent;
+            overflow: hidden;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        /* Sin `display` a propósito: TwistyPlayer usa `display: grid` en su `:host`
+           y si lo sobreescribimos el diagrama colapsa a 0 de alto. */
+        twisty-player {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+<script>
+    // Puente con Swift. `__setScramble` se puede llamar aunque el módulo todavía
+    // esté cargando: espera a que `viewer.js` termine y luego aplica el scramble.
+    window.__listo = new Promise(function (resolve) {
+        window.__listoResolve = resolve;
+    });
+
+    window.__aplicarScramble = null;
+
+    window.__setScramble = async function (puzzle, alg) {
+        await window.__listo;
+        if (window.__aplicarScramble) {
+            window.__aplicarScramble(puzzle, alg);
+        }
+    };
+</script>
+<script type="module">
+    import "./viewer.js";
+</script>
+</body>
+</html>

@@ -9,9 +9,9 @@
 /* Begin PBXBuildFile section */
 		8C7738F32F3D03A700B7F833 /* ModeloTiempos.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C7738F22F3D03A700B7F833 /* ModeloTiempos.swift */; };
 		8C7739842F3DD55F00B7F833 /* RubikAppViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C7739832F3DD55F00B7F833 /* RubikAppViewModel.swift */; };
+		8CAA10022F50000100ABCDEF /* ScrambleEngine in Resources */ = {isa = PBXBuildFile; fileRef = 8CAA10012F50000100ABCDEF /* ScrambleEngine */; };
 		B61584FA2B92C6B200C20F12 /* TimeCuber.swift in Sources */ = {isa = PBXBuildFile; fileRef = B61584F92B92C6B200C20F12 /* TimeCuber.swift */; };
 		B61584FC2B92C6B200C20F12 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B61584FB2B92C6B200C20F12 /* ContentView.swift */; };
-		8CAA10022F50000100ABCDEF /* ScrambleEngine in Resources */ = {isa = PBXBuildFile; fileRef = 8CAA10012F50000100ABCDEF /* ScrambleEngine */; };
 		B61584FE2B92C6B400C20F12 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B61584FD2B92C6B400C20F12 /* Assets.xcassets */; };
 		B61585012B92C6B400C20F12 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B61585002B92C6B400C20F12 /* Preview Assets.xcassets */; };
 /* End PBXBuildFile section */

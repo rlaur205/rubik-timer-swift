@@ -49,6 +49,16 @@ struct CronometroView: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 20)
                     .padding(.top,15)
+
+                //DIAGRAMA 2D DEL SCRAMBLE
+                if !vm.scrambleActual.isEmpty {
+                    ImagenScrambleView(
+                        scramble: vm.scrambleActual,
+                        categoria: vm.sesionActual.categoria
+                    )
+                    .frame(height: 120)
+                    .padding(.horizontal, 20)
+                }
             }
             
             //CRONOMETRO

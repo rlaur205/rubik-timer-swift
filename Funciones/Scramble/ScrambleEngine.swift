@@ -44,6 +44,7 @@ final class ScrambleEngine {
     private let maxReconstrucciones = 3
 
     private var server: ScrambleHTTPServer?
+    private var puerto: UInt16?
     private var webView: WKWebView?
     private var preparacion: Task<Void, Error>?
     private var listo = false
@@ -126,6 +127,18 @@ final class ScrambleEngine {
 
     // MARK: - Arranque
 
+    /// URL del visor que dibuja el diagrama 2D del scramble. Arranca el motor si
+    /// todavía no estaba en marcha.
+    func viewerURL() async throws -> URL {
+        try await prepare()
+
+        guard let puerto, let url = URL(string: "http://127.0.0.1:\(puerto)/viewer.html") else {
+            throw ScrambleEngineError.motorNoDisponible
+        }
+
+        return url
+    }
+
     private func prepare() async throws {
         if listo {
             return
@@ -168,10 +181,11 @@ final class ScrambleEngine {
         }
 
         let servidor = ScrambleHTTPServer(root: raiz)
-        let puerto = try await servidor.start()
+        let puertoAsignado = try await servidor.start()
         server = servidor
+        puerto = puertoAsignado
 
-        guard let url = URL(string: "http://127.0.0.1:\(puerto)/index.html") else {
+        guard let url = URL(string: "http://127.0.0.1:\(puertoAsignado)/index.html") else {
             throw ScrambleEngineError.recursosNoEncontrados
         }
 
@@ -233,6 +247,7 @@ final class ScrambleEngine {
         webView = nil
         server?.cancel()
         server = nil
+        puerto = nil
 
         reconstrucciones += 1
         if reconstrucciones > maxReconstrucciones {

@@ -58,12 +58,14 @@ rubik-timer-swift/
 │   ├── Scramble/                     # Motor de scrambles random-state (cubing.js)
 │   │   ├── ScrambleService.swift     # Cola y precarga de scrambles por categoría
 │   │   ├── ScrambleEngine.swift      # Puente Swift ↔ WKWebView
+│   │   ├── ImagenScrambleView.swift  # Diagrama 2D del scramble (TwistyPlayer)
 │   │   └── ScrambleHTTPServer.swift  # Servidor loopback que sirve los recursos JS
 │
 ├── ScrambleEngineBuild/              # Proyecto npm que recompila el motor JS
 │   ├── package.json                  # Dependencia: cubing 0.66.1
 │   ├── src/entry.js                  # Punto de entrada del hilo principal
 │   ├── src/worker.js                 # Punto de entrada del Web Worker
+│   ├── src/viewer.js                 # Punto de entrada del diagrama 2D
 │   └── build.sh                      # Genera TimeCuber/ScrambleEngine/*.js
 │
 └── TimerV3.xcodeproj/               # Proyecto Xcode
@@ -209,6 +211,7 @@ Vista central de la app. Muestra:
 
 - El nombre de la sesión activa con emoji 🍀 y botón de borrar último tiempo (ícono de basura rojo).
 - El **scramble actual** adaptando el tamaño de fuente según la categoría (más grande para 3x3, más pequeño para Megaminx o 7x7).
+- El **diagrama 2D** del estado del puzzle tras el scramble (ver sección 8.2).
 - El área táctil del cronómetro (`TimerAreaView`).
 - Las estadísticas rápidas al pie (`EstadisticasCronometroView`).
 
@@ -291,6 +294,7 @@ Los scrambles se generan con **cubing.js** (random-state real, el mismo enfoque 
 |---|---|
 |`ScrambleService.swift`|Cola de scrambles por categoría y precarga en segundo plano|
 |`ScrambleEngine.swift`|Carga cubing.js en un `WKWebView` oculto y expone `scramble(eventID:)`|
+|`ImagenScrambleView.swift`|Diagrama 2D del scramble en un `WKWebView` transparente (ver 8.2)|
 |`ScrambleHTTPServer.swift`|Servidor HTTP en `127.0.0.1` que sirve los recursos del motor|
 
 Cómo funciona:
@@ -304,7 +308,28 @@ El servidor local es necesario porque `WKWebView` no permite módulos ES ni Web 
 
 Si iOS mata el proceso `WebContent` (presión de memoria), el puente falla y el motor se reconstruye automáticamente en la siguiente llamada. Tras varios intentos fallidos se deja de intentar y, hasta que se reinicie la app, no se muestran scrambles.
 
-### 8.2 Recompilar el motor
+### 8.2 Diagrama 2D del scramble (`ImagenScrambleView`)
+
+Debajo del texto del scramble, la pantalla del cronómetro dibuja el estado del puzzle
+al que corresponde esa mezcla. Usa el mismo cubing.js, no una librería aparte.
+
+|Pieza|Responsabilidad|
+|---|---|
+|`Funciones/Scramble/ImagenScrambleView.swift`|`UIViewRepresentable` con un `WKWebView` transparente y sin interacción|
+|`TimeCuber/ScrambleEngine/viewer.html`|Página del visor; expone `window.__setScramble(puzzle, alg)`|
+|`TimeCuber/ScrambleEngine/viewer.js`|Registra `<twisty-player>` y crea el `TwistyPlayer` en modo 2D|
+
+Cómo funciona:
+
+1. `ScrambleEngine.viewerURL()` devuelve `http://127.0.0.1:<puerto>/viewer.html` (arranca el motor si hacía falta). El visor y el motor comparten el mismo servidor local.
+2. La vista traduce la categoría a un puzzle de cubing.js (`3x3x3`, `pyraminx`, `megaminx`, `square1`…), y al terminar la carga llama a `window.__setScramble(puzzle, alg)` con `callAsyncJavaScript`.
+3. `viewer.js` crea un `TwistyPlayer` con `visualization: "2D"`, `background: "none"`, `controlPanel: "none"` y `hintFacelets: "none"`, y le pasa el scramble como `experimentalSetupAlg` para que el diagrama muestre el estado **después** de la mezcla.
+4. El `WKWebView` va con fondo transparente, sin `scroll` y con `isUserInteractionEnabled = false`, así que se comporta como una imagen.
+5. Si el motor no está disponible, la vista deja de reintentar y simplemente no dibuja nada; el cronómetro y el texto del scramble siguen funcionando igual.
+
+> Nota: el build ESM de cubing.js no registra el custom element `twisty-player`, por eso `src/viewer.js` llama a `customElements.define` antes de crear el elemento.
+
+### 8.3 Recompilar el motor
 
 Los ficheros `TimeCuber/ScrambleEngine/*.js` son bundles ya compilados y **no se editan a mano**. Para regenerarlos tras cambiar de versión de cubing.js:
 
