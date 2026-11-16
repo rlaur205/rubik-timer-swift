@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 
+@MainActor
 class RubikViewModel: ObservableObject {
     
     @Published var tiemposPrincipal: [Sesion] = []
@@ -37,6 +38,16 @@ class RubikViewModel: ObservableObject {
     init() {
         cargarSesiones()
         actualizarVista()
+        // Cuando el motor termine el primer scramble, lo mostramos si la pantalla
+        // sigue vacía (al arrancar la cola todavía está en marcha).
+        ScrambleService.shared.alPrimerScramble = { [weak self] categoria in
+            guard let self,
+                  self.scrambleActual.isEmpty,
+                  categoria == self.categoriaSeleccionada
+            else { return }
+
+            self.scrambleActual = ScrambleService.shared.siguiente(categoria: categoria)
+        }
         // Arranca el motor de scrambles y empieza a precargar en segundo plano
         ScrambleService.shared.iniciar(categoria: categoriaSeleccionada)
     }

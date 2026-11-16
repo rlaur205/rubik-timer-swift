@@ -2,13 +2,10 @@ import Foundation
 
 /// Cola de scrambles por categoría con generación en segundo plano.
 ///
-/// `siguiente(categoria:)` es **síncrona y nunca falla**: devuelve al instante un
-/// scramble de la cola si hay uno listo y, si no, recurre a los generadores Swift de
-/// siempre (`scrambleMostrar`). Mientras tanto se repone la cola en segundo plano y
-/// los siguientes scrambles ya vienen del motor random-state de cubing.js.
-///
-/// Así la UI nunca se queda esperando y, aunque el motor no llegue a cargar, la app
-/// sigue siendo 100 % funcional.
+/// `siguiente(categoria:)` es **síncrona y nunca bloquea**: devuelve al instante el
+/// siguiente scramble de la cola. Si la cola está vacía (primer arranque) o el motor
+/// no está disponible, devuelve una cadena vacía: la app simplemente no muestra
+/// scramble en ese momento, sin inventarse ninguno.
 final class ScrambleService: @unchecked Sendable {
 
     static let shared = ScrambleService()
@@ -19,6 +16,11 @@ final class ScrambleService: @unchecked Sendable {
     private let lock = NSLock()
     private var colas: [String: [String]] = [:]
     private var generando: Set<String> = []
+
+    /// Aviso en el hilo principal cuando una categoría pasa de 0 a 1 scrambles
+    /// listos. La app lo usa para rellenar la pantalla si estaba vacía esperando
+    /// al motor.
+    var alPrimerScramble: (@MainActor (String) -> Void)?
 
     private init() {}
 
@@ -33,9 +35,12 @@ final class ScrambleService: @unchecked Sendable {
     }
 
     /// Devuelve el siguiente scramble para una categoría. Nunca bloquea.
+    ///
+    /// Si todavía no hay ninguno listo (o el motor no está disponible) devuelve una
+    /// cadena vacía.
     func siguiente(categoria: String) -> String {
         guard let eventID = Self.eventID(para: categoria) else {
-            return scrambleMostrar(categoria: categoria)
+            return ""
         }
 
         let resultado: String? = lock.withLock {
@@ -50,11 +55,7 @@ final class ScrambleService: @unchecked Sendable {
         // Reponemos lo que acabamos de consumir.
         reponer(categoria: categoria, eventID: eventID)
 
-        if let resultado, !resultado.isEmpty {
-            return resultado
-        }
-
-        return scrambleMostrar(categoria: categoria)
+        return resultado ?? ""
     }
 
     /// Asegura que haya scrambles en cola para una categoría.
@@ -82,20 +83,28 @@ final class ScrambleService: @unchecked Sendable {
                 do {
                     let scramble = try await ScrambleEngine.shared.scramble(eventID: eventID, timeout: 25)
 
-                    let llena: Bool = lock.withLock {
+                    let (llena, eraVacia): (Bool, Bool) = lock.withLock {
                         var cola = colas[categoria] ?? []
+                        let eraVacia = cola.isEmpty
                         cola.append(scramble)
                         let llena = cola.count >= objetivo
                         colas[categoria] = cola
                         if llena {
                             generando.remove(categoria)
                         }
-                        return llena
+                        return (llena, eraVacia)
                     }
 
                     #if DEBUG
                     NSLog("[Scramble] \(eventID) → \(scramble)")
                     #endif
+
+                    if eraVacia {
+                        await MainActor.run { [weak self] in
+                            guard let self, let aviso = self.alPrimerScramble else { return }
+                            aviso(categoria)
+                        }
+                    }
 
                     if llena {
                         return

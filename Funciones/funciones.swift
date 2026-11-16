@@ -61,36 +61,6 @@ func ft(_ segundosTotales: Double) -> String {
 
 
 
-func scrambleMostrar(categoria:String) -> String{
-    if categoria == "2x2" {
-        return generador2()
-    } else if categoria == "4x4" {
-        return generar6_7(tamaño: 4)
-    } else if categoria == "5x5" {
-        return generador5()
-    } else if categoria == "6x6" {
-        return generar6_7(tamaño: 6)
-    } else if categoria == "7x7" {
-        return generar6_7(tamaño: 7)
-    } else if categoria == "3x3 OH" {
-        return generador3()
-    } else if categoria == "3x3 BLD" {
-        return generador3bld()
-    } else if categoria == "Pyraminx" {
-        return generadorPyra()
-    } else if categoria == "Megaminx" {
-        return generarMega()
-    } else if categoria == "Skewb" {
-        return generadorSkewb()
-    } else if categoria == "Square 1" {
-        return generadorSq1()
-    } else{
-        return generador3()
-    }
-}
-
-
-
 func convertirAHoras(_ horaTexto: String) -> Double {
     let partes = horaTexto.components(separatedBy: ":")
     var minutos = 0

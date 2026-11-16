@@ -51,8 +51,8 @@ Aplicación iOS nativa desarrollada en Swift y SwiftUI para speedcubing. Cronome
 ![iOS](https://img.shields.io/badge/iOS-18%2B-black?logo=apple)
 
 Los scrambles se generan con [cubing.js](https://github.com/cubing/cubing.js) (MPL-2.0)
-ejecutado en un `WKWebView` oculto. Los generadores Swift propios quedan como respaldo
-por si el motor no está disponible.
+ejecutado en un `WKWebView` oculto. Si el motor no está disponible, la app no muestra
+scramble en lugar de inventarse uno.
 
 ---
 

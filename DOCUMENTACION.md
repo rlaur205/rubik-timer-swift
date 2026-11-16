@@ -59,15 +59,6 @@ rubik-timer-swift/
 │   │   ├── ScrambleService.swift     # Cola y precarga de scrambles por categoría
 │   │   ├── ScrambleEngine.swift      # Puente Swift ↔ WKWebView
 │   │   └── ScrambleHTTPServer.swift  # Servidor loopback que sirve los recursos JS
-│   └── generadores/                  # Generadores de scrambles por tipo de puzzle
-│       ├── gen3.swift                # Scramble para 3x3 y 3x3 OH/BLD
-│       ├── gen4.swift                # Scramble para 4x4
-│       ├── gen5.swift                # Scramble para 5x5
-│       ├── gen6-7.swift              # Scramble para 6x6 y 7x7
-│       ├── genMega.swift             # Scramble para Megaminx
-│       ├── genPyra.swift             # Scramble para Pyraminx
-│       ├── genSkewb.swift            # Scramble para Skewb
-│       └── genSq1.swift              # Scramble para Square-1
 │
 ├── ScrambleEngineBuild/              # Proyecto npm que recompila el motor JS
 │   ├── package.json                  # Dependencia: cubing 0.66.1
@@ -266,7 +257,6 @@ Pantalla dedicada a estadísticas profundas dividida en subvistas:
 |`formatoFecha(_ fecha: Date) -> String`|Formatea una fecha a `dd/MM/yy HH:mm` en locale español|
 |`ft(_ segundos: Double) -> String`|Alias de `formatoTiempo`, mismo comportamiento|
 |`obtenerMejorPeor(listaTiempos:tipo:) -> Double`|Retorna el mínimo o máximo de una lista de tiempos|
-|`scrambleMostrar(categoria:) -> String`|Enrutador que llama al generador de scramble correcto según categoría|
 |`convertirAHoras(_ horaTexto: String) -> Double`|Convierte texto `"M:SS"` a segundos Double|
 |`ordenarLista(_ lista: [Tiempo]) -> [Tiempo]`|Ordena una lista de `Tiempo` por duración usando **Quicksort recursivo**|
 |`obtenerTiemposRecorrer(categoria:nombreCategoria:listaSesiones:)`|Obtiene los tiempos de una sesión específica|
@@ -293,42 +283,28 @@ Pantalla dedicada a estadísticas profundas dividida en subvistas:
 
 ## 8. Generadores de Scrambles
 
-Los scrambles se generan con **cubing.js** (random-state real, el mismo enfoque que usa la WCA), y si el motor no está disponible se recurre a los generadores Swift propios.
+Los scrambles se generan con **cubing.js** (random-state real, el mismo enfoque que usa la WCA). No hay generador alternativo: si el motor no está disponible, la app simplemente no muestra scramble.
 
 ### 8.1 Motor random-state (`Funciones/Scramble/`)
 
 |Archivo|Responsabilidad|
 |---|---|
-|`ScrambleService.swift`|Cola de scrambles por categoría, precarga en segundo plano y fallback|
+|`ScrambleService.swift`|Cola de scrambles por categoría y precarga en segundo plano|
 |`ScrambleEngine.swift`|Carga cubing.js en un `WKWebView` oculto y expone `scramble(eventID:)`|
 |`ScrambleHTTPServer.swift`|Servidor HTTP en `127.0.0.1` que sirve los recursos del motor|
 
 Cómo funciona:
 
 1. `ScrambleService` mantiene hasta 5 scrambles listos por categoría y los va reponiendo en segundo plano.
-2. `siguiente(categoria:)` es **síncrona y nunca bloquea**: devuelve al instante el siguiente scramble de la cola. Si la cola está vacía (por ejemplo en el primer arranque) devuelve uno de los generadores Swift.
+2. `siguiente(categoria:)` es **síncrona y nunca bloquea**: devuelve al instante el siguiente scramble de la cola. Si la cola está vacía (por ejemplo al arrancar) devuelve una cadena vacía y la vista no muestra nada.
 3. `ScrambleEngine` abre un `WKWebView` oculto, sirve `TimeCuber/ScrambleEngine/` desde un servidor en loopback y llama a `window.__generateScramble(eventID)`.
+4. Cuando el motor termina el primer scramble de la categoría, `ScrambleService` avisa y la vista lo pinta si seguía vacía.
 
 El servidor local es necesario porque `WKWebView` no permite módulos ES ni Web Workers desde `file://`, y los `WKURLSchemeHandler` personalizados tampoco los soportan de forma fiable. Al escuchar solo en loopback no es accesible desde la red.
 
-Si iOS mata el proceso `WebContent` (presión de memoria), el puente falla y el motor se reconstruye automáticamente en la siguiente llamada. Tras varios intentos fallidos se deja de intentar y la app sigue con los generadores Swift.
+Si iOS mata el proceso `WebContent` (presión de memoria), el puente falla y el motor se reconstruye automáticamente en la siguiente llamada. Tras varios intentos fallidos se deja de intentar y, hasta que se reinicie la app, no se muestran scrambles.
 
-### 8.2 Generadores Swift (fallback)
-
-Cada archivo en `Funciones/generadores/` contiene la lógica para generar una secuencia de movimientos aleatoria válida para su tipo de puzzle. La función `scrambleMostrar(categoria:)` actúa como enrutador central.
-
-|Archivo|Función generadora|Categorías soportadas|
-|---|---|---|
-|`gen3.swift`|`generador3()`, `generador2()`, `generador3bld()`|3x3, 2x2, 3x3 OH, 3x3 BLD|
-|`gen4.swift`|`generar6_7(tamaño: 4)`|4x4|
-|`gen5.swift`|`generador5()`|5x5|
-|`gen6-7.swift`|`generar6_7(tamaño: 6/7)`|6x6, 7x7|
-|`genMega.swift`|`generarMega()`|Megaminx|
-|`genPyra.swift`|`generadorPyra()`|Pyraminx|
-|`genSkewb.swift`|`generadorSkewb()`|Skewb|
-|`genSq1.swift`|`generadorSq1()`|Square-1|
-
-### 8.3 Recompilar el motor
+### 8.2 Recompilar el motor
 
 Los ficheros `TimeCuber/ScrambleEngine/*.js` son bundles ya compilados y **no se editan a mano**. Para regenerarlos tras cambiar de versión de cubing.js:
 
