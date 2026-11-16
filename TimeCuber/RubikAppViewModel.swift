@@ -22,6 +22,8 @@ class RubikViewModel: ObservableObject {
         didSet {
             // Cuando esta variable cambie, guardamos el nuevo valor en la memoria del teléfono
             UserDefaults.standard.set(categoriaSeleccionada, forKey: "categoriaSeleccionada")
+            // Y vamos preparando scrambles de la nueva categoría en segundo plano
+            ScrambleService.shared.precargar(categoria: categoriaSeleccionada)
         }
     }
         
@@ -35,6 +37,8 @@ class RubikViewModel: ObservableObject {
     init() {
         cargarSesiones()
         actualizarVista()
+        // Arranca el motor de scrambles y empieza a precargar en segundo plano
+        ScrambleService.shared.iniciar(categoria: categoriaSeleccionada)
     }
 
     func guardarSesiones() {
@@ -95,9 +99,9 @@ class RubikViewModel: ObservableObject {
         // 3. Actualizamos el ID para que la vista sepa cuál es
         idActual = sesionActual.id
         
-        // 4. Si no hay scramble (mezcla), generamos uno nuevo (usando TU función global)
+        // 4. Si no hay scramble (mezcla), generamos uno nuevo
         if scrambleActual.isEmpty {
-            scrambleActual = scrambleMostrar(categoria: categoriaSeleccionada)
+            scrambleActual = ScrambleService.shared.siguiente(categoria: categoriaSeleccionada)
         }
     }
     
@@ -158,7 +162,7 @@ class RubikViewModel: ObservableObject {
             sesionActual = tiemposPrincipal[index]
             guardarSesiones()
         }
-        scrambleActual = scrambleMostrar(categoria: sesionActual.categoria)
+        scrambleActual = ScrambleService.shared.siguiente(categoria: sesionActual.categoria)
     }
 
     func borrarUltimoTiempo() {
@@ -187,7 +191,7 @@ class RubikViewModel: ObservableObject {
                 }
             }
             
-            scrambleActual = scrambleMostrar(categoria: sesionActual.categoria)
+            scrambleActual = ScrambleService.shared.siguiente(categoria: sesionActual.categoria)
             timerState.visibilidadPromedios = true
 
         
@@ -211,7 +215,7 @@ class RubikViewModel: ObservableObject {
     }
     
     func nuevoScramble() {
-        scrambleActual = scrambleMostrar(categoria: categoriaSeleccionada)
+        scrambleActual = ScrambleService.shared.siguiente(categoria: categoriaSeleccionada)
     }
 
     

@@ -31,7 +31,7 @@ Aplicación iOS nativa desarrollada en Swift y SwiftUI para speedcubing. Cronome
 ## Funcionalidades
 
 - **Cronómetro táctil** — inicia y deten el timer con solo tocar la pantalla
-- **Scrambles automáticos** — mezclas aleatorias específicas para cada puzzle al iniciar y después de cada solve
+- **Scrambles automáticos** — mezclas random-state reales para cada puzzle (vía [cubing.js](https://github.com/cubing/cubing.js)) al iniciar y después de cada solve
 - **12 puzzles WCA** — 3x3, 2x2, 4x4, 5x5, 6x6, 7x7, 3x3 OH, 3x3 BLD, Pyraminx, Megaminx, Skewb, Square-1
 - **Múltiples sesiones** — crea y gestiona varias sesiones por categoría
 - **Stats en tiempo real** — Mo3, Ao5, Ao12, Ao50 siempre visibles debajo del cronómetro
@@ -50,6 +50,10 @@ Aplicación iOS nativa desarrollada en Swift y SwiftUI para speedcubing. Cronome
 ![UserDefaults](https://img.shields.io/badge/Persistencia-UserDefaults%20%2B%20JSON-lightgrey)
 ![iOS](https://img.shields.io/badge/iOS-18%2B-black?logo=apple)
 
+Los scrambles se generan con [cubing.js](https://github.com/cubing/cubing.js) (MPL-2.0)
+ejecutado en un `WKWebView` oculto. Los generadores Swift propios quedan como respaldo
+por si el motor no está disponible.
+
 ---
 
 ## Instalación
@@ -63,6 +67,15 @@ open TimerV3.xcodeproj
 ```
 
 Selecciona un simulador o dispositivo en Xcode y presiona `Cmd + R`.
+
+Los bundles de cubing.js que usa el motor de scrambles ya están incluidos en el
+repositorio. Solo hace falta Node.js si quieres recompilarlos:
+
+```bash
+cd ScrambleEngineBuild
+npm install
+./build.sh
+```
 
 
 ---

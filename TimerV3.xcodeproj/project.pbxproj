@@ -11,6 +11,7 @@
 		8C7739842F3DD55F00B7F833 /* RubikAppViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C7739832F3DD55F00B7F833 /* RubikAppViewModel.swift */; };
 		B61584FA2B92C6B200C20F12 /* TimeCuber.swift in Sources */ = {isa = PBXBuildFile; fileRef = B61584F92B92C6B200C20F12 /* TimeCuber.swift */; };
 		B61584FC2B92C6B200C20F12 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B61584FB2B92C6B200C20F12 /* ContentView.swift */; };
+		8CAA10022F50000100ABCDEF /* ScrambleEngine in Resources */ = {isa = PBXBuildFile; fileRef = 8CAA10012F50000100ABCDEF /* ScrambleEngine */; };
 		B61584FE2B92C6B400C20F12 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B61584FD2B92C6B400C20F12 /* Assets.xcassets */; };
 		B61585012B92C6B400C20F12 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B61585002B92C6B400C20F12 /* Preview Assets.xcassets */; };
 /* End PBXBuildFile section */
@@ -18,6 +19,7 @@
 /* Begin PBXFileReference section */
 		8C7738F22F3D03A700B7F833 /* ModeloTiempos.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModeloTiempos.swift; sourceTree = "<group>"; };
 		8C7739832F3DD55F00B7F833 /* RubikAppViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RubikAppViewModel.swift; sourceTree = "<group>"; };
+		8CAA10012F50000100ABCDEF /* ScrambleEngine */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ScrambleEngine; sourceTree = "<group>"; };
 		B61584F62B92C6B200C20F12 /* TimerV3.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TimerV3.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B61584F92B92C6B200C20F12 /* TimeCuber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeCuber.swift; sourceTree = "<group>"; };
 		B61584FB2B92C6B200C20F12 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -72,6 +74,7 @@
 				8C7738F22F3D03A700B7F833 /* ModeloTiempos.swift */,
 				B61584F92B92C6B200C20F12 /* TimeCuber.swift */,
 				B61584FB2B92C6B200C20F12 /* ContentView.swift */,
+				8CAA10012F50000100ABCDEF /* ScrambleEngine */,
 				B61584FD2B92C6B400C20F12 /* Assets.xcassets */,
 				B61584FF2B92C6B400C20F12 /* Preview Content */,
 			);
@@ -151,6 +154,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8CAA10022F50000100ABCDEF /* ScrambleEngine in Resources */,
 				B61585012B92C6B400C20F12 /* Preview Assets.xcassets in Resources */,
 				B61584FE2B92C6B400C20F12 /* Assets.xcassets in Resources */,
 			);
@@ -338,7 +342,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"TimeCuberPreview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"TimeCuber/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

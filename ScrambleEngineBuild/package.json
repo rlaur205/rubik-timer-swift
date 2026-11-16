@@ -1,0 +1,15 @@
+{
+  "name": "rubik-timer-scramble-engine",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Genera los bundles de cubing.js que se embeben en la app.",
+  "scripts": {
+    "build": "./build.sh"
+  },
+  "dependencies": {
+    "cubing": "0.66.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}

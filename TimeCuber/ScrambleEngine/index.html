@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Scramble Engine</title>
+</head>
+<body>
+<script>
+    // cubing.js calcula la URL de su Web Worker con `import.meta.resolve(...)` o con
+    // `new URL("./search-worker-entry.js", import.meta.url)`. Dentro de un bundle
+    // empaquetado ninguna de las dos apunta a un fichero real, así que interceptamos
+    // `Worker` y lo redirigimos siempre a nuestro `worker.js`.
+    (function () {
+        var NativeWorker = window.Worker;
+        window.Worker = class extends NativeWorker {
+            constructor(_url, options) {
+                var target = new URL("worker.js", document.baseURI).href;
+                super(target, options || { type: "module" });
+            }
+        };
+    })();
+</script>
+<script type="module">
+    import "./engine.js";
+
+    // `engine.js` define `window.__generateScramble`. Lo comprobamos para que Swift
+    // sepa cuándo el motor está listo de verdad.
+    window.__scrambleEngineReady = typeof window.__generateScramble === "function";
+</script>
+</body>
+</html>

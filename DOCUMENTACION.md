@@ -27,7 +27,11 @@ rubik-timer-swift/
 │   ├── TimeCuber.swift               # Punto de entrada (@main)
 │   ├── ContentView.swift             # Vista raíz con TabView
 │   ├── ModeloTiempos.swift           # Modelos de datos (Sesion, Tiempo, Orden, TimerState)
-│   └── RubikAppViewModel.swift       # ViewModel principal (RubikViewModel)
+│   ├── RubikAppViewModel.swift       # ViewModel principal (RubikViewModel)
+│   └── ScrambleEngine/               # Recursos JS embebidos (generados, no editar)
+│       ├── index.html                # Carga el motor y redirige el Worker
+│       ├── engine.js                 # Bundle de cubing.js (hilo principal)
+│       └── worker.js                 # Bundle de cubing.js (Web Worker)
 │
 ├── Cronometro/                       # Módulo del cronómetro
 │   ├── CronometroView.swift          # Vista principal del cronómetro
@@ -51,6 +55,10 @@ rubik-timer-swift/
 ├── Funciones/                        # Lógica y utilidades puras
 │   ├── funciones.swift               # Funciones de formato, ordenamiento y navegación
 │   ├── funcionesEstadisticas.swift   # Funciones de cálculo estadístico
+│   ├── Scramble/                     # Motor de scrambles random-state (cubing.js)
+│   │   ├── ScrambleService.swift     # Cola y precarga de scrambles por categoría
+│   │   ├── ScrambleEngine.swift      # Puente Swift ↔ WKWebView
+│   │   └── ScrambleHTTPServer.swift  # Servidor loopback que sirve los recursos JS
 │   └── generadores/                  # Generadores de scrambles por tipo de puzzle
 │       ├── gen3.swift                # Scramble para 3x3 y 3x3 OH/BLD
 │       ├── gen4.swift                # Scramble para 4x4
@@ -60,6 +68,12 @@ rubik-timer-swift/
 │       ├── genPyra.swift             # Scramble para Pyraminx
 │       ├── genSkewb.swift            # Scramble para Skewb
 │       └── genSq1.swift              # Scramble para Square-1
+│
+├── ScrambleEngineBuild/              # Proyecto npm que recompila el motor JS
+│   ├── package.json                  # Dependencia: cubing 0.66.1
+│   ├── src/entry.js                  # Punto de entrada del hilo principal
+│   ├── src/worker.js                 # Punto de entrada del Web Worker
+│   └── build.sh                      # Genera TimeCuber/ScrambleEngine/*.js
 │
 └── TimerV3.xcodeproj/               # Proyecto Xcode
 ```
@@ -279,6 +293,28 @@ Pantalla dedicada a estadísticas profundas dividida en subvistas:
 
 ## 8. Generadores de Scrambles
 
+Los scrambles se generan con **cubing.js** (random-state real, el mismo enfoque que usa la WCA), y si el motor no está disponible se recurre a los generadores Swift propios.
+
+### 8.1 Motor random-state (`Funciones/Scramble/`)
+
+|Archivo|Responsabilidad|
+|---|---|
+|`ScrambleService.swift`|Cola de scrambles por categoría, precarga en segundo plano y fallback|
+|`ScrambleEngine.swift`|Carga cubing.js en un `WKWebView` oculto y expone `scramble(eventID:)`|
+|`ScrambleHTTPServer.swift`|Servidor HTTP en `127.0.0.1` que sirve los recursos del motor|
+
+Cómo funciona:
+
+1. `ScrambleService` mantiene hasta 5 scrambles listos por categoría y los va reponiendo en segundo plano.
+2. `siguiente(categoria:)` es **síncrona y nunca bloquea**: devuelve al instante el siguiente scramble de la cola. Si la cola está vacía (por ejemplo en el primer arranque) devuelve uno de los generadores Swift.
+3. `ScrambleEngine` abre un `WKWebView` oculto, sirve `TimeCuber/ScrambleEngine/` desde un servidor en loopback y llama a `window.__generateScramble(eventID)`.
+
+El servidor local es necesario porque `WKWebView` no permite módulos ES ni Web Workers desde `file://`, y los `WKURLSchemeHandler` personalizados tampoco los soportan de forma fiable. Al escuchar solo en loopback no es accesible desde la red.
+
+Si iOS mata el proceso `WebContent` (presión de memoria), el puente falla y el motor se reconstruye automáticamente en la siguiente llamada. Tras varios intentos fallidos se deja de intentar y la app sigue con los generadores Swift.
+
+### 8.2 Generadores Swift (fallback)
+
 Cada archivo en `Funciones/generadores/` contiene la lógica para generar una secuencia de movimientos aleatoria válida para su tipo de puzzle. La función `scrambleMostrar(categoria:)` actúa como enrutador central.
 
 |Archivo|Función generadora|Categorías soportadas|
@@ -291,6 +327,18 @@ Cada archivo en `Funciones/generadores/` contiene la lógica para generar una se
 |`genPyra.swift`|`generadorPyra()`|Pyraminx|
 |`genSkewb.swift`|`generadorSkewb()`|Skewb|
 |`genSq1.swift`|`generadorSq1()`|Square-1|
+
+### 8.3 Recompilar el motor
+
+Los ficheros `TimeCuber/ScrambleEngine/*.js` son bundles ya compilados y **no se editan a mano**. Para regenerarlos tras cambiar de versión de cubing.js:
+
+```bash
+cd ScrambleEngineBuild
+npm install
+./build.sh
+```
+
+Requiere Node.js y esbuild (instalado por `npm install`). El detalle está en `ScrambleEngineBuild/README.md`.
 
 ---
 
