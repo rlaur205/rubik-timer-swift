@@ -2,8 +2,8 @@ import SwiftUI
 
 // MARK: - Modelos internos
 
-private struct PuzzleOption: Identifiable {
-    let id: String          // clave interna (categoria para TNoodle)
+private struct PuzzleOption {
+    let id: String          // identificador interno del puzzle
     let display: String     // texto visible e.g. "3×3"
     let sfSymbol: String
     let eventos: [EventoOption]
@@ -23,15 +23,16 @@ private let puzzleList: [PuzzleOption] = [
     ]),
     PuzzleOption(id: "3x3",      display: "3×3",      sfSymbol: "square.grid.3x3.fill",          eventos: [
         EventoOption(id: "3x3",      nombre: "Normal",    badge: ""),
-        EventoOption(id: "3x3 OH",   nombre: "Una mano",  badge: "OH"),
         EventoOption(id: "3x3 BLD",  nombre: "A ciegas",  badge: "BLD"),
-        EventoOption(id: "3x3 FMC",  nombre: "Min. movs.", badge: "FMC")
+        EventoOption(id: "3x3 OH",   nombre: "Una mano",  badge: "OH")
     ]),
     PuzzleOption(id: "4x4",      display: "4×4",      sfSymbol: "square.grid.3x3",               eventos: [
-        EventoOption(id: "4x4",      nombre: "Normal",    badge: "")
+        EventoOption(id: "4x4",      nombre: "Normal",    badge: ""),
+        EventoOption(id: "4x4 BLD",  nombre: "A ciegas",  badge: "BLD")
     ]),
     PuzzleOption(id: "5x5",      display: "5×5",      sfSymbol: "rectangle.split.3x3",           eventos: [
-        EventoOption(id: "5x5",      nombre: "Normal",    badge: "")
+        EventoOption(id: "5x5",      nombre: "Normal",    badge: ""),
+        EventoOption(id: "5x5 BLD",  nombre: "A ciegas",  badge: "BLD")
     ]),
     PuzzleOption(id: "6x6",      display: "6×6",      sfSymbol: "square.grid.3x3.topleft.filled", eventos: [
         EventoOption(id: "6x6",      nombre: "Normal",    badge: "")
@@ -50,18 +51,7 @@ private let puzzleList: [PuzzleOption] = [
     ]),
     PuzzleOption(id: "Square 1", display: "Square-1", sfSymbol: "square.on.square",              eventos: [
         EventoOption(id: "Square 1", nombre: "Normal",    badge: "")
-    ]),
-    PuzzleOption(id: "Clock",    display: "Clock",    sfSymbol: "clock",                         eventos: [
-        EventoOption(id: "Clock",    nombre: "Normal",    badge: "")
     ])
-]
-
-// Slots fijos que siempre se muestran en la fila de eventos
-private let eventSlots: [(nombre: String, badge: String)] = [
-    ("Normal",     ""),
-    ("Una mano",   "OH"),
-    ("A ciegas",   "BLD"),
-    ("Min. movs.", "FMC")
 ]
 
 // MARK: - Vista principal
@@ -75,15 +65,11 @@ struct CrearCategoriaView: View {
     @State private var nuevoNombre = ""
     @State private var puzzleIdx: Int = 1          // 3×3 por defecto
     @State private var eventoId: String = "3x3"    // Normal por defecto
+    // Puzzle cuyo popover de eventos está abierto (nil = ninguno)
+    @State private var popoverPuzzleIdx: Int? = nil
 
     // MARK: Computed helpers
     private var puzzle: PuzzleOption { puzzleList[puzzleIdx] }
-
-    private var categoriaFinal: String {
-        // Para FMC reutilizamos el scramble de 3x3 normal (misma práctica WCA)
-        if eventoId == "3x3 FMC" { return "3x3" }
-        return eventoId
-    }
 
     private var textoCrearComo: String {
         let ev = puzzle.eventos.first(where: { $0.id == eventoId }) ?? puzzle.eventos[0]
@@ -91,91 +77,55 @@ struct CrearCategoriaView: View {
         return "\(puzzle.display) \(ev.badge)"
     }
 
-    private var infoEvento: String {
-        switch puzzle.eventos.count {
-        case 1: return "🔒 \(puzzle.display) solo tiene un evento oficial, se elige solo"
-        case 2: return "ⓘ El \(puzzle.display) tiene 2 eventos oficiales: Normal y A ciegas"
-        case 4: return "ⓘ El \(puzzle.display) tiene 4 eventos oficiales"
-        default: return "ⓘ El \(puzzle.display) tiene \(puzzle.eventos.count) eventos"
-        }
-    }
-
     // MARK: Body
     var body: some View {
         VStack(spacing: 0) {
 
-            // ── Header ──────────────────────────────────────────────
-            HStack(alignment: .center) {
-                Text("Nueva sesión")
-                    .font(.largeTitle).bold()
-                Spacer()
-                Button { mostrarFormulario = false } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.title2)
+            // ── Contenido ────────────────────────────────────────────
+            VStack(alignment: .leading, spacing: 24) {
+
+                // — Nombre ——————————————————————————————————
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("NOMBRE")
+                            .font(.headline).fontWeight(.semibold)
+                            .foregroundStyle(.secondary)
+                            .padding(.top,10)
+                        Spacer()
+                        Text("\(nuevoNombre.count)/10")
+                            .font(.caption)
+                            .foregroundStyle(nuevoNombre.count >= 10 ? Color.red : Color.secondary)
+                    }
+                    TextField("Nombre de la sesión", text: $nuevoNombre)
+                        .onChange(of: nuevoNombre) { _, new in
+                            if new.count > 10 { nuevoNombre = String(new.prefix(10)) }
+                        }
+                        .padding(12)
+                        .background(Color(.secondarySystemBackground))
+                        .cornerRadius(10)
+                }
+
+                // — Puzzle ——————————————————————————————————
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("PUZZLE")
+                        .font(.headline).fontWeight(.semibold)
                         .foregroundStyle(.secondary)
+
+                    LazyVGrid(
+                        columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 4),
+                        spacing: 10
+                    ) {
+                        ForEach(Array(puzzleList.enumerated()), id: \.element.id) { idx, p in
+                            puzzleCell(p, idx: idx)
+                        }
+                    }
                 }
             }
             .padding(.horizontal, 20)
-            .padding(.top, 24)
-            .padding(.bottom, 16)
+            .padding(.top, 36)
+            .padding(.bottom, 20)
 
-            Divider()
-
-            // ── Contenido scrollable ─────────────────────────────────
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-
-                    // — Nombre ——————————————————————————————————
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack {
-                            stepHeader(numero: "1", label: "NOMBRE")
-                            Spacer()
-                            Text("\(nuevoNombre.count)/10")
-                                .font(.caption)
-                                .foregroundStyle(nuevoNombre.count >= 10 ? Color.red : Color.secondary)
-                        }
-                        TextField("Nombre de la sesión", text: $nuevoNombre)
-                            .onChange(of: nuevoNombre) { _, new in
-                                if new.count > 10 { nuevoNombre = String(new.prefix(10)) }
-                            }
-                            .padding(12)
-                            .background(Color(.secondarySystemBackground))
-                            .cornerRadius(10)
-                    }
-
-                    // — Paso 1: Puzzle ———————————————————————————
-                    VStack(alignment: .leading, spacing: 12) {
-                        stepHeader(numero: "2", label: "PUZZLE")
-
-                        LazyVGrid(
-                            columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 4),
-                            spacing: 10
-                        ) {
-                            ForEach(Array(puzzleList.enumerated()), id: \.element.id) { idx, p in
-                                puzzleCell(p, idx: idx)
-                            }
-                        }
-                    }
-
-                    // — Paso 2: Evento ———————————————————————————
-                    VStack(alignment: .leading, spacing: 12) {
-                        stepHeader(numero: "3", label: "EVENTO")
-
-                        HStack(spacing: 8) {
-                            ForEach(eventSlots, id: \.nombre) { slot in
-                                eventoCell(slot)
-                            }
-                        }
-
-                        Text(infoEvento)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    Spacer(minLength: 20)
-                }
-                .padding(20)
-            }
+            Spacer(minLength: 0)
 
             // ── Barra inferior ───────────────────────────────────────
             VStack(spacing: 0) {
@@ -204,7 +154,7 @@ struct CrearCategoriaView: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, 28)
             }
-            .background(Color(.systemBackground))
+            .fixedSize(horizontal: false, vertical: true)
         }
         // Alerta de nombre inválido
         .alert("Nombre inválido", isPresented: $mostrarAlertaNombreInvalido) {
@@ -212,37 +162,40 @@ struct CrearCategoriaView: View {
         } message: {
             Text("El nombre no puede estar vacío y tiene un máximo de 10 caracteres.")
         }
+        // Sheet compacto, con el material nativo de iOS en todo el sheet y el
+        // indicador de arrastre para cerrarlo (ya no hay botón ✕).
+        .presentationDetents([.height(470)])
+        .presentationDragIndicator(.visible)
     }
 
     // MARK: - Subvistas
 
     @ViewBuilder
-    private func stepHeader(numero: String, label: String) -> some View {
-        HStack(spacing: 8) {
-            ZStack {
-                Circle().fill(Color.blue).frame(width: 20, height: 20)
-                Text(numero).font(.caption2).bold().foregroundColor(.white)
-            }
-            Text(label)
-                .font(.caption).fontWeight(.semibold)
-                .foregroundStyle(.secondary)
-        }
-    }
-
-    @ViewBuilder
     private func puzzleCell(_ p: PuzzleOption, idx: Int) -> some View {
         let isSelected = puzzleIdx == idx
+        let tieneVariosEventos = p.eventos.count > 1
+
         Button {
+            let cambioDePuzzle = puzzleIdx != idx
             puzzleIdx = idx
-            eventoId = p.eventos[0].id  // resetear al primer evento disponible
+            // Al cambiar de puzzle se empieza por su primer evento (Normal).
+            if cambioDePuzzle { eventoId = p.eventos[0].id }
+
+            if tieneVariosEventos {
+                popoverPuzzleIdx = idx
+            } else {
+                popoverPuzzleIdx = nil
+            }
         } label: {
             VStack(spacing: 6) {
                 Image(systemName: p.sfSymbol)
                     .font(.system(size: 22))
                     .foregroundStyle(isSelected ? .white : .primary)
-                Text(p.display)
+                Text(textoCelda(p, isSelected: isSelected))
                     .font(.caption2)
                     .foregroundStyle(isSelected ? .white : .primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity)
             .frame(height: 62)
@@ -250,57 +203,73 @@ struct CrearCategoriaView: View {
             .cornerRadius(12)
         }
         .buttonStyle(.plain)
+        .popover(
+            isPresented: Binding(
+                get: { popoverPuzzleIdx == idx },
+                set: { if !$0 { popoverPuzzleIdx = nil } }
+            ),
+            arrowEdge: .top
+        ) {
+            popoverEventos(p)
+        }
     }
 
     @ViewBuilder
-    private func eventoCell(_ slot: (nombre: String, badge: String)) -> some View {
-        // ¿Existe este slot en el puzzle actual?
-        let matchEvento = puzzle.eventos.first(where: { $0.badge == slot.badge })
-        let isAvailable = matchEvento != nil
-        let isSingleEvent = puzzle.eventos.count == 1
-        let isSelected = eventoId == matchEvento?.id
+    private func popoverEventos(_ p: PuzzleOption) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Evento · \(p.display)")
+                .font(.caption).fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+                .padding(.bottom, 2)
 
-        Button {
-            if let ev = matchEvento, !isSingleEvent {
-                eventoId = ev.id
-            }
-        } label: {
-            VStack(spacing: 3) {
-                // Candado si el puzzle solo tiene un evento y este es el disponible
-                if isSingleEvent && isAvailable {
-                    Image(systemName: "lock.fill")
-                        .font(.caption2)
-                        .foregroundStyle(isSelected ? .white : .secondary)
+            ForEach(p.eventos) { ev in
+                let seleccionado = eventoId == ev.id
+
+                Button {
+                    eventoId = ev.id
+                    popoverPuzzleIdx = nil
+                } label: {
+                    HStack(spacing: 8) {
+                        Text(ev.nombre)
+                            .font(.subheadline)
+                            .foregroundStyle(.primary)
+
+                        if !ev.badge.isEmpty {
+                            Text(ev.badge)
+                                .font(.caption2).bold()
+                                .foregroundStyle(.blue)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.blue.opacity(0.15))
+                                .clipShape(Capsule())
+                        }
+
+                        Spacer(minLength: 12)
+
+                        if seleccionado {
+                            Image(systemName: "checkmark")
+                                .font(.footnote).bold()
+                                .foregroundStyle(.blue)
+                        }
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .background(seleccionado ? Color.blue.opacity(0.12) : Color.clear)
+                    .cornerRadius(8)
                 }
-                Text(slot.nombre)
-                    .font(.caption2).bold()
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(
-                        isSelected   ? Color.white :
-                        isAvailable  ? Color.primary :
-                        Color.secondary.opacity(0.4)
-                    )
-                if !slot.badge.isEmpty {
-                    Text(slot.badge)
-                        .font(.caption2)
-                        .foregroundStyle(
-                            isSelected  ? Color.white.opacity(0.85) :
-                            isAvailable ? Color.secondary :
-                            Color.secondary.opacity(0.3)
-                        )
-                }
+                .buttonStyle(.plain)
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: 54)
-            .background(
-                isSelected  ? Color.blue :
-                isAvailable ? Color(.secondarySystemBackground) :
-                Color(.secondarySystemBackground).opacity(0.4)
-            )
-            .cornerRadius(10)
         }
-        .buttonStyle(.plain)
-        .disabled(!isAvailable || isSingleEvent)
+        .padding(14)
+        .frame(width: 210)
+        .presentationCompactAdaptation(.popover)
+    }
+
+    /// Texto del botón del grid; añade el badge del evento cuando está elegido.
+    private func textoCelda(_ p: PuzzleOption, isSelected: Bool) -> String {
+        guard isSelected else { return p.display }
+        let ev = p.eventos.first(where: { $0.id == eventoId }) ?? p.eventos[0]
+        return ev.badge.isEmpty ? p.display : "\(p.display) \(ev.badge)"
     }
 
     // MARK: - Acción
@@ -311,7 +280,7 @@ struct CrearCategoriaView: View {
             mostrarAlertaNombreInvalido = true
             return
         }
-        let nuevaSesion = Sesion(tiempos: [], nombre: nombre, categoria: categoriaFinal)
+        let nuevaSesion = Sesion(tiempos: [], nombre: nombre, categoria: eventoId)
         vm.tiemposPrincipal.append(nuevaSesion)
         vm.guardarSesiones()
         nuevoNombre = ""
@@ -320,5 +289,9 @@ struct CrearCategoriaView: View {
 }
 
 #Preview {
-    ContentView()
+    CrearCategoriaView(
+        vm: RubikViewModel(),
+        mostrarFormulario: .constant(true),
+        mostrarAlertaNombreInvalido: .constant(false)
+    )
 }

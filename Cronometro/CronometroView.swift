@@ -59,8 +59,8 @@ struct CronometroView: View {
             //SCRAMBLE
             if !vm.timerState.estaCorriendo {
                 Text(vm.scrambleActual)
-                    .font(.system(size: vm.sesionActual.categoria == "4x4" ? 20 :
-                                    vm.sesionActual.categoria == "5x5" ? 18 :
+                    .font(.system(size: vm.sesionActual.categoria.hasPrefix("4x4") ? 20 :
+                                    vm.sesionActual.categoria.hasPrefix("5x5") ? 18 :
                                     vm.sesionActual.categoria == "6x6" ? 13 :
                                     vm.sesionActual.categoria == "7x7" ? 12 :
                                     vm.sesionActual.categoria == "Megaminx" ? 11 :

@@ -148,8 +148,8 @@ extension ImagenScrambleView {
             switch categoria {
             case "2x2": return "2x2x2"
             case "3x3", "3x3 OH", "3x3 BLD": return "3x3x3"
-            case "4x4": return "4x4x4"
-            case "5x5": return "5x5x5"
+            case "4x4", "4x4 BLD": return "4x4x4"
+            case "5x5", "5x5 BLD": return "5x5x5"
             case "6x6": return "6x6x6"
             case "7x7": return "7x7x7"
             case "Pyraminx": return "pyraminx"

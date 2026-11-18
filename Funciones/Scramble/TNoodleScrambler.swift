@@ -6,7 +6,7 @@ import TNoodleLibNative
 /// Los valores coinciden con el índice que espera `tnoodle_lib_scramble` en la
 /// librería nativa (ver `PuzzleRegistry.Main` de TNoodle):
 /// 0 2x2, 1 3x3, 2 4x4, 3 5x5, 4 6x6, 5 7x7, 6 Square-1, 7 Megaminx,
-/// 8 Pyraminx, 9 Clock, 10 Skewb, 11 3x3 (normal), 12 3x3 sin inspección.
+/// 8 Pyraminx, 10 Skewb, 12 3x3 sin inspección.
 enum TNoodlePuzzle: Int32, Sendable {
     case twoByTwo = 0
     case threeByThree = 1
@@ -17,14 +17,14 @@ enum TNoodlePuzzle: Int32, Sendable {
     case squareOne = 6
     case megaminx = 7
     case pyraminx = 8
-    case clock = 9
     case skewb = 10
     case threeByThreeSinInspeccion = 12
 
     /// Traduce una categoría de la app al puzzle de TNoodle.
     ///
-    /// TNoodle no tiene eventos separados para OH ni BLD: OH usa el 3x3 normal y el
-    /// BLD usa el 3x3 sin inspección, igual que en la WCA.
+    /// TNoodle no tiene eventos separados para OH ni BLD: OH usa el 3x3 normal,
+    /// 3x3 BLD usa el 3x3 sin inspección y 4x4/5x5 BLD usan el scramble normal de
+    /// su puzzle, igual que en la WCA.
     static func paraCategoria(_ categoria: String) -> TNoodlePuzzle? {
         switch categoria {
         case "2x2": return .twoByTwo
@@ -35,6 +35,8 @@ enum TNoodlePuzzle: Int32, Sendable {
         case "7x7": return .sevenBySeven
         case "3x3 OH": return .threeByThree
         case "3x3 BLD": return .threeByThreeSinInspeccion
+        case "4x4 BLD": return .fourByFour
+        case "5x5 BLD": return .fiveByFive
         case "Pyraminx": return .pyraminx
         case "Megaminx": return .megaminx
         case "Skewb": return .skewb

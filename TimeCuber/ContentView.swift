@@ -20,6 +20,10 @@ struct ContentView: View {
             vistaCategorias()
                 .tabItem {Image(systemName: "archivebox")}
             
+            //en preparacion
+            //vistaAjustes()
+            //.tabItem {Image(systemName: "gearshape")}
+            
         }
         .tint(.cyan)
  

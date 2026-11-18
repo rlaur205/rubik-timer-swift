@@ -331,9 +331,12 @@ Mapeo de categorías a puzzles de TNoodle (en `TNoodlePuzzle.paraCategoria`):
 |Square-1, Megaminx, Pyraminx, Skewb|`SquareOne`, `Megaminx`, `Pyraminx`, `Skewb`|6, 7, 8, 10|
 |3x3 OH|3x3 normal|1|
 |3x3 BLD|3x3 sin inspección|12|
+|4x4 BLD|4x4 normal|2|
+|5x5 BLD|5x5 normal|3|
 
-TNoodle no separa OH ni BLD: OH usa el 3x3 normal y BLD el 3x3 sin inspección, igual
-que en CubeTime.
+TNoodle no separa OH ni BLD: OH usa el 3x3 normal, 3x3 BLD el 3x3 sin
+inspección y 4x4/5x5 BLD el scramble normal de su puzzle, igual que en CubeTime y
+en la WCA.
 
 #### Procedencia del framework
 
@@ -404,6 +407,8 @@ La app soporta los siguientes tipos de puzzle, cubriendo la mayoría de eventos 
 |7x7|V-Cube 7|
 |3x3 OH|3x3 con una sola mano (One-Handed)|
 |3x3 BLD|3x3 con los ojos vendados (Blindfolded)|
+|4x4 BLD|4x4 con los ojos vendados (Blindfolded)|
+|5x5 BLD|5x5 con los ojos vendados (Blindfolded)|
 |Pyraminx|Tetraedro de 4 capas|
 |Megaminx|Dodecaedro|
 |Skewb|Cubo con movimientos diagonales|

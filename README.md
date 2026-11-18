@@ -1,6 +1,6 @@
 # TimeCuber — Timer de Rubik para iOS
 
-Aplicación iOS nativa desarrollada en Swift y SwiftUI para speedcubing. Cronometra tus solves, genera scrambles automáticos para 12 tipos de puzzles WCA y sigue tus estadísticas, todo en una interfaz limpia y nativa.
+Aplicación iOS nativa desarrollada en Swift y SwiftUI para speedcubing. Cronometra tus solves, genera scrambles automáticos para 14 tipos de puzzles/eventos WCA y sigue tus estadísticas, todo en una interfaz limpia y nativa.
 
 ---
 
@@ -33,7 +33,7 @@ Aplicación iOS nativa desarrollada en Swift y SwiftUI para speedcubing. Cronome
 - **Cronómetro táctil** — inicia y deten el timer con solo tocar la pantalla
 - **Scrambles automáticos** — mezclas oficiales de [TNoodle](https://github.com/thewca/tnoodle) (el programa de la WCA) generadas en el propio dispositivo, sin servidor ni internet
 - **Diagrama del scramble** — dibujo 2D del estado del puzzle tras la mezcla, con [cubing.js](https://github.com/cubing/cubing.js)
-- **12 puzzles WCA** — 3x3, 2x2, 4x4, 5x5, 6x6, 7x7, 3x3 OH, 3x3 BLD, Pyraminx, Megaminx, Skewb, Square-1
+- **14 eventos WCA** — 3x3, 2x2, 4x4, 5x5, 6x6, 7x7, 3x3 OH, 3x3 BLD, 4x4 BLD, 5x5 BLD, Pyraminx, Megaminx, Skewb, Square-1
 - **Múltiples sesiones** — crea y gestiona varias sesiones por categoría
 - **Stats en tiempo real** — Mo3, Ao5, Ao12, Ao50 siempre visibles debajo del cronómetro
 - **Estadísticas avanzadas** — PBs históricos, desviación estándar y gráficas de progreso
