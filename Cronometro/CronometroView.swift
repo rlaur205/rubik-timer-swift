@@ -1,96 +1,112 @@
 import SwiftUI
-import UIKit
 
 struct CronometroView: View {
-    
     @ObservedObject var vm: RubikViewModel
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var mostrarDiagrama = false
-        
-    var body: some View {
+    @State private var mostrarPromedios = false
 
-        VStack(spacing: 10) {
-            
-            //TITULO DEL CRONOMETRO
-            if !vm.timerState.estaCorriendo {
-                HStack {
-                    
-                    Image(systemName: "trash.fill")
-                        .padding(8)
-                        .background(Color(.red).opacity(0.4))
-                        .cornerRadius(10)
-                        .font(.system(size: 23))
-                        .padding(.leading, -20)
-                        .onTapGesture {
-                            vm.borrarUltimoTiempo()
-                        }
-                    
-                    // Nombre de sesión — el 🍀 abre el diagrama del scramble
-                    HStack(spacing: 0) {
-                        Text(" \(vm.sesionActual.nombre) ")
-                            .multilineTextAlignment(.center)
-                            .bold()
-                            .foregroundColor(.primary)
-                            .font(.custom("Avenir", size: 34))
-                        
-                        Text("🍀")
-                            .font(.custom("Avenir", size: 34))
-                            .onTapGesture {
-                                if !vm.scrambleActual.isEmpty {
-                                    mostrarDiagrama = true
-                                }
-                            }
-                            .popover(isPresented: $mostrarDiagrama, arrowEdge: .top) {
-                                VStack(spacing: 12) {
-                                    ImagenScrambleView(
-                                        scramble: vm.scrambleActual,
-                                        categoria: vm.sesionActual.categoria
-                                    )
-                                    .frame(width: 260, height: 160)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 20)
-                                }
-                                .presentationCompactAdaptation(.popover)
-                            }
+    private var tamanoScramble: CGFloat {
+        switch vm.sesionActual.categoria {
+        case "Megaminx": return 15
+        case "7x7": return 16
+        case "6x6": return 17
+        case let categoria where categoria.hasPrefix("5x5"): return 18
+        case let categoria where categoria.hasPrefix("4x4"): return 20
+        default: return 24
+        }
+    }
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if dynamicTypeSize.isAccessibilitySize && !vm.timerState.estaCorriendo {
+                    ScrollView { contenido }
+                } else {
+                    contenido
+                }
+            }
+            .background(Color(uiColor: .systemBackground))
+            .navigationTitle(vm.sesionActual.nombre)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Eliminar último tiempo", systemImage: "trash", role: .destructive) {
+                        vm.borrarUltimoTiempo()
                     }
                 }
-                .padding(.horizontal)
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Ver diagrama", systemImage: "cube.transparent") {
+                        if !vm.scrambleActual.isEmpty { mostrarDiagrama = true }
+                    }
+                    .popover(isPresented: $mostrarDiagrama, arrowEdge: .top) {
+                        VStack(spacing: 16) {
+                            Text("Diagrama").font(.headline)
+                            ImagenScrambleView(scramble: vm.scrambleActual, categoria: vm.sesionActual.categoria)
+                                .frame(width: 260, height: 180)
+                        }
+                        .padding(24)
+                        .presentationCompactAdaptation(.popover)
+                    }
+                }
             }
-            
-            //SCRAMBLE
-            if !vm.timerState.estaCorriendo {
+            .toolbar(vm.timerState.estaCorriendo ? .hidden : .visible, for: .navigationBar, .tabBar)
+        }
+    }
+
+    private var mezclaLarga: Bool {
+        ["6x6", "7x7", "Megaminx"].contains(vm.sesionActual.categoria)
+            || vm.sesionActual.categoria.hasPrefix("5x5")
+    }
+
+    private var mezcla: some View {
+        VStack(spacing: 12) {
+            if vm.scrambleActual.isEmpty {
+                ProgressView("Preparando mezcla…").font(.subheadline)
+            } else {
                 Text(vm.scrambleActual)
-                    .font(.system(size: vm.sesionActual.categoria.hasPrefix("4x4") ? 20 :
-                                    vm.sesionActual.categoria.hasPrefix("5x5") ? 18 :
-                                    vm.sesionActual.categoria == "6x6" ? 13 :
-                                    vm.sesionActual.categoria == "7x7" ? 12 :
-                                    vm.sesionActual.categoria == "Megaminx" ? 11 :
-                                    vm.sesionActual.categoria == "Square 1" ? 20 : 24))
-                    .bold()
+                    .font(.system(size: tamanoScramble, weight: .bold, design: .monospaced))
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 15)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .textSelection(.enabled)
             }
-            
-            //CRONOMETRO
+        }
+    }
+
+    private var contenido: some View {
+        VStack(spacing: 0) {
+            if !vm.timerState.estaCorriendo {
+                Group {
+                    if mostrarPromedios && mezclaLarga {
+                        ScrollView {
+                            mezcla
+                        }
+                        .frame(height: 180)
+                        .scrollBounceBehavior(.basedOnSize)
+                    } else {
+                        mezcla
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 16)
+            }
+
             TimerAreaView(
                 stateTimer: $vm.timerState,
                 registrarNuevoTiempo: { vm.registrarNuevoTiempo() },
-                formatoTiempo: formatoTiempo)
-            
-            //ESTADISTICAS (EN LA PARTE INFERIOR)
+                formatoTiempo: formatoTiempo
+            )
+            .frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 240 : 140)
+            .layoutPriority(1)
+
             if !vm.timerState.estaCorriendo {
-                EstadisticasCronometroView(vm: vm)
+                EstadisticasCronometroView(vm: vm, mostrarPromedios: $mostrarPromedios)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 16)
             }
         }
-        
-        .padding(.top, 15)
-        .padding(.bottom, 5)
-        .toolbar(vm.timerState.estaCorriendo ? .hidden : .visible, for: .tabBar)
-
     }
 
 }
 
-#Preview {
-    ContentView()
-}
+#Preview { ContentView() }

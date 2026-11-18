@@ -1,59 +1,53 @@
 import SwiftUI
 
 struct ListaTiemposView: View {
-    
     @ObservedObject var vm: RubikViewModel
-  
     @State var manejo = false
     @State var seguridad = false
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
-                ForEach(vm.tiemposRecorrer, id: \.id) { tiempo in
-                    TiempoRowView(
-                        tiempo: tiempo,
-                        onEliminar: {vm.eliminarTiempoSeleccionado(tiempo:tiempo)})
+                if vm.tiemposRecorrer.isEmpty {
+                    ContentUnavailableView("Aún no hay tiempos", systemImage: "stopwatch", description: Text("Tus tiempos aparecerán aquí después de tu primera resolución."))
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                } else {
+                    Section {
+                        ForEach(vm.tiemposRecorrer, id: \.id) { tiempo in
+                            TiempoRowView(tiempo: tiempo, onEliminar: { vm.eliminarTiempoSeleccionado(tiempo: tiempo) })
+                        }
+                    }
                 }
-            }.navigationTitle("Tiempos⌛️")
-            .navigationBarItems(trailing: Button("",systemImage: "arrow.up.arrow.down.circle",action: {
-                manejo = true
-            }))
-            .navigationBarItems(trailing: Button("",systemImage: "trash",action: {
-                seguridad = true
-            }))
-                
             }
-        .confirmationDialog("Orden",
-                            isPresented: $manejo,
-                            titleVisibility: .visible) {
-            
-            botonOrdenamiento(orden: .fecha)
-            botonOrdenamiento(orden: .ascendente)
-            botonOrdenamiento(orden: .descendente)
-            
-            Button("Cancelar", role: .cancel) { }
+            .listStyle(.insetGrouped)
+            .navigationTitle("Tiempos")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Ordenar", systemImage: "arrow.up.arrow.down") { manejo = true }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Eliminar tiempos", systemImage: "trash", role: .destructive) { seguridad = true }
+                }
+            }
+            .confirmationDialog("Ordenar tiempos", isPresented: $manejo, titleVisibility: .visible) {
+                botonOrdenamiento(orden: .fecha)
+                botonOrdenamiento(orden: .ascendente)
+                botonOrdenamiento(orden: .descendente)
+                Button("Cancelar", role: .cancel) {}
+            }
+            .alert("Eliminar tiempos", isPresented: $seguridad) {
+                Button("Eliminar", role: .destructive) { vm.eliminarTodosTiempos() }
+                Button("Cancelar", role: .cancel) {}
+            } message: {
+                Text("¿Seguro que quieres eliminar TODOS tus tiempos?")
+            }
         }
-            .alert(isPresented: $seguridad, content: {
-                    Alert(title:Text("Eliminar"),
-                          message: Text("¿Seguro que quieres eliminar TODOS tus tiempos?"),
-                          primaryButton: .default(Text("Aceptar"),action: {
-                        vm.eliminarTodosTiempos()
-                        
-                    }),
-                          secondaryButton: .destructive(Text("Cancelar")))
-                })
     }
+
     func botonOrdenamiento(orden: Orden) -> some View {
-        Button(orden.rawValue) { // el texto visible
-            vm.cambiarOrden(orden) // actualiza según enum
-        }
+        Button(orden.rawValue) { vm.cambiarOrden(orden) }
     }
-    
-
 }
 
-
-#Preview {
-    ContentView()
-}
+#Preview { ContentView() }

@@ -11,7 +11,7 @@ struct CategoriasView: View {
     @State private var sesionAEliminar: Sesion? // Sesión seleccionada para eliminar
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 ForEach(vm.tiemposPrincipal, id: \.id) { sesion in
                     SesionTimeView(
@@ -23,12 +23,13 @@ struct CategoriasView: View {
                         })
                 }
             }
-            .navigationTitle("Categorías 🌟")
+            .listStyle(.insetGrouped)
+            .navigationTitle("Sesiones")
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         mostrarFormulario = true
-                    } label: { Image(systemName: "plus") }
+                    } label: { Label("Nueva sesión", systemImage: "plus") }
                 }
             }
             .sheet(isPresented: $mostrarFormulario) {

@@ -1,73 +1,87 @@
 import SwiftUI
 
 struct EstadisticasCronometroView: View {
-    
     @ObservedObject var vm: RubikViewModel
-    
-    var body: some View {
-        
-        HStack{
-            
-            VStack(alignment:.leading ){
-                let listaTiempo = obtenerTiempos(sesion: vm.sesionActual)
-                let mean = media(tiempos: obtenerTiempos(sesion: vm.sesionActual), cantidad: listaTiempo.count == 0 ? 1 : listaTiempo.count)
-                    let peor = obtenerMejorPeor(listaTiempos: listaTiempo, tipo: "peor")
-                    let mejor = obtenerMejorPeor(listaTiempos: listaTiempo, tipo: "mejor")
-                    Text("Solves: \(listaTiempo.count)")
-                    Text("Media: \(mean <= 60 ? "\(formatoTiempo(mean).dropLast())" : "\(formatoTiempo(mean).dropLast(2))")")
-                    Text("Peor: \(peor <= 60 ? "\(formatoTiempo(peor).dropLast())" : "\(formatoTiempo(peor).dropLast(2))")")
-                    Text("Mejor: \(mejor <= 60 ? "\(formatoTiempo(mejor).dropLast())" : "\(formatoTiempo(mejor).dropLast(2))")")
-            }
-            .bold()
-            .padding(10)
-            .background(Color(.cyan).opacity(0.3))
-            .cornerRadius(12)
-            
-            
-            VStack(alignment: .center) {
-                let listaTiempo = obtenerTiempos(sesion: vm.sesionActual)
-                let ultimos5 = Array(listaTiempo.suffix(5))
-                
-                ForEach(0..<min(listaTiempo.count, 5), id: \.self) { index in
-                    let tiempo = listaTiempo[listaTiempo.count - index - 1]
-                    let fontSize: CGFloat = 20 - CGFloat(index * 2)
-                    
-                    Text("\(tiempo <= 60 ? "\(formatoTiempo(tiempo).dropLast())" : "\(formatoTiempo(tiempo).dropLast(2))")")
-                        .font(.system(size: fontSize))
-                        .foregroundColor(
-                            tiempo == ultimos5.max() ? .red :
-                            tiempo == ultimos5.min() ? .blue :
-                            .primary
-                        )
-                }
-            }
-            .bold()
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background(Color(.gray).opacity(0.25))
-            .cornerRadius(12)
-            
-            
-            VStack(alignment: .leading) {
-                let mean3 = media(tiempos: obtenerTiempos(sesion: vm.sesionActual), cantidad: 3)
-                let avg5 = avg(tiempos: obtenerTiempos(sesion: vm.sesionActual), cantidad: 5)
-                let avg12 = avg(tiempos: obtenerTiempos(sesion: vm.sesionActual), cantidad: 12)
-                let avg50 = avg(tiempos: obtenerTiempos(sesion: vm.sesionActual), cantidad: 50)
-                
-                Text("Mo3: \(mean3 <= 60 ? "\(formatoTiempo(mean3).dropLast())" : "\(formatoTiempo(mean3).dropLast(2))")")
-                Text("Avg5: \(avg5 <= 60 ? "\(formatoTiempo(avg5).dropLast())" : "\(formatoTiempo(avg5).dropLast(2))")")
-                Text("Avg12: \(avg12 <= 60 ? "\(formatoTiempo(avg12).dropLast())" : "\(formatoTiempo(avg12).dropLast(2))")")
-                Text("Avg50: \(avg50 <= 60 ? "\(formatoTiempo(avg50).dropLast())" : "\(formatoTiempo(avg50).dropLast(2))")")
-            }
-            .bold()
-            .padding(10)
-            .background(Color(.red).opacity(0.3))
-            .cornerRadius(12)
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Binding var mostrarPromedios: Bool
+    private var tiempos: [Double] { obtenerTiempos(sesion: vm.sesionActual) }
 
+    var body: some View {
+        VStack(spacing: 18) {
+            if !tiempos.isEmpty {
+                Group {
+                    if dynamicTypeSize.isAccessibilitySize {
+                        ScrollView(.horizontal, showsIndicators: false) { ultimosTiempos }
+                    } else {
+                        ultimosTiempos
+                    }
+                }
+                .accessibilityLabel("Últimos tiempos")
+            }
+            Button {
+                withAnimation(.easeInOut(duration: 0.22)) {
+                    mostrarPromedios.toggle()
+                }
+            } label: {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: dynamicTypeSize.isAccessibilitySize ? 2 : 4), spacing: 18) {
+                    ForEach(0..<(mostrarPromedios ? metricas.count : 4), id: \.self) { index in
+                        resumen(metricas[index].0, valor: metricas[index].1)
+                            .transition(.opacity)
+                    }
+                }
+                .padding(16)
+                .background(EstiloVisual.acento.opacity(0.14), in: RoundedRectangle(cornerRadius: 20))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 20)
+                        .strokeBorder(EstiloVisual.acento.opacity(0.18), lineWidth: 1)
+                }
+                .contentShape(RoundedRectangle(cornerRadius: 20))
+            }
+            .buttonStyle(.plain)
+            .accessibilityValue(mostrarPromedios ? "Expandido" : "Contraído")
+            .accessibilityHint(mostrarPromedios ? "Toca para ocultar los promedios" : "Toca para mostrar Mo3, Ao5, Ao12 y Ao50")
         }
     }
-}
 
-#Preview {
-    ContentView()
+    private var ultimosTiempos: some View {
+        HStack(spacing: 8) {
+            ForEach(0..<min(tiempos.count, 5), id: \.self) { index in
+                let tiempo = tiempos[tiempos.count - index - 1]
+                Text(EstiloVisual.tiempo(tiempo))
+                    .font(.system(.title3, design: .rounded, weight: .bold).monospacedDigit())
+                    .foregroundStyle(tiempo == tiempos.suffix(5).max() ? EstiloVisual.peligro : tiempo == tiempos.suffix(5).min() ? EstiloVisual.mejor : Color.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .frame(maxWidth: .infinity)
+            }
+        }
+    }
+
+    private var metricas: [(String, String)] {
+        [
+            ("Solves", "\(tiempos.count)"),
+            ("Media", EstiloVisual.tiempo(media(tiempos: tiempos, cantidad: tiempos.isEmpty ? 1 : tiempos.count), disponible: !tiempos.isEmpty)),
+            ("Mejor", EstiloVisual.tiempo(obtenerMejorPeor(listaTiempos: tiempos, tipo: "mejor"), disponible: !tiempos.isEmpty)),
+            ("Peor", EstiloVisual.tiempo(obtenerMejorPeor(listaTiempos: tiempos, tipo: "peor"), disponible: !tiempos.isEmpty)),
+            ("Mo3", EstiloVisual.tiempo(media(tiempos: tiempos, cantidad: 3), disponible: tiempos.count >= 3)),
+            ("Ao5", EstiloVisual.tiempo(avg(tiempos: tiempos, cantidad: 5), disponible: tiempos.count >= 5)),
+            ("Ao12", EstiloVisual.tiempo(avg(tiempos: tiempos, cantidad: 12), disponible: tiempos.count >= 12)),
+            ("Ao50", EstiloVisual.tiempo(avg(tiempos: tiempos, cantidad: 50), disponible: tiempos.count >= 50))
+        ]
+    }
+
+    private func resumen(_ titulo: String, valor: String) -> some View {
+        VStack(spacing: 5) {
+            Text(titulo).font(.subheadline.weight(.semibold)).foregroundStyle(.primary.opacity(0.75))
+                .fixedSize(horizontal: false, vertical: true)
+                .multilineTextAlignment(.center)
+            Text(valor)
+                .foregroundStyle(titulo == "Mejor" ? EstiloVisual.mejor : titulo == "Peor" ? EstiloVisual.peligro : titulo.hasPrefix("Ao") ? EstiloVisual.acento : Color.primary)
+                .font(.system(.title3, design: .rounded, weight: .bold).monospacedDigit())
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+    }
 }

@@ -20,12 +20,11 @@ struct ContentView: View {
             vistaCategorias()
                 .tabItem {Image(systemName: "archivebox")}
             
-            //en preparacion
-            //vistaAjustes()
-            //.tabItem {Image(systemName: "gearshape")}
+            vistaAjustes()
+            .tabItem {Image(systemName: "gearshape")}
             
         }
-        .tint(.cyan)
+        .tint(EstiloVisual.acento)
  
     }
     
@@ -58,6 +57,10 @@ struct ContentView: View {
         }
     }
     
+    func vistaAjustes() -> some View {
+        AjustesView()
+    }
+
 }
 
 #Preview {

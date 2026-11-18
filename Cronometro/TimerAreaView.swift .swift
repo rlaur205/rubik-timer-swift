@@ -29,9 +29,12 @@ struct TimerAreaView: View {
                     let tiempoParaMostrar = stateTimer.estaCorriendo ? Date().timeIntervalSince(stateTimer.tiempoInicio ?? Date()) : stateTimer.tiempoTranscurrido
                     
                     Text("\(formatoTiempo(tiempoParaMostrar).dropLast())")
-                        .font(.system(size: stateTimer.estaCorriendo ? 80.0 : 70.0, design: .monospaced))
-                        .foregroundColor(stateTimer.estaTocando ? .yellow : .primary)
-                        .fontWeight(.bold)
+                        .font(.system(size: stateTimer.estaCorriendo ? 104 : 96, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.45)
+                        .padding(.horizontal, 24)
+                        .foregroundStyle(stateTimer.estaTocando ? EstiloVisual.preparado : Color.primary)
                     
                 }
             }
@@ -44,7 +47,7 @@ struct TimerAreaView: View {
                 .onChanged { value in
                     switch value {
                     case .first(true):
-                        // Dedo presionado suficiente tiempo -> cambia color a amarillo
+                        // Dedo presionado suficiente tiempo -> muestra el color de preparación
                         if !stateTimer.estaCorriendo {
                             stateTimer.estaTocando = true
                         }

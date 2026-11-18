@@ -59,6 +59,7 @@ private let puzzleList: [PuzzleOption] = [
 struct CrearCategoriaView: View {
 
     @ObservedObject var vm: RubikViewModel
+    @Environment(\.colorScheme) private var colorScheme
     @Binding var mostrarFormulario: Bool
     @Binding var mostrarAlertaNombreInvalido: Bool
 
@@ -82,80 +83,70 @@ struct CrearCategoriaView: View {
         VStack(spacing: 0) {
 
             // ── Contenido ────────────────────────────────────────────
-            VStack(alignment: .leading, spacing: 24) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
 
-                // — Nombre ——————————————————————————————————
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        Text("NOMBRE")
-                            .font(.headline).fontWeight(.semibold)
+                    // — Nombre ——————————————————————————————————
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text("Nombre")
+                                .font(.subheadline).fontWeight(.medium)
+                                .foregroundStyle(.secondary)
+
+                            Spacer()
+                            Text("\(nuevoNombre.count)/10")
+                                .font(.caption)
+                                .foregroundStyle(nuevoNombre.count >= 10 ? Color.red : Color.secondary)
+                        }
+                        TextField("Nombre de la sesión", text: $nuevoNombre)
+                            .onChange(of: nuevoNombre) { _, new in
+                                if new.count > 10 { nuevoNombre = String(new.prefix(10)) }
+                            }
+                            .padding(12)
+                            .background(EstiloVisual.acento.opacity(0.055))
+                            .cornerRadius(10)
+                    }
+
+                    // — Puzzle ——————————————————————————————————
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Puzzle")
+                            .font(.subheadline).fontWeight(.medium)
                             .foregroundStyle(.secondary)
-                            .padding(.top,10)
-                        Spacer()
-                        Text("\(nuevoNombre.count)/10")
-                            .font(.caption)
-                            .foregroundStyle(nuevoNombre.count >= 10 ? Color.red : Color.secondary)
-                    }
-                    TextField("Nombre de la sesión", text: $nuevoNombre)
-                        .onChange(of: nuevoNombre) { _, new in
-                            if new.count > 10 { nuevoNombre = String(new.prefix(10)) }
-                        }
-                        .padding(12)
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(10)
-                }
 
-                // — Puzzle ——————————————————————————————————
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("PUZZLE")
-                        .font(.headline).fontWeight(.semibold)
-                        .foregroundStyle(.secondary)
-
-                    LazyVGrid(
-                        columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 4),
-                        spacing: 10
-                    ) {
-                        ForEach(Array(puzzleList.enumerated()), id: \.element.id) { idx, p in
-                            puzzleCell(p, idx: idx)
+                        LazyVGrid(
+                            columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 4),
+                            spacing: 10
+                        ) {
+                            ForEach(Array(puzzleList.enumerated()), id: \.element.id) { idx, p in
+                                puzzleCell(p, idx: idx)
+                            }
                         }
                     }
                 }
+                .padding(.horizontal, 20)
+                .padding(.top, 24)
+                .padding(.bottom, 16)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 36)
-            .padding(.bottom, 20)
+            .scrollBounceBehavior(.basedOnSize)
 
             Spacer(minLength: 0)
 
             // ── Barra inferior ───────────────────────────────────────
             VStack(spacing: 0) {
-                Divider()
-                HStack {
-                    Text("Se creará como")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Text(textoCrearComo)
-                        .font(.subheadline).bold()
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 12)
-                .padding(.bottom, 8)
-
                 Button(action: crearSesion) {
                     Text("Crear sesión")
                         .font(.headline)
-                        .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color.blue)
-                        .cornerRadius(14)
+                        .padding(.vertical, 8)
                 }
+                .accionPrincipal()
+                .controlSize(.large)
                 .padding(.horizontal, 20)
-                .padding(.bottom, 28)
+                .padding(.bottom, 20)
             }
             .fixedSize(horizontal: false, vertical: true)
         }
+        .tint(EstiloVisual.acento)
         // Alerta de nombre inválido
         .alert("Nombre inválido", isPresented: $mostrarAlertaNombreInvalido) {
             Button("Aceptar") {}
@@ -164,7 +155,7 @@ struct CrearCategoriaView: View {
         }
         // Sheet compacto, con el material nativo de iOS en todo el sheet y el
         // indicador de arrastre para cerrarlo (ya no hay botón ✕).
-        .presentationDetents([.height(470)])
+        .presentationDetents([.height(480)])
         .presentationDragIndicator(.visible)
     }
 
@@ -190,16 +181,16 @@ struct CrearCategoriaView: View {
             VStack(spacing: 6) {
                 Image(systemName: p.sfSymbol)
                     .font(.system(size: 22))
-                    .foregroundStyle(isSelected ? .white : .primary)
+                    .foregroundStyle(isSelected ? (colorScheme == .dark ? Color.black : Color.white) : Color.primary)
                 Text(textoCelda(p, isSelected: isSelected))
                     .font(.caption2)
-                    .foregroundStyle(isSelected ? .white : .primary)
+                    .foregroundStyle(isSelected ? (colorScheme == .dark ? Color.black : Color.white) : Color.primary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity)
             .frame(height: 62)
-            .background(isSelected ? Color.blue : Color(.secondarySystemBackground))
+            .background(isSelected ? EstiloVisual.acento : EstiloVisual.acento.opacity(0.055))
             .cornerRadius(12)
         }
         .buttonStyle(.plain)
@@ -237,10 +228,10 @@ struct CrearCategoriaView: View {
                         if !ev.badge.isEmpty {
                             Text(ev.badge)
                                 .font(.caption2).bold()
-                                .foregroundStyle(.blue)
+                                .foregroundStyle(EstiloVisual.acento)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
-                                .background(Color.blue.opacity(0.15))
+                                .background(EstiloVisual.acento.opacity(0.15))
                                 .clipShape(Capsule())
                         }
 
@@ -249,12 +240,12 @@ struct CrearCategoriaView: View {
                         if seleccionado {
                             Image(systemName: "checkmark")
                                 .font(.footnote).bold()
-                                .foregroundStyle(.blue)
+                                .foregroundStyle(EstiloVisual.acento)
                         }
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 8)
-                    .background(seleccionado ? Color.blue.opacity(0.12) : Color.clear)
+                    .background(seleccionado ? EstiloVisual.acento.opacity(0.12) : Color.clear)
                     .cornerRadius(8)
                 }
                 .buttonStyle(.plain)
