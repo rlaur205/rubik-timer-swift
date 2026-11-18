@@ -59,7 +59,7 @@ private let puzzleList: [PuzzleOption] = [
 struct CrearCategoriaView: View {
 
     @ObservedObject var vm: RubikViewModel
-    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.temaApp) private var temaApp
     @Binding var mostrarFormulario: Bool
     @Binding var mostrarAlertaNombreInvalido: Bool
 
@@ -91,27 +91,32 @@ struct CrearCategoriaView: View {
                         HStack {
                             Text("Nombre")
                                 .font(.subheadline).fontWeight(.medium)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(temaApp.texto.opacity(0.65))
 
                             Spacer()
                             Text("\(nuevoNombre.count)/10")
                                 .font(.caption)
-                                .foregroundStyle(nuevoNombre.count >= 10 ? Color.red : Color.secondary)
+                                .foregroundStyle(nuevoNombre.count >= 10 ? Color.red : temaApp.texto.opacity(0.65))
                         }
                         TextField("Nombre de la sesión", text: $nuevoNombre)
                             .onChange(of: nuevoNombre) { _, new in
                                 if new.count > 10 { nuevoNombre = String(new.prefix(10)) }
                             }
                             .padding(12)
-                            .background(EstiloVisual.acento.opacity(0.055))
+                            .background(temaApp.superficie)
+                            .foregroundStyle(temaApp.texto)
                             .cornerRadius(10)
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .strokeBorder(temaApp.linea, lineWidth: 1)
+                            }
                     }
 
                     // — Puzzle ——————————————————————————————————
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Puzzle")
                             .font(.subheadline).fontWeight(.medium)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(temaApp.texto.opacity(0.65))
 
                         LazyVGrid(
                             columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 4),
@@ -146,7 +151,9 @@ struct CrearCategoriaView: View {
             }
             .fixedSize(horizontal: false, vertical: true)
         }
-        .tint(EstiloVisual.acento)
+        .tint(temaApp.acento)
+        .foregroundStyle(temaApp.texto)
+        .background(temaApp.fondo)
         // Alerta de nombre inválido
         .alert("Nombre inválido", isPresented: $mostrarAlertaNombreInvalido) {
             Button("Aceptar") {}
@@ -157,6 +164,7 @@ struct CrearCategoriaView: View {
         // indicador de arrastre para cerrarlo (ya no hay botón ✕).
         .presentationDetents([.height(480)])
         .presentationDragIndicator(.visible)
+        .presentationBackground(temaApp.fondo)
     }
 
     // MARK: - Subvistas
@@ -181,17 +189,21 @@ struct CrearCategoriaView: View {
             VStack(spacing: 6) {
                 Image(systemName: p.sfSymbol)
                     .font(.system(size: 22))
-                    .foregroundStyle(isSelected ? (colorScheme == .dark ? Color.black : Color.white) : Color.primary)
+                    .foregroundStyle(isSelected ? (temaApp.colorScheme == .dark ? Color.black : Color.white) : temaApp.texto)
                 Text(textoCelda(p, isSelected: isSelected))
                     .font(.caption2)
-                    .foregroundStyle(isSelected ? (colorScheme == .dark ? Color.black : Color.white) : Color.primary)
+                    .foregroundStyle(isSelected ? (temaApp.colorScheme == .dark ? Color.black : Color.white) : temaApp.texto)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity)
             .frame(height: 62)
-            .background(isSelected ? EstiloVisual.acento : EstiloVisual.acento.opacity(0.055))
+            .background(isSelected ? temaApp.acento : temaApp.superficie)
             .cornerRadius(12)
+            .overlay {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(temaApp.linea, lineWidth: isSelected ? 0 : 1)
+            }
         }
         .buttonStyle(.plain)
         .popover(
@@ -210,7 +222,7 @@ struct CrearCategoriaView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Evento · \(p.display)")
                 .font(.caption).fontWeight(.semibold)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(temaApp.texto.opacity(0.65))
                 .padding(.bottom, 2)
 
             ForEach(p.eventos) { ev in
@@ -223,15 +235,15 @@ struct CrearCategoriaView: View {
                     HStack(spacing: 8) {
                         Text(ev.nombre)
                             .font(.subheadline)
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(temaApp.texto)
 
                         if !ev.badge.isEmpty {
                             Text(ev.badge)
                                 .font(.caption2).bold()
-                                .foregroundStyle(EstiloVisual.acento)
+                                .foregroundStyle(temaApp.acento)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
-                                .background(EstiloVisual.acento.opacity(0.15))
+                                .background(temaApp.acento.opacity(0.15))
                                 .clipShape(Capsule())
                         }
 
@@ -240,12 +252,12 @@ struct CrearCategoriaView: View {
                         if seleccionado {
                             Image(systemName: "checkmark")
                                 .font(.footnote).bold()
-                                .foregroundStyle(EstiloVisual.acento)
+                                .foregroundStyle(temaApp.acento)
                         }
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 8)
-                    .background(seleccionado ? EstiloVisual.acento.opacity(0.12) : Color.clear)
+                    .background(seleccionado ? temaApp.acento.opacity(0.12) : Color.clear)
                     .cornerRadius(8)
                 }
                 .buttonStyle(.plain)
@@ -253,6 +265,8 @@ struct CrearCategoriaView: View {
         }
         .padding(14)
         .frame(width: 210)
+        .foregroundStyle(temaApp.texto)
+        .background(temaApp.fondo)
         .presentationCompactAdaptation(.popover)
     }
 

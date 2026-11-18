@@ -3,6 +3,7 @@ import SwiftUI
 struct TiempoRowView: View {
     let tiempo: Tiempo
     var onEliminar: () -> Void
+    @Environment(\.temaApp) private var temaApp
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -16,7 +17,7 @@ struct TiempoRowView: View {
             }
             Text(tiempo.scramble)
                 .font(.system(.footnote, design: .monospaced))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(temaApp.texto.opacity(0.65))
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.vertical, 8)
@@ -29,9 +30,10 @@ struct TiempoRowView: View {
         Text(formatoTiempo(tiempo.tiempo))
             .font(.system(.title2, design: .rounded, weight: .semibold))
             .monospacedDigit()
+            .foregroundStyle(temaApp.texto)
     }
 
     private var fecha: some View {
-        Text(formatoFecha(tiempo.fecha)).font(.caption).foregroundStyle(.secondary)
+        Text(formatoFecha(tiempo.fecha)).font(.caption).foregroundStyle(temaApp.texto.opacity(0.65))
     }
 }

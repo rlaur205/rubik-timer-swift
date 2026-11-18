@@ -3,6 +3,7 @@ import SwiftUI
 struct EstadisticasCronometroView: View {
     @ObservedObject var vm: RubikViewModel
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.temaApp) private var temaApp
     @Binding var mostrarPromedios: Bool
     private var tiempos: [Double] { obtenerTiempos(sesion: vm.sesionActual) }
 
@@ -30,10 +31,10 @@ struct EstadisticasCronometroView: View {
                     }
                 }
                 .padding(16)
-                .background(EstiloVisual.acento.opacity(0.14), in: RoundedRectangle(cornerRadius: 20))
+                .background(temaApp.superficie, in: RoundedRectangle(cornerRadius: 20))
                 .overlay {
                     RoundedRectangle(cornerRadius: 20)
-                        .strokeBorder(EstiloVisual.acento.opacity(0.18), lineWidth: 1)
+                        .strokeBorder(temaApp.linea, lineWidth: 1)
                 }
                 .contentShape(RoundedRectangle(cornerRadius: 20))
             }
@@ -49,7 +50,7 @@ struct EstadisticasCronometroView: View {
                 let tiempo = tiempos[tiempos.count - index - 1]
                 Text(EstiloVisual.tiempo(tiempo))
                     .font(.system(.title3, design: .rounded, weight: .bold).monospacedDigit())
-                    .foregroundStyle(tiempo == tiempos.suffix(5).max() ? EstiloVisual.peligro : tiempo == tiempos.suffix(5).min() ? EstiloVisual.mejor : Color.primary)
+                    .foregroundStyle(tiempo == tiempos.suffix(5).max() ? EstiloVisual.peligro : tiempo == tiempos.suffix(5).min() ? EstiloVisual.mejor : temaApp.texto)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                     .frame(maxWidth: .infinity)
@@ -72,11 +73,11 @@ struct EstadisticasCronometroView: View {
 
     private func resumen(_ titulo: String, valor: String) -> some View {
         VStack(spacing: 5) {
-            Text(titulo).font(.subheadline.weight(.semibold)).foregroundStyle(.primary.opacity(0.75))
+            Text(titulo).font(.subheadline.weight(.semibold)).foregroundStyle(temaApp.texto.opacity(0.65))
                 .fixedSize(horizontal: false, vertical: true)
                 .multilineTextAlignment(.center)
             Text(valor)
-                .foregroundStyle(titulo == "Mejor" ? EstiloVisual.mejor : titulo == "Peor" ? EstiloVisual.peligro : titulo.hasPrefix("Ao") ? EstiloVisual.acento : Color.primary)
+                .foregroundStyle(titulo == "Mejor" ? EstiloVisual.mejor : titulo == "Peor" ? EstiloVisual.peligro : titulo.hasPrefix("Ao") ? temaApp.acento : temaApp.texto)
                 .font(.system(.title3, design: .rounded, weight: .bold).monospacedDigit())
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)

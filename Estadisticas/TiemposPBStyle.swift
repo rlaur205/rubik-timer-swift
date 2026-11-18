@@ -6,6 +6,7 @@ struct TiemposPBStyle: View {
     let listaParaMostrar: [Double]
     @Binding var mostrarTiempos: [Double]
     @Binding var arriba: Bool
+    @Environment(\.temaApp) private var temaApp
 
     var body: some View {
         Button {
@@ -16,7 +17,7 @@ struct TiemposPBStyle: View {
                 MetricaView(titulo: titulo, valor: tiempo)
                 Image(systemName: "chevron.right")
                     .font(.footnote.weight(.bold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(temaApp.texto.opacity(0.65))
             }
             .frame(minHeight: 54)
             .contentShape(Rectangle())

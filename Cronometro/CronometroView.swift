@@ -3,6 +3,7 @@ import SwiftUI
 struct CronometroView: View {
     @ObservedObject var vm: RubikViewModel
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.temaApp) private var temaApp
     @State private var mostrarDiagrama = false
     @State private var mostrarPromedios = false
 
@@ -26,7 +27,8 @@ struct CronometroView: View {
                     contenido
                 }
             }
-            .background(Color(uiColor: .systemBackground))
+            .background(temaApp.fondo)
+            .foregroundStyle(temaApp.texto)
             .navigationTitle(vm.sesionActual.nombre)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -46,11 +48,15 @@ struct CronometroView: View {
                                 .frame(width: 260, height: 180)
                         }
                         .padding(24)
+                        .background(temaApp.fondo)
+                        .presentationBackground(temaApp.fondo)
                         .presentationCompactAdaptation(.popover)
                     }
                 }
             }
             .toolbar(vm.timerState.estaCorriendo ? .hidden : .visible, for: .navigationBar, .tabBar)
+            .toolbarBackground(temaApp.fondo, for: .navigationBar)
+            .toolbarColorScheme(temaApp.colorScheme, for: .navigationBar)
         }
     }
 
@@ -66,6 +72,7 @@ struct CronometroView: View {
             } else {
                 Text(vm.scrambleActual)
                     .font(.system(size: tamanoScramble, weight: .bold, design: .monospaced))
+                    .foregroundStyle(temaApp.texto)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                     .textSelection(.enabled)

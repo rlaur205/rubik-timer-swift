@@ -2,6 +2,7 @@ import SwiftUI
 
 struct TextoSeccion: View {
     @Bindable var estado: AjustesEstado
+    @Environment(\.temaApp) private var temaApp
 
     var body: some View {
         Section {
@@ -12,11 +13,11 @@ struct TextoSeccion: View {
                     Spacer(minLength: 8)
                     Text(estado.tamanoScramble.nombre)
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(temaApp.texto.opacity(0.65))
                 }
 
                 Slider(value: indiceTamano, in: 0...2, step: 1)
-                    .tint(EstiloVisual.acento)
+                    .tint(temaApp.acento)
                     .accessibilityLabel("Tamaño del scramble")
                     .accessibilityValue(estado.tamanoScramble.nombre)
 
@@ -25,7 +26,7 @@ struct TextoSeccion: View {
                         Text(tamano.nombre)
                             .font(.caption2)
                             .fontWeight(tamano == estado.tamanoScramble ? .semibold : .regular)
-                            .foregroundStyle(tamano == estado.tamanoScramble ? EstiloVisual.acento : Color.secondary)
+                            .foregroundStyle(tamano == estado.tamanoScramble ? temaApp.acento : temaApp.texto.opacity(0.65))
                             .frame(maxWidth: .infinity, alignment: .center)
                     }
                 }
@@ -34,6 +35,7 @@ struct TextoSeccion: View {
                 AjustesVistaPreviaScramble(tamano: estado.tamanoScramble)
             }
             .padding(.vertical, 4)
+            .filaTema(temaApp)
         } header: {
             Text("TEXTO")
         }

@@ -3,6 +3,7 @@ import SwiftUI
 struct TiemposPBView: View {
     let actual: [Double]
     let sesionActual: Sesion
+    @Environment(\.temaApp) private var temaApp
     @State private var mostrarTiempos: [Double] = []
     @State private var arriba = false
 
@@ -37,16 +38,25 @@ struct TiemposPBView: View {
                             LabeledContent {
                                 Text(formatoTiempo(mostrarTiempos[reversedIndex]))
                                     .font(.title3.weight(.semibold).monospacedDigit())
-                                    .foregroundStyle(.primary)
+                                    .foregroundStyle(temaApp.texto)
                             } label: {
-                                Text("\(index + 1)").foregroundStyle(.secondary)
+                                Text("\(index + 1)").foregroundStyle(temaApp.texto.opacity(0.65))
                             }
+                            .listRowBackground(temaApp.superficie)
+                            .listRowSeparatorTint(temaApp.linea)
                         }
                     }
                 }
+                .listStyle(.insetGrouped)
+                .id(temaApp)
+                .scrollContentBackground(.hidden)
+                .background(temaApp.fondo)
+                .foregroundStyle(temaApp.texto)
                 .navigationTitle("Tiempos del récord")
                 .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
+                .toolbarBackground(temaApp.fondo, for: .navigationBar)
+                .toolbarColorScheme(temaApp.colorScheme, for: .navigationBar)
+                    .toolbar {
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Listo") { arriba = false }
                     }
@@ -54,6 +64,7 @@ struct TiemposPBView: View {
             }
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
+            .presentationBackground(temaApp.fondo)
         }
     }
 }

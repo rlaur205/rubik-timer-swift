@@ -3,6 +3,7 @@ import SwiftUI
 struct TimerAreaView: View {
     
     @Binding var stateTimer:TimerState
+    @Environment(\.temaApp) private var temaApp
     
     let registrarNuevoTiempo: () -> Void
     let formatoTiempo: (TimeInterval) -> String
@@ -34,7 +35,7 @@ struct TimerAreaView: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.45)
                         .padding(.horizontal, 24)
-                        .foregroundStyle(stateTimer.estaTocando ? EstiloVisual.preparado : Color.primary)
+                        .foregroundStyle(stateTimer.estaTocando ? EstiloVisual.preparado : temaApp.texto)
                     
                 }
             }

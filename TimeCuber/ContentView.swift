@@ -4,7 +4,15 @@ import SwiftData
 struct ContentView: View {
     
     @StateObject var vm = RubikViewModel()
-    
+    @AppStorage("temaApp") private var temaElegido: TemaApp = .claro
+    @AppStorage("temaDelSistema") private var temaDelSistema = true
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var temaEfectivo: TemaApp {
+        guard temaDelSistema else { return temaElegido }
+        return colorScheme == .dark ? .oscuro : .claro
+    }
+
     var body: some View {
    
         TabView{
@@ -21,10 +29,22 @@ struct ContentView: View {
                 .tabItem {Image(systemName: "archivebox")}
             
             vistaAjustes()
-            .tabItem {Image(systemName: "gearshape")}
+            .tabItem {
+                Image(systemName: "gearshape")
+                    .accessibilityLabel("Ajustes")
+                    .accessibilityIdentifier("tab-ajustes")
+            }
             
         }
-        .tint(EstiloVisual.acento)
+        .tint(temaEfectivo.acento)
+        .background(temaEfectivo.fondo.ignoresSafeArea())
+        .foregroundStyle(temaEfectivo.texto)
+        .toolbarBackground(temaEfectivo.fondo, for: .tabBar)
+        .toolbarBackground(.visible, for: .tabBar)
+        .toolbarColorScheme(temaEfectivo.colorScheme, for: .tabBar)
+        .preferredColorScheme(temaDelSistema ? nil : temaElegido.colorScheme)
+        .environment(\.temaApp, temaEfectivo)
+        .environment(\.colorScheme, temaEfectivo.colorScheme)
  
     }
     

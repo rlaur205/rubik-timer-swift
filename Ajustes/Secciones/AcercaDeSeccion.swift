@@ -4,6 +4,7 @@ struct AcercaDeSeccion: View {
     let version: String
     let restablecer: () -> Void
 
+    @Environment(\.temaApp) private var temaApp
     @State private var confirmarRestablecer = false
 
     var body: some View {
@@ -14,6 +15,7 @@ struct AcercaDeSeccion: View {
                 titulo: "Versión",
                 valor: version
             )
+            .filaTema(temaApp)
 
             NavigationLink {
                 LicenciasView()
@@ -23,6 +25,7 @@ struct AcercaDeSeccion: View {
                     Text("Licencias de terceros")
                 }
             }
+            .filaTema(temaApp)
 
             Button {
                 confirmarRestablecer = true
@@ -36,6 +39,7 @@ struct AcercaDeSeccion: View {
             }
             .buttonStyle(.plain)
             .accessibilityHint("Pide confirmación antes de restablecer los ajustes de esta pantalla")
+            .filaTema(temaApp)
         } header: {
             Text("ACERCA DE")
         }

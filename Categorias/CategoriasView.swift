@@ -3,6 +3,7 @@ import SwiftUI
 struct CategoriasView: View {
     
     @ObservedObject var vm: RubikViewModel
+    @Environment(\.temaApp) private var temaApp
     
     @State private var mostrarFormulario = false
     @State private var mostrarAlertaNombreInvalido = false
@@ -21,9 +22,15 @@ struct CategoriasView: View {
                             sesionAEliminar = sesion // Guardamos la sesión a eliminar
                             mostrarAlertaEliminar = true // Mostramos la alerta
                         })
+                    .listRowBackground(temaApp.superficie)
+                    .listRowSeparatorTint(temaApp.linea)
                 }
             }
             .listStyle(.insetGrouped)
+            .id(temaApp)
+            .scrollContentBackground(.hidden)
+            .background(temaApp.fondo)
+            .foregroundStyle(temaApp.texto)
             .navigationTitle("Sesiones")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -61,6 +68,8 @@ struct CategoriasView: View {
                     )
                 }
             }
+            .toolbarBackground(temaApp.fondo, for: .navigationBar)
+            .toolbarColorScheme(temaApp.colorScheme, for: .navigationBar)
             
         }
     }

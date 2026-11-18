@@ -26,6 +26,8 @@ struct AjustesToggleFila: View {
     var subtitulo: String?
     @Binding var estaActivo: Bool
 
+    @Environment(\.temaApp) private var temaApp
+
     var body: some View {
         Toggle(isOn: $estaActivo) {
             HStack(spacing: 12) {
@@ -35,13 +37,13 @@ struct AjustesToggleFila: View {
                     if let subtitulo {
                         Text(subtitulo)
                             .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(temaApp.texto.opacity(0.65))
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }
         }
-        .tint(EstiloVisual.acento)
+        .tint(temaApp.acento)
     }
 }
 
@@ -52,18 +54,20 @@ struct AjustesFilaValor: View {
     let valor: String
     var bloqueada = false
 
+    @Environment(\.temaApp) private var temaApp
+
     var body: some View {
         HStack(spacing: 12) {
             AjustesIcono(sistema: sistema, color: color)
             Text(titulo)
             Spacer(minLength: 8)
             Text(valor)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(temaApp.texto.opacity(0.65))
                 .multilineTextAlignment(.trailing)
             if bloqueada {
                 Image(systemName: "lock.fill")
                     .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(temaApp.texto.opacity(0.4))
                     .accessibilityHidden(true)
             }
         }
@@ -81,12 +85,13 @@ struct AjustesCirculoColor: View {
     let accion: () -> Void
 
     @ScaledMetric(relativeTo: .body) private var diametro: CGFloat = 30
+    @Environment(\.temaApp) private var temaApp
 
     var body: some View {
         Button(action: accion) {
             ZStack {
                 Circle()
-                    .strokeBorder(seleccionado ? EstiloVisual.acento : .clear, lineWidth: 2.5)
+                    .strokeBorder(seleccionado ? temaApp.acento : .clear, lineWidth: 2.5)
                     .frame(width: diametro + 8, height: diametro + 8)
                 Circle()
                     .fill(opcion.color)
@@ -109,9 +114,11 @@ struct AjustesCirculoColor: View {
 // MARK: - Tarjeta de tema
 
 struct AjustesTarjetaTema: View {
-    let tema: TemaAjuste
+    let tema: TemaApp
     let seleccionado: Bool
     let accion: () -> Void
+
+    @Environment(\.temaApp) private var temaApp
 
     var body: some View {
         Button(action: accion) {
@@ -119,7 +126,7 @@ struct AjustesTarjetaTema: View {
                 superficieMiniatura
                 Text(tema.nombre)
                     .font(.caption2)
-                    .foregroundStyle(seleccionado ? EstiloVisual.acento : Color.secondary)
+                    .foregroundStyle(seleccionado ? temaApp.acento : temaApp.texto.opacity(0.65))
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
@@ -128,12 +135,12 @@ struct AjustesTarjetaTema: View {
             .padding(4)
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(seleccionado ? EstiloVisual.acento.opacity(0.12) : Color.clear)
+                    .fill(seleccionado ? temaApp.acento.opacity(0.12) : Color.clear)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .strokeBorder(
-                        seleccionado ? EstiloVisual.acento : Color.secondary.opacity(0.25),
+                        seleccionado ? temaApp.acento : temaApp.linea,
                         lineWidth: seleccionado ? 2 : 1
                     )
             )
@@ -142,9 +149,10 @@ struct AjustesTarjetaTema: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Tema \(tema.nombre)")
         .accessibilityValue(seleccionado ? "Seleccionado" : "No seleccionado")
-        .accessibilityHint("Selecciona este tema para la vista previa")
+        .accessibilityHint("Selecciona este tema para la app")
         .accessibilityAddTraits(.isButton)
         .accessibilityAddTraits(seleccionado ? .isSelected : AccessibilityTraits())
+        .accessibilityIdentifier("tema-" + tema.rawValue)
     }
 
     private var superficieMiniatura: some View {
@@ -179,17 +187,18 @@ struct AjustesTarjetaTema: View {
 
 struct AjustesVistaPreviaScramble: View {
     let tamano: TamanoScramble
+    @Environment(\.temaApp) private var temaApp
 
     var body: some View {
         Text("R U2 F′ D L2 B R′ U")
             .font(.system(size: tamano.tamanoFuente, weight: .medium, design: .monospaced))
-            .foregroundStyle(.primary)
+            .foregroundStyle(temaApp.texto)
             .minimumScaleFactor(0.6)
             .lineLimit(2)
             .frame(maxWidth: .infinity)
             .padding(12)
             .background(
-                Color(uiColor: .tertiarySystemGroupedBackground),
+                temaApp.superficie,
                 in: RoundedRectangle(cornerRadius: 10, style: .continuous)
             )
             .animation(.easeInOut(duration: 0.2), value: tamano)
@@ -200,19 +209,20 @@ struct AjustesVistaPreviaScramble: View {
 struct AjustesVistaPreviaTimer: View {
     let tamano: Double
     let precision: PrecisionAjuste
+    @Environment(\.temaApp) private var temaApp
 
     var body: some View {
         Text(precision.ejemplo)
             .font(.system(size: CGFloat(tamano), weight: .semibold, design: .rounded))
             .monospacedDigit()
-            .foregroundStyle(.primary)
+            .foregroundStyle(temaApp.texto)
             .lineLimit(1)
             .minimumScaleFactor(0.4)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
             .padding(.horizontal, 8)
             .background(
-                Color(uiColor: .tertiarySystemGroupedBackground),
+                temaApp.superficie,
                 in: RoundedRectangle(cornerRadius: 10, style: .continuous)
             )
             .animation(.easeInOut(duration: 0.2), value: tamano)

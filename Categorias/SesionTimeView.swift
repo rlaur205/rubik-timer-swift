@@ -4,6 +4,7 @@ struct SesionTimeView: View {
     @ObservedObject var vm: RubikViewModel
     let sesion: Sesion
     let eliminarTiempo: () -> Void
+    @Environment(\.temaApp) private var temaApp
     private var seleccionada: Bool { vm.idActual == sesion.id }
 
     var body: some View {
@@ -16,17 +17,17 @@ struct SesionTimeView: View {
             HStack(spacing: 14) {
                 Image(systemName: "cube")
                     .font(.title2)
-                    .foregroundStyle(seleccionada ? EstiloVisual.acento : .secondary)
+                    .foregroundStyle(seleccionada ? temaApp.acento : temaApp.texto.opacity(0.65))
                     .frame(width: 30)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(sesion.nombre).font(.headline).foregroundStyle(.primary)
-                    Text(sesion.categoria).font(.subheadline).foregroundStyle(.secondary)
+                    Text(sesion.nombre).font(.headline).foregroundStyle(temaApp.texto)
+                    Text(sesion.categoria).font(.subheadline).foregroundStyle(temaApp.texto.opacity(0.65))
                 }
                 Spacer(minLength: 8)
                 if seleccionada {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.title3)
-                        .foregroundStyle(EstiloVisual.acento)
+                        .foregroundStyle(temaApp.acento)
                         .accessibilityLabel("Sesión actual")
                 }
             }

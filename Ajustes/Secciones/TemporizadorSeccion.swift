@@ -2,10 +2,12 @@ import SwiftUI
 
 struct TemporizadorSeccion: View {
     @Bindable var estado: AjustesEstado
+    @Environment(\.temaApp) private var temaApp
 
     var body: some View {
         Section {
             filaTamano
+                .filaTema(temaApp)
 
             AjustesToggleFila(
                 sistema: "clock",
@@ -14,6 +16,7 @@ struct TemporizadorSeccion: View {
                 subtitulo: "Cuenta atrás antes de empezar",
                 estaActivo: $estado.inspeccion15s
             )
+            .filaTema(temaApp)
 
             AjustesToggleFila(
                 sistema: "hand.tap.fill",
@@ -21,10 +24,14 @@ struct TemporizadorSeccion: View {
                 titulo: "Mantener para iniciar",
                 estaActivo: $estado.mantenerParaIniciar
             )
+            .filaTema(temaApp)
 
             filaEspera
+                .filaTema(temaApp)
             filaColorListo
+                .filaTema(temaApp)
             filaPrecision
+                .filaTema(temaApp)
 
             AjustesToggleFila(
                 sistema: "iphone.radiowaves.left.and.right",
@@ -32,6 +39,7 @@ struct TemporizadorSeccion: View {
                 titulo: "Vibración",
                 estaActivo: $estado.vibracion
             )
+            .filaTema(temaApp)
 
             AjustesToggleFila(
                 sistema: "sun.max.fill",
@@ -39,6 +47,7 @@ struct TemporizadorSeccion: View {
                 titulo: "Pantalla siempre encendida",
                 estaActivo: $estado.pantallaSiempreEncendida
             )
+            .filaTema(temaApp)
         } header: {
             Text("TEMPORIZADOR")
         }
@@ -53,11 +62,11 @@ struct TemporizadorSeccion: View {
                 Spacer(minLength: 8)
                 Text("\(Int(estado.tamanoTimer)) pt")
                     .font(.subheadline.monospacedDigit())
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(temaApp.texto.opacity(0.65))
             }
 
             Slider(value: $estado.tamanoTimer, in: 40...100, step: 1)
-                .tint(EstiloVisual.acento)
+                .tint(temaApp.acento)
                 .accessibilityLabel("Tamaño del timer")
                 .accessibilityValue("\(Int(estado.tamanoTimer)) puntos")
 
@@ -75,11 +84,11 @@ struct TemporizadorSeccion: View {
                 Spacer(minLength: 8)
                 Text(textoTiempoEspera)
                     .font(.subheadline.monospacedDigit())
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(temaApp.texto.opacity(0.65))
             }
 
             Slider(value: $estado.tiempoEspera, in: 0.1...1, step: 0.1)
-                .tint(EstiloVisual.acento)
+                .tint(temaApp.acento)
                 .disabled(!estado.mantenerParaIniciar)
                 .accessibilityLabel("Tiempo de espera")
                 .accessibilityValue(textoTiempoEspera)

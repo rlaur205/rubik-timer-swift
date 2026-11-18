@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DatosSeccion: View {
     @Bindable var estado: AjustesEstado
+    @Environment(\.temaApp) private var temaApp
     @State private var aviso: AjustesAviso?
 
     var body: some View {
@@ -13,6 +14,7 @@ struct DatosSeccion: View {
                 subtitulo: "Guarda tus sesiones en tu cuenta",
                 estaActivo: activarICloud
             )
+            .filaTema(temaApp)
 
             Button {
                 aviso = AjustesAviso(
@@ -23,19 +25,20 @@ struct DatosSeccion: View {
                 HStack(spacing: 12) {
                     AjustesIcono(sistema: "square.and.arrow.up", color: .green)
                     Text("Exportar tiempos")
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(temaApp.texto)
                     Spacer(minLength: 8)
                     Text("JSON")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(temaApp.texto.opacity(0.65))
                     Image(systemName: "chevron.right")
                         .font(.footnote.weight(.semibold))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(temaApp.texto.opacity(0.4))
                         .accessibilityHidden(true)
                 }
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityHint("Muestra un aviso de función disponible próximamente")
+            .filaTema(temaApp)
 
             Button {
                 aviso = AjustesAviso(
@@ -46,21 +49,23 @@ struct DatosSeccion: View {
                 HStack(spacing: 12) {
                     AjustesIcono(sistema: "square.and.arrow.down", color: .blue)
                     Text("Importar tiempos")
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(temaApp.texto)
                     Spacer(minLength: 8)
                     Image(systemName: "chevron.right")
                         .font(.footnote.weight(.semibold))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(temaApp.texto.opacity(0.4))
                         .accessibilityHidden(true)
                 }
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityHint("Muestra un aviso de función disponible próximamente")
+            .filaTema(temaApp)
         } header: {
             Text("DATOS")
         } footer: {
             Text("Al importar se combinan los tiempos sin borrar los actuales.")
+                .foregroundStyle(temaApp.texto.opacity(0.65))
         }
         .mostrarAviso($aviso)
     }

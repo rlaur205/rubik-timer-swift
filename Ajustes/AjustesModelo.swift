@@ -28,70 +28,6 @@ enum IdiomaAjuste: String, CaseIterable, Identifiable, Hashable {
     }
 }
 
-// MARK: - Temas
-
-/// Temas de vista previa. Los colores son fijos para que la tarjeta no dependa
-/// del esquema claro/oscuro real del dispositivo.
-enum TemaAjuste: String, CaseIterable, Identifiable, Hashable {
-    case claro
-    case oscuro
-    case azulNoche
-    case bosque
-    case atardecer
-
-    var id: String { rawValue }
-
-    var nombre: String {
-        switch self {
-        case .claro: "Claro"
-        case .oscuro: "Oscuro"
-        case .azulNoche: "Azul noche"
-        case .bosque: "Bosque"
-        case .atardecer: "Atardecer"
-        }
-    }
-
-    var fondo: Color {
-        switch self {
-        case .claro: Color(red: 0.95, green: 0.95, blue: 0.97)
-        case .oscuro: Color(red: 0.05, green: 0.05, blue: 0.06)
-        case .azulNoche: Color(red: 0.04, green: 0.09, blue: 0.18)
-        case .bosque: Color(red: 0.05, green: 0.12, blue: 0.09)
-        case .atardecer: Color(red: 0.17, green: 0.07, blue: 0.15)
-        }
-    }
-
-    var superficie: Color {
-        switch self {
-        case .claro: .white
-        case .oscuro: Color(red: 0.12, green: 0.12, blue: 0.13)
-        case .azulNoche: Color(red: 0.08, green: 0.17, blue: 0.30)
-        case .bosque: Color(red: 0.09, green: 0.21, blue: 0.16)
-        case .atardecer: Color(red: 0.28, green: 0.12, blue: 0.24)
-        }
-    }
-
-    var linea: Color {
-        switch self {
-        case .claro: Color(red: 0.76, green: 0.76, blue: 0.79)
-        case .oscuro: Color(red: 0.28, green: 0.28, blue: 0.30)
-        case .azulNoche: Color(red: 0.20, green: 0.32, blue: 0.50)
-        case .bosque: Color(red: 0.18, green: 0.35, blue: 0.26)
-        case .atardecer: Color(red: 0.46, green: 0.23, blue: 0.37)
-        }
-    }
-
-    var acento: Color {
-        switch self {
-        case .claro: Color(red: 0.00, green: 0.48, blue: 1.00)
-        case .oscuro: Color(red: 0.04, green: 0.52, blue: 1.00)
-        case .azulNoche: Color(red: 0.35, green: 0.65, blue: 1.00)
-        case .bosque: Color(red: 0.32, green: 0.82, blue: 0.55)
-        case .atardecer: Color(red: 1.00, green: 0.62, blue: 0.42)
-        }
-    }
-}
-
 // MARK: - Texto
 
 enum TamanoScramble: Int, CaseIterable, Identifiable, Hashable {
@@ -180,8 +116,6 @@ final class AjustesEstado {
 
     // Apariencia
     var idioma: IdiomaAjuste = .sistema
-    var temaSistema = true
-    var tema: TemaAjuste = .claro
 
     // Texto
     var tamanoScramble: TamanoScramble = .mediano
@@ -202,8 +136,6 @@ final class AjustesEstado {
     /// Restablece únicamente el estado de esta pantalla.
     func restablecer() {
         idioma = .sistema
-        temaSistema = true
-        tema = .claro
         tamanoScramble = .mediano
         tamanoTimer = 70
         inspeccion15s = true
