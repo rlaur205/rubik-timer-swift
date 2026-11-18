@@ -1,87 +1,101 @@
 import SwiftUI
 
 struct TimerAreaView: View {
-    
-    @Binding var stateTimer:TimerState
+    @Binding var stateTimer: TimerState
     @Environment(\.temaApp) private var temaApp
-    
+    @GestureState private var estaPreparado = false
+
+    let mantenerParaIniciar: Bool
+    let tiempoEspera: TimeInterval
+    let colorListo: Color
+    let tamanoTimer: Double
+    var fuenteTimer: FuenteTimerAjuste = .predeterminado
+    let resultadoEnReposo: Tiempo?
     let registrarNuevoTiempo: () -> Void
-    let formatoTiempo: (TimeInterval) -> String
-    
+    let abrirPenalizacion: (() -> Void)?
+
     var body: some View {
-        
-        ZStack{
+        ZStack {
+            if stateTimer.estaCorriendo || !mantenerParaIniciar {
+                area.onTapGesture(perform: responderAlToque)
+            } else {
+                area.gesture(gestoMantener)
+            }
+        }
+        .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
+        .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 25)
+                .onEnded { arrastre in
+                    guard !stateTimer.estaCorriendo, esDeslizamientoHaciaAbajo(arrastre.translation) else { return }
+                    abrirPenalizacion?()
+                }
+        )
+    }
+
+    private var area: some View {
+        ZStack {
             Rectangle()
                 .fill(Color.clear)
-                .contentShape(Rectangle())
                 .frame(maxHeight: .infinity)
-                .onAppear {
-                    // Evitar que la pantalla se apague mientras la aplicación está en primer plano
-                    UIApplication.shared.isIdleTimerDisabled = true
-                }
-                .onDisappear {
-                    // Reactivar el apagado automático de la pantalla
-                    UIApplication.shared.isIdleTimerDisabled = false
-                }
-            VStack {
-                
-                TimelineView(.animation) { context in
-                    
-                    let tiempoParaMostrar = stateTimer.estaCorriendo ? Date().timeIntervalSince(stateTimer.tiempoInicio ?? Date()) : stateTimer.tiempoTranscurrido
-                    
-                    Text("\(formatoTiempo(tiempoParaMostrar).dropLast())")
-                        .font(.system(size: stateTimer.estaCorriendo ? 104 : 96, weight: .bold, design: .rounded))
-                        .monospacedDigit()
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.45)
-                        .padding(.horizontal, 24)
-                        .foregroundStyle(stateTimer.estaTocando ? EstiloVisual.preparado : temaApp.texto)
-                    
-                }
+
+            TimelineView(.animation) { _ in
+                let tiempo = stateTimer.estaCorriendo
+                    ? Date().timeIntervalSince(stateTimer.tiempoInicio ?? Date())
+                    : stateTimer.tiempoTranscurrido
+
+                let resultado = stateTimer.estaCorriendo ? nil : resultadoEnReposo
+                Text(resultado?.texto(largo: false) ?? String(formatoTiempo(tiempo).dropLast()))
+                    .font(fuenteTimer.font(tamano: CGFloat(tamanoTimer), pesoPredeterminado: .bold))
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.45)
+                    .padding(.horizontal, 24)
+                    .foregroundStyle(estaPreparado && !stateTimer.estaCorriendo ? colorListo : temaApp.texto)
+                    .accessibilityIdentifier("timer-digitos")
             }
-            
         }
         .contentShape(Rectangle())
-        .gesture(
-            LongPressGesture(minimumDuration: 0.5)
-                .sequenced(before: DragGesture(minimumDistance: 0))
-                .onChanged { value in
-                    switch value {
-                    case .first(true):
-                        // Dedo presionado suficiente tiempo -> muestra el color de preparación
-                        if !stateTimer.estaCorriendo {
-                            stateTimer.estaTocando = true
-                        }
-                    default:
-                        break
-                    }
+    }
+
+    private var gestoMantener: some Gesture {
+        LongPressGesture(minimumDuration: tiempoEspera)
+            .sequenced(before: DragGesture(minimumDistance: 0))
+            .updating($estaPreparado) { fase, preparado, _ in
+                // La segunda fase solo se alcanza tras completar la pulsación larga.
+                if case .second(true, _) = fase {
+                    preparado = true
                 }
-                .onEnded { value in
-                    // Inicia cronómetro cuando se suelta el dedo después del long press
-                    if case .second(true, _) = value, !stateTimer.estaCorriendo {
-                        stateTimer.estaCorriendo = true
-                        stateTimer.tiempoInicio = Date()
-                        stateTimer.tiempoTranscurrido = 0
-                        stateTimer.visibilidadPromedios = false
+            }
+            .onEnded { fase in
+                if case .second(true, let arrastre) = fase {
+                    if abrirPenalizacion != nil, let arrastre, esDeslizamientoHaciaAbajo(arrastre.translation) {
+                        return
                     }
-                    stateTimer.estaTocando = false
+                    iniciar()
                 }
-        )
-        .simultaneousGesture(
-            TapGesture()
-                .onEnded {
-                    if stateTimer.estaCorriendo {
-                        stateTimer.estaCorriendo = false
-                        registrarNuevoTiempo()
-                        stateTimer.visibilidadPromedios = true
-                    }
-                }
-        )
-        
-        
-        
-        
-        
+            }
+    }
+
+    private func esDeslizamientoHaciaAbajo(_ desplazamiento: CGSize) -> Bool {
+        desplazamiento.height >= 50 && desplazamiento.height > abs(desplazamiento.width)
+    }
+
+    private func responderAlToque() {
+        if stateTimer.estaCorriendo {
+            stateTimer.estaCorriendo = false
+            registrarNuevoTiempo()
+            stateTimer.visibilidadPromedios = true
+        } else {
+            iniciar()
+        }
+    }
+
+    private func iniciar() {
+        stateTimer.estaCorriendo = true
+        stateTimer.tiempoInicio = Date()
+        stateTimer.tiempoTranscurrido = 0
+        stateTimer.visibilidadPromedios = false
     }
 }
 

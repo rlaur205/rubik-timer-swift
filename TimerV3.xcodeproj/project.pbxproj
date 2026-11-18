@@ -18,6 +18,20 @@
 		B61585012B92C6B400C20F12 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B61585002B92C6B400C20F12 /* Preview Assets.xcassets */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		8CF000042F51000000ABCDEF /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				8CF000032F51000000ABCDEF /* TNoodleLibNative.xcframework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		8C7738F22F3D03A700B7F833 /* ModeloTiempos.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModeloTiempos.swift; sourceTree = "<group>"; };
 		8C7739832F3DD55F00B7F833 /* RubikAppViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RubikAppViewModel.swift; sourceTree = "<group>"; };
@@ -39,20 +53,6 @@
 		8CA1F7E32F5A100100ABCDEF /* Ajustes */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Ajustes; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
-/* Begin PBXCopyFilesBuildPhase section */
-		8CF000042F51000000ABCDEF /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				8CF000032F51000000ABCDEF /* TNoodleLibNative.xcframework in Embed Frameworks */,
-			);
-			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFrameworksBuildPhase section */
 		B61584F32B92C6B200C20F12 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
@@ -65,6 +65,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		8CF000052F51000000ABCDEF /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				8CF000012F51000000ABCDEF /* TNoodleLibNative.xcframework */,
+			);
+			path = Frameworks;
+			sourceTree = "<group>";
+		};
 		B61584ED2B92C6B200C20F12 = {
 			isa = PBXGroup;
 			children = (
@@ -86,14 +94,6 @@
 				B61584F62B92C6B200C20F12 /* TimerV3.app */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		8CF000052F51000000ABCDEF /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				8CF000012F51000000ABCDEF /* TNoodleLibNative.xcframework */,
-			);
-			path = Frameworks;
 			sourceTree = "<group>";
 		};
 		B61584F82B92C6B200C20F12 /* TimeCuber */ = {

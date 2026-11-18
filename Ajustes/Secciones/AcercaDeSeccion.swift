@@ -10,8 +10,6 @@ struct AcercaDeSeccion: View {
     var body: some View {
         Section {
             AjustesFilaValor(
-                sistema: "info.circle.fill",
-                color: .gray,
                 titulo: "Versión",
                 valor: version
             )
@@ -20,10 +18,7 @@ struct AcercaDeSeccion: View {
             NavigationLink {
                 LicenciasView()
             } label: {
-                HStack(spacing: 12) {
-                    AjustesIcono(sistema: "doc", color: .gray)
-                    Text("Licencias de terceros")
-                }
+                Text("Licencias de terceros")
             }
             .filaTema(temaApp)
 

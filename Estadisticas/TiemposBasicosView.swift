@@ -1,14 +1,14 @@
 import SwiftUI
 
 struct TiemposBasicosView: View {
-    let actual: [Double]
+    let actual: [Tiempo]
 
     var body: some View {
         LazyVGrid(columns: EstiloVisual.columnas, alignment: .leading, spacing: 22) {
             MetricaView(titulo: "Solves", valor: "\(actual.count)")
-            MetricaView(titulo: "Media", valor: EstiloVisual.tiempo(media(tiempos: actual, cantidad: actual.count), disponible: !actual.isEmpty))
-            MetricaView(titulo: "Mejor tiempo", valor: EstiloVisual.tiempo(actual.min() ?? 0, disponible: !actual.isEmpty), color: EstiloVisual.mejor)
-            MetricaView(titulo: "Peor tiempo", valor: EstiloVisual.tiempo(actual.max() ?? 0, disponible: !actual.isEmpty), color: EstiloVisual.peligro)
+            MetricaView(titulo: "Media", valor: EstiloVisual.promedio(mediaTotal(tiempos: actual)))
+            MetricaView(titulo: "Mejor tiempo", valor: mejorTiempo(tiempos: actual)?.texto(largo: true) ?? "—", color: EstiloVisual.mejor)
+            MetricaView(titulo: "Peor tiempo", valor: peorTiempo(tiempos: actual)?.texto(largo: true) ?? "—", color: EstiloVisual.peligro)
         }
         .padding(.vertical, 8)
     }

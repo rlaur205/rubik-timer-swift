@@ -1,10 +1,18 @@
 import SwiftUI
 
 struct ListaTiemposView: View {
+    private struct DetalleSeleccionado: Identifiable {
+        let tiempo: Tiempo
+        let categoria: String
+
+        var id: UUID { tiempo.id }
+    }
+
     @ObservedObject var vm: RubikViewModel
     @Environment(\.temaApp) private var temaApp
     @State var manejo = false
     @State var seguridad = false
+    @State private var detalleSeleccionado: DetalleSeleccionado?
 
     var body: some View {
         NavigationStack {
@@ -17,7 +25,12 @@ struct ListaTiemposView: View {
                 } else {
                     Section {
                         ForEach(vm.tiemposRecorrer, id: \.id) { tiempo in
-                            TiempoRowView(tiempo: tiempo, onEliminar: { vm.eliminarTiempoSeleccionado(tiempo: tiempo) })
+                            TiempoRowView(tiempo: tiempo) {
+                                detalleSeleccionado = DetalleSeleccionado(
+                                    tiempo: tiempo,
+                                    categoria: tiempo.categoria ?? vm.sesionActual.categoria
+                                )
+                            }
                                 .listRowBackground(temaApp.superficie)
                                 .listRowSeparatorTint(temaApp.linea)
                         }
@@ -52,6 +65,16 @@ struct ListaTiemposView: View {
             }
             .toolbarBackground(temaApp.fondo, for: .navigationBar)
             .toolbarColorScheme(temaApp.colorScheme, for: .navigationBar)
+            .sheet(item: $detalleSeleccionado) { detalle in
+                TiempoDetalleView(
+                    tiempo: detalle.tiempo,
+                    categoria: detalle.categoria,
+                    aplicarPenalizacion: { vm.establecerPenalizacion($0, tiempoID: detalle.id) }
+                ) {
+                    vm.eliminarTiempoSeleccionado(tiempo: detalle.tiempo)
+                    detalleSeleccionado = nil
+                }
+            }
         }
     }
 

@@ -10,10 +10,15 @@ class RubikViewModel: ObservableObject {
     @Published var scrambleActual: String = ""
     @Published var idActual: UUID? = nil //id de la session actual
     @Published var ordenActual = Orden.fecha
+    @Published private var idTiempoMostrado: UUID?
+
+    var resultadoCronometro: Tiempo? {
+        guard let ultimo = sesionActual.tiempos.last, ultimo.id == idTiempoMostrado else { return nil }
+        return ultimo
+    }
     
     @Published var timerState = TimerState(
         estaCorriendo: false,
-        estaTocando: false,
         tiempoInicio: nil,
         tiempoTranscurrido: 0,
         visibilidadPromedios: false
@@ -137,6 +142,26 @@ class RubikViewModel: ObservableObject {
         }
         guardarSesiones()
     }
+
+    func establecerPenalizacion(_ penalizacion: PenalizacionTiempo, tiempoID: UUID) {
+        guard let sesion = tiemposPrincipal.first(where: { $0.id == sesionActual.id }),
+              let indice = sesion.tiempos.firstIndex(where: { $0.id == tiempoID }) else { return }
+
+        if sesion.tiempos.last?.id == tiempoID {
+            idTiempoMostrado = tiempoID
+        }
+        guard sesion.tiempos[indice].penalizacion != penalizacion else { return }
+
+        sesion.tiempos[indice].penalizacion = penalizacion
+        sesionActual = sesion
+        tiemposRecorrer = ordentiemposMostrar(
+            orden: ordenActual,
+            catSele: categoriaSeleccionada,
+            nomSele: nombreSeleccionada,
+            tPrincipal: tiemposPrincipal
+        )
+        guardarSesiones()
+    }
     
     func cambiarOrden(_ orden: Orden){
         
@@ -158,13 +183,19 @@ class RubikViewModel: ObservableObject {
             }
             
         timerState.tiempoInicio = nil
+        idTiempoMostrado = nil
         
         guard timerState.tiempoTranscurrido >= 0.01 else { return }
         
         if let index = tiemposPrincipal.firstIndex(where: { $0.id == sesionActual.id }) {
-            tiemposPrincipal[index].tiempos.append(
-                Tiempo(tiempo: timerState.tiempoTranscurrido, scramble: scrambleActual, fecha: Date())
+            let tiempo = Tiempo(
+                tiempo: timerState.tiempoTranscurrido,
+                scramble: scrambleActual,
+                fecha: Date(),
+                categoria: sesionActual.categoria
             )
+            tiemposPrincipal[index].tiempos.append(tiempo)
+            idTiempoMostrado = tiempo.id
             tiemposRecorrer = obtenerTiemposRecorrer(
                 categoria: sesionActual.categoria,
                 nombreCategoria: sesionActual.nombre,
@@ -178,7 +209,8 @@ class RubikViewModel: ObservableObject {
 
     func borrarUltimoTiempo() {
         
-        if(obtenerTiempos(sesion: sesionActual).count != 0){
+        if !sesionActual.tiempos.isEmpty {
+            idTiempoMostrado = nil
             timerState.estaCorriendo = false
             timerState.tiempoTranscurrido = 0
             

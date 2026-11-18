@@ -2,6 +2,11 @@ import SwiftUI
 
 struct TemporizadorSeccion: View {
     @Bindable var estado: AjustesEstado
+    @Binding var tamanoTimer: Double
+    @Binding var fuenteTimer: FuenteTimerAjuste
+    @Binding var mantenerParaIniciar: Bool
+    @Binding var tiempoEspera: Double
+    @Binding var colorListo: ColorListoAjuste
     @Environment(\.temaApp) private var temaApp
 
     var body: some View {
@@ -9,20 +14,18 @@ struct TemporizadorSeccion: View {
             filaTamano
                 .filaTema(temaApp)
 
+            filaFuenteTimer
+                .filaTema(temaApp)
+
             AjustesToggleFila(
-                sistema: "clock",
-                color: .orange,
                 titulo: "Inspección de 15 s",
-                subtitulo: "Cuenta atrás antes de empezar",
                 estaActivo: $estado.inspeccion15s
             )
             .filaTema(temaApp)
 
             AjustesToggleFila(
-                sistema: "hand.tap.fill",
-                color: .green,
                 titulo: "Mantener para iniciar",
-                estaActivo: $estado.mantenerParaIniciar
+                estaActivo: $mantenerParaIniciar
             )
             .filaTema(temaApp)
 
@@ -34,18 +37,8 @@ struct TemporizadorSeccion: View {
                 .filaTema(temaApp)
 
             AjustesToggleFila(
-                sistema: "iphone.radiowaves.left.and.right",
-                color: .pink,
                 titulo: "Vibración",
                 estaActivo: $estado.vibracion
-            )
-            .filaTema(temaApp)
-
-            AjustesToggleFila(
-                sistema: "sun.max.fill",
-                color: .yellow,
-                titulo: "Pantalla siempre encendida",
-                estaActivo: $estado.pantallaSiempreEncendida
             )
             .filaTema(temaApp)
         } header: {
@@ -60,19 +53,29 @@ struct TemporizadorSeccion: View {
             HStack(spacing: 12) {
                 Text("Tamaño del timer")
                 Spacer(minLength: 8)
-                Text("\(Int(estado.tamanoTimer)) pt")
+                Text("\(Int(tamanoTimer)) pt")
                     .font(.subheadline.monospacedDigit())
                     .foregroundStyle(temaApp.texto.opacity(0.65))
             }
 
-            Slider(value: $estado.tamanoTimer, in: 40...100, step: 1)
+            Slider(value: $tamanoTimer, in: AjustesInicioCronometro.rangoTamanoTimer, step: 1)
                 .tint(temaApp.acento)
                 .accessibilityLabel("Tamaño del timer")
-                .accessibilityValue("\(Int(estado.tamanoTimer)) puntos")
+                .accessibilityValue("\(Int(tamanoTimer)) puntos")
 
-            AjustesVistaPreviaTimer(tamano: estado.tamanoTimer, precision: estado.precision)
+            AjustesVistaPreviaTimer(tamano: tamanoTimer, precision: estado.precision, fuente: fuenteTimer)
         }
         .padding(.vertical, 4)
+    }
+
+    private var filaFuenteTimer: some View {
+        FuenteSelectorFila(
+            titulo: "Fuente del timer",
+            ejemplo: estado.precision.ejemplo,
+            pesoPredeterminado: .semibold,
+            identificador: "fuente-timer",
+            seleccion: $fuenteTimer
+        )
     }
 
     // MARK: - Tiempo de espera
@@ -87,18 +90,18 @@ struct TemporizadorSeccion: View {
                     .foregroundStyle(temaApp.texto.opacity(0.65))
             }
 
-            Slider(value: $estado.tiempoEspera, in: 0.1...1, step: 0.1)
+            Slider(value: $tiempoEspera, in: AjustesInicioCronometro.rangoEspera, step: 0.1)
                 .tint(temaApp.acento)
-                .disabled(!estado.mantenerParaIniciar)
+                .disabled(!mantenerParaIniciar)
                 .accessibilityLabel("Tiempo de espera")
                 .accessibilityValue(textoTiempoEspera)
         }
-        .opacity(estado.mantenerParaIniciar ? 1 : 0.45)
+        .opacity(mantenerParaIniciar ? 1 : 0.45)
         .padding(.vertical, 4)
     }
 
     private var textoTiempoEspera: String {
-        estado.tiempoEspera.formatted(.number.precision(.fractionLength(1))) + " s"
+        tiempoEspera.formatted(.number.precision(.fractionLength(1))) + " s"
     }
 
     // MARK: - Color al estar listo
@@ -106,11 +109,10 @@ struct TemporizadorSeccion: View {
     private var filaColorListo: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 12) {
-                AjustesIcono(sistema: "record.circle", color: .red)
                 Text("Color al estar listo")
                 Spacer(minLength: 8)
                 Circle()
-                    .fill(estado.colorListo.color)
+                    .fill(colorListo.color)
                     .frame(width: 22, height: 22)
                     .overlay {
                         Circle().strokeBorder(Color.black.opacity(0.08), lineWidth: 1)
@@ -122,9 +124,9 @@ struct TemporizadorSeccion: View {
                 ForEach(ColorListoAjuste.allCases) { opcion in
                     AjustesCirculoColor(
                         opcion: opcion,
-                        seleccionado: estado.colorListo == opcion
+                        seleccionado: colorListo == opcion
                     ) {
-                        estado.colorListo = opcion
+                        colorListo = opcion
                     }
                     .frame(maxWidth: .infinity)
                 }
@@ -138,10 +140,7 @@ struct TemporizadorSeccion: View {
 
     private var filaPrecision: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 12) {
-                AjustesIcono(sistema: "number.square.fill", color: .gray)
-                Text("Precisión")
-            }
+            Text("Precisión")
 
             Picker("Precisión", selection: $estado.precision) {
                 ForEach(PrecisionAjuste.allCases) { precision in
@@ -158,7 +157,14 @@ struct TemporizadorSeccion: View {
 #Preview {
     NavigationStack {
         List {
-            TemporizadorSeccion(estado: AjustesEstado())
+            TemporizadorSeccion(
+                estado: AjustesEstado(),
+                tamanoTimer: .constant(AjustesInicioCronometro.tamanoTimerPredeterminado),
+                fuenteTimer: .constant(AjustesInicioCronometro.fuenteTimerPredeterminada),
+                mantenerParaIniciar: .constant(AjustesInicioCronometro.mantenerPredeterminado),
+                tiempoEspera: .constant(AjustesInicioCronometro.esperaPredeterminada),
+                colorListo: .constant(AjustesInicioCronometro.colorPredeterminado)
+            )
         }
         .listStyle(.insetGrouped)
         .navigationTitle("Ajustes")

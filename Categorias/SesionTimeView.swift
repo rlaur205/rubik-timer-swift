@@ -15,10 +15,9 @@ struct SesionTimeView: View {
             vm.nuevoScramble()
         } label: {
             HStack(spacing: 14) {
-                Image(systemName: "cube")
-                    .font(.title2)
-                    .foregroundStyle(seleccionada ? temaApp.acento : temaApp.texto.opacity(0.65))
-                    .frame(width: 30)
+                IconoPuzzle(categoria: sesion.categoria, size: 36, multiplicadorTrazo: 1.45)
+                    .foregroundStyle(seleccionada ? temaApp.acento : temaApp.texto.opacity(0.85))
+                    .frame(width: 38)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(sesion.nombre).font(.headline).foregroundStyle(temaApp.texto)
                     Text(sesion.categoria).font(.subheadline).foregroundStyle(temaApp.texto.opacity(0.65))

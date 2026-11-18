@@ -1,107 +1,164 @@
-
 import Foundation
 
-func avg(tiempos:[Double] ,cantidad: Int) -> Double{
-    if tiempos.count>cantidad-1{
-        var listaAVG = Array(tiempos.suffix(cantidad))
-        if let minValue = listaAVG.min(), let maxValue = listaAVG.max() {
-            listaAVG.removeAll { $0 == minValue || $0 == maxValue }
-        }
-        let sumaAVG = listaAVG.reduce(0, +)
-        return sumaAVG / Double(cantidad-2)
+enum ResultadoPromedio: Equatable {
+    case insuficiente
+    case valor(Double)
+    case dnf
+}
+
+struct ResultadoPB {
+    let resultado: ResultadoPromedio
+    let tiempos: [Tiempo]
+}
+
+func mejorTiempo(tiempos: [Tiempo]) -> Tiempo? {
+    tiempos
+        .filter { $0.segundosValidos != nil }
+        .min { ($0.segundosValidos ?? .infinity) < ($1.segundosValidos ?? .infinity) }
+}
+
+func peorTiempo(tiempos: [Tiempo]) -> Tiempo? {
+    tiempos
+        .filter { $0.segundosValidos != nil }
+        .max { ($0.segundosValidos ?? -.infinity) < ($1.segundosValidos ?? -.infinity) }
+}
+
+func mediaTotal(tiempos: [Tiempo]) -> ResultadoPromedio {
+    let validos = tiempos.compactMap(\.segundosValidos)
+    guard !validos.isEmpty else {
+        return .insuficiente
     }
-    else{
-        return 0.00
+    return .valor(validos.reduce(0, +) / Double(validos.count))
+}
+
+func mo3(tiempos: [Tiempo]) -> ResultadoPromedio {
+    guard tiempos.count >= 3 else {
+        return .insuficiente
+    }
+    return calcularMo3(tiempos.suffix(3))
+}
+
+func avg(tiempos: [Tiempo], cantidad: Int) -> ResultadoPromedio {
+    guard cantidad >= 3, tiempos.count >= cantidad else {
+        return .insuficiente
+    }
+    return calcularAvg(tiempos.suffix(cantidad), cantidad: cantidad)
+}
+
+func PBmo3(tiempos: [Tiempo]) -> ResultadoPB {
+    mejorVentanaPB(tiempos: tiempos, cantidad: 3) { ventana in
+        calcularMo3(ventana)
     }
 }
 
-func media(tiempos:[Double], cantidad: Int) -> Double {
-    var x = 1
-    if tiempos.count >= cantidad {
-        if !tiempos.isEmpty {
-            x = cantidad
-        } else {
-            x = 1
-        }
-        let listaM = Array(tiempos.suffix(cantidad))
-        return listaM.reduce(0, +) / Double(x)
-    } else {
-        return 0.0
+func PBavg(tiempos: [Tiempo], cantidad: Int) -> ResultadoPB {
+    mejorVentanaPB(tiempos: tiempos, cantidad: cantidad) { ventana in
+        calcularAvg(ventana, cantidad: cantidad)
     }
 }
 
-func PBavg(tiempos: [Double],x: Int) -> [Double] {
-    guard tiempos.count>x-1 else {
-        return [0.0]
+func desviacion(tiempos: [Tiempo]) -> String {
+    let validos = tiempos.compactMap(\.segundosValidos)
+    guard validos.count >= 2 else {
+        return "—"
     }
-    
-    var mejorPromedio: Double?
-    var mejoresTiempos: [Double]?
-    
-    for i in 0...(tiempos.count - x) {
-        let subTiempos = Array(tiempos[i..<(i + x)])
-        let promedio = subTiempos.sorted().dropFirst().dropLast().reduce(0.0, +) / Double(x - 2)
-        if mejorPromedio == nil || promedio < mejorPromedio! {
-            mejorPromedio = promedio
-            mejoresTiempos = subTiempos
-        }
-    }
-    return mejoresTiempos ?? [0.0]
-}
 
-
-
-func PBmo3(lista: [Double]) -> [Double] {
-    guard lista.count >= 3 else {
-        return [0.0]
-    }
-    
-    var minSum = Double.infinity
-    var resultado: [Double] = []
-    
-    for i in 0...(lista.count - 3) {
-        let sum = lista[i] + lista[i+1] + lista[i+2]
-        if sum < minSum {
-            minSum = sum
-            resultado = [lista[i], lista[i+1], lista[i+2]]
-        }
-    }
-    return resultado
-}
-
-
-
-func desviacion(valores: [Double]) -> String {
-    let count = Double(valores.count)
-    
-    // Si hay menos de 2 elementos en la lista, retornar "0.00"
-    guard count >= 2 else {
-        return "0.00"
-    }
-    
-    // Calcular la media
-    let media = valores.reduce(0.0, +) / count
-    
-    // Calcular la suma de los cuadrados de las diferencias
-    let sumatorioCuadradosDiferencias = valores.reduce(0.0) { result, valor in
+    let count = Double(validos.count)
+    let media = validos.reduce(0.0, +) / count
+    let sumatorioCuadradosDiferencias = validos.reduce(0.0) { result, valor in
         let diferencia = valor - media
         return result + (diferencia * diferencia)
     }
-    
-    // Calcular la desviación estándar
-    let desviacion = sqrt(sumatorioCuadradosDiferencias / (count - 1))
-    
-    // Formatear la desviación como un String con dos decimales
-    return String(format: "%.2f", desviacion)
+    let valorDesviacion = sqrt(sumatorioCuadradosDiferencias / (count - 1))
+    return String(format: "%.2f", valorDesviacion)
 }
 
-func grafica(valores: [Double]) -> [Item] {
-    var items: [Item] = []
-    
-    for (index, value) in valores.enumerated() {
-        let item = Item(value: Double(value), fecha: "\(index + 1)")
-        items.append(item)
+func grafica(tiempos: [Tiempo]) -> [Item] {
+    tiempos.enumerated().compactMap { index, tiempo in
+        guard let segundos = tiempo.segundosValidos else {
+            return nil
+        }
+        return Item(value: segundos, indice: index + 1)
     }
-    
-    return items
+}
+
+private func calcularMo3<S: Collection>(_ ventana: S) -> ResultadoPromedio where S.Element == Tiempo {
+    guard ventana.count == 3 else {
+        return .insuficiente
+    }
+    var suma = 0.0
+    for tiempo in ventana {
+        guard let segundos = tiempo.segundosValidos else {
+            return .dnf
+        }
+        suma += segundos
+    }
+    return .valor(suma / 3.0)
+}
+
+private func calcularAvg<S: Collection>(_ ventana: S, cantidad: Int) -> ResultadoPromedio where S.Element == Tiempo {
+    guard cantidad >= 3, ventana.count == cantidad else {
+        return .insuficiente
+    }
+
+    var suma = 0.0
+    var minimo = Double.infinity
+    var maximo = -Double.infinity
+    var cantidadDNF = 0
+
+    for tiempo in ventana {
+        if let segundos = tiempo.segundosValidos {
+            suma += segundos
+            if segundos < minimo { minimo = segundos }
+            if segundos > maximo { maximo = segundos }
+        } else {
+            cantidadDNF += 1
+            if cantidadDNF >= 2 {
+                return .dnf
+            }
+        }
+    }
+
+    // Con 1 DNF se descarta como el peor y solo se elimina 1 mejor.
+    let sumaRecortada = cantidadDNF == 1 ? (suma - minimo) : (suma - minimo - maximo)
+    return .valor(sumaRecortada / Double(cantidad - 2))
+}
+
+private func mejorVentanaPB(
+    tiempos: [Tiempo],
+    cantidad: Int,
+    evaluar: (ArraySlice<Tiempo>) -> ResultadoPromedio
+) -> ResultadoPB {
+    guard cantidad >= 3, tiempos.count >= cantidad else {
+        return ResultadoPB(resultado: .insuficiente, tiempos: [])
+    }
+
+    var mejorValor: Double?
+    var mejorVentana: ArraySlice<Tiempo>?
+    var ventanaDNF: ArraySlice<Tiempo>?
+
+    for inicio in 0...(tiempos.count - cantidad) {
+        let ventana = tiempos[inicio..<(inicio + cantidad)]
+        switch evaluar(ventana) {
+        case .valor(let valor):
+            if valor < (mejorValor ?? .infinity) {
+                mejorValor = valor
+                mejorVentana = ventana
+            }
+        case .dnf:
+            if ventanaDNF == nil {
+                ventanaDNF = ventana
+            }
+        case .insuficiente:
+            break
+        }
+    }
+
+    if let mejorValor, let mejorVentana {
+        return ResultadoPB(resultado: .valor(mejorValor), tiempos: Array(mejorVentana))
+    }
+    if let ventanaDNF {
+        return ResultadoPB(resultado: .dnf, tiempos: Array(ventanaDNF))
+    }
+    return ResultadoPB(resultado: .insuficiente, tiempos: [])
 }

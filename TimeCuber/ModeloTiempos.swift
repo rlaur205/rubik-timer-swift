@@ -22,25 +22,71 @@ class Sesion: Codable, Identifiable, Equatable {
     }
 }
 
-class Tiempo: Codable, Identifiable, Equatable {
+enum PenalizacionTiempo: String, Codable, CaseIterable, Identifiable {
+    case dnf
+    case masDos
+    case ninguna
+
+    var id: Self { self }
+
+    var titulo: String {
+        switch self {
+        case .dnf: "DNF"
+        case .masDos: "+2"
+        case .ninguna: "Sin penalización"
+        }
+    }
+}
+
+struct Tiempo: Codable, Identifiable, Equatable {
     var id: UUID
     var tiempo: Double
     var scramble: String
     var fecha: Date
+    var categoria: String?
+    private var penalizacionGuardada: PenalizacionTiempo?
+
+    // Los tiempos guardados antes de esta función no tienen una penalización.
+    var penalizacion: PenalizacionTiempo {
+        get { penalizacionGuardada ?? .ninguna }
+        set { penalizacionGuardada = newValue == .ninguna ? nil : newValue }
+    }
+
+    var segundosValidos: Double? {
+        switch penalizacion {
+        case .ninguna: tiempo
+        case .masDos: tiempo + 2
+        case .dnf: nil
+        }
+    }
     
-    init(tiempo: Double, scramble: String, fecha: Date) {
+    init(
+        tiempo: Double,
+        scramble: String,
+        fecha: Date,
+        categoria: String? = nil,
+        penalizacion: PenalizacionTiempo = .ninguna
+    ) {
         self.id = UUID()
         self.tiempo = tiempo
         self.scramble = scramble
         self.fecha = fecha
+        self.categoria = categoria
+        self.penalizacion = penalizacion
     }
     
-    // Implementación de Equatable
-    static func == (lhs: Tiempo, rhs: Tiempo) -> Bool {
-        return lhs.id == rhs.id &&
-               lhs.tiempo == rhs.tiempo &&
-               lhs.scramble == rhs.scramble &&
-               lhs.fecha == rhs.fecha
+    func texto(largo: Bool) -> String {
+        let valor = String(formatoTiempo(segundosValidos ?? tiempo).dropLast())
+        switch penalizacion {
+        case .ninguna: return valor
+        case .masDos: return valor + (largo ? "(+2)" : "+")
+        case .dnf: return largo ? valor + "(DNF)" : "DNF"
+        }
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, tiempo, scramble, fecha, categoria
+        case penalizacionGuardada = "penalizacion"
     }
 }
 
@@ -52,7 +98,6 @@ enum Orden: String, CaseIterable {
 
 struct TimerState {
     var estaCorriendo: Bool
-    var estaTocando: Bool
     var tiempoInicio: Date?
     var tiempoTranscurrido:TimeInterval
     var visibilidadPromedios: Bool

@@ -2,20 +2,30 @@ import SwiftUI
 
 struct CronometroView: View {
     @ObservedObject var vm: RubikViewModel
+    @AppStorage(AjustesInicioCronometro.claveMantenerParaIniciar)
+    private var mantenerParaIniciar = AjustesInicioCronometro.mantenerPredeterminado
+    @AppStorage(AjustesInicioCronometro.claveTiempoEspera)
+    private var tiempoEspera = AjustesInicioCronometro.esperaPredeterminada
+    @AppStorage(AjustesInicioCronometro.claveColorListo)
+    private var colorListo = AjustesInicioCronometro.colorPredeterminado
+    @AppStorage(AjustesInicioCronometro.claveTamanoScramble)
+    private var tamanoScramble = AjustesInicioCronometro.tamanoScramblePredeterminado
+    @AppStorage(AjustesInicioCronometro.claveMostrarScramble)
+    private var mostrarScramble = AjustesInicioCronometro.mostrarScramblePredeterminado
+    @AppStorage(AjustesInicioCronometro.claveTamanoTimer)
+    private var tamanoTimer = AjustesInicioCronometro.tamanoTimerPredeterminado
+    @AppStorage(AjustesInicioCronometro.claveFuenteTimer)
+    private var fuenteTimer = AjustesInicioCronometro.fuenteTimerPredeterminada
+    @AppStorage(AjustesInicioCronometro.claveFuenteScramble)
+    private var fuenteScramble = AjustesInicioCronometro.fuenteScramblePredeterminada
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.temaApp) private var temaApp
     @State private var mostrarDiagrama = false
     @State private var mostrarPromedios = false
+    @State private var mostrarPenalizacion = false
 
-    private var tamanoScramble: CGFloat {
-        switch vm.sesionActual.categoria {
-        case "Megaminx": return 15
-        case "7x7": return 16
-        case "6x6": return 17
-        case let categoria where categoria.hasPrefix("5x5"): return 18
-        case let categoria where categoria.hasPrefix("4x4"): return 20
-        default: return 24
-        }
+    private var tamanoScrambleAjustado: CGFloat {
+        tamanoScramble.tamanoFuenteAjustado(para: vm.sesionActual.categoria)
     }
 
     var body: some View {
@@ -38,16 +48,23 @@ struct CronometroView: View {
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Ver diagrama", systemImage: "cube.transparent") {
+                    Button(mostrarScramble ? "Ver diagrama" : "Ver scramble y diagrama", systemImage: "cube.transparent") {
                         if !vm.scrambleActual.isEmpty { mostrarDiagrama = true }
                     }
                     .popover(isPresented: $mostrarDiagrama, arrowEdge: .top) {
                         VStack(spacing: 16) {
-                            Text("Diagrama").font(.headline)
+                            if !mostrarScramble {
+                                mezcla
+                            }
                             ImagenScrambleView(scramble: vm.scrambleActual, categoria: vm.sesionActual.categoria)
                                 .frame(width: 260, height: 180)
                         }
-                        .padding(24)
+                        .frame(
+                            minWidth: 0,
+                            idealWidth: mostrarScramble ? 260 : 330,
+                            maxWidth: mostrarScramble ? 260 : 330
+                        )
+                        .padding(mostrarScramble ? 24 : 16)
                         .background(temaApp.fondo)
                         .presentationBackground(temaApp.fondo)
                         .presentationCompactAdaptation(.popover)
@@ -57,6 +74,18 @@ struct CronometroView: View {
             .toolbar(vm.timerState.estaCorriendo ? .hidden : .visible, for: .navigationBar, .tabBar)
             .toolbarBackground(temaApp.fondo, for: .navigationBar)
             .toolbarColorScheme(temaApp.colorScheme, for: .navigationBar)
+            .confirmationDialog(
+                "Penalización del último tiempo",
+                isPresented: $mostrarPenalizacion,
+                titleVisibility: .hidden,
+                presenting: vm.sesionActual.tiempos.last
+            ) { tiempo in
+                ForEach(PenalizacionTiempo.allCases) { penalizacion in
+                    Button(penalizacion.titulo) {
+                        vm.establecerPenalizacion(penalizacion, tiempoID: tiempo.id)
+                    }
+                }
+            }
         }
     }
 
@@ -66,25 +95,35 @@ struct CronometroView: View {
     }
 
     private var mezcla: some View {
-        VStack(spacing: 12) {
-            if vm.scrambleActual.isEmpty {
-                ProgressView("Preparando mezcla…").font(.subheadline)
-            } else {
-                Text(vm.scrambleActual)
-                    .font(.system(size: tamanoScramble, weight: .bold, design: .monospaced))
-                    .foregroundStyle(temaApp.texto)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .textSelection(.enabled)
-            }
-        }
+        textoSuperior(vm.scrambleActual)
+            .textSelection(.enabled)
+            .accessibilityIdentifier("scramble-texto")
+    }
+
+    private func textoSuperior(_ texto: String) -> some View {
+        Text(texto)
+            .font(fuenteScramble.font(tamano: tamanoScrambleAjustado, pesoPredeterminado: .bold))
+            .monospacedDigit()
+            .foregroundStyle(temaApp.texto)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     private var contenido: some View {
         VStack(spacing: 0) {
             if !vm.timerState.estaCorriendo {
                 Group {
-                    if mostrarPromedios && mezclaLarga {
+                    if !mostrarScramble {
+                        ZStack {
+                            IconoPuzzle(categoria: vm.sesionActual.categoria, size: 38)
+                                .foregroundStyle(temaApp.texto)
+                        }
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(Text(vm.sesionActual.categoria))
+                        .accessibilityAddTraits(.isImage)
+                    } else if vm.scrambleActual.isEmpty {
+                        ProgressView("Preparando mezcla…").font(.subheadline)
+                    } else if mostrarPromedios && mezclaLarga {
                         ScrollView {
                             mezcla
                         }
@@ -100,8 +139,14 @@ struct CronometroView: View {
 
             TimerAreaView(
                 stateTimer: $vm.timerState,
+                mantenerParaIniciar: mantenerParaIniciar,
+                tiempoEspera: AjustesInicioCronometro.esperaValida(tiempoEspera),
+                colorListo: colorListo.color,
+                tamanoTimer: AjustesInicioCronometro.tamanoTimerValido(tamanoTimer),
+                fuenteTimer: fuenteTimer,
+                resultadoEnReposo: vm.resultadoCronometro,
                 registrarNuevoTiempo: { vm.registrarNuevoTiempo() },
-                formatoTiempo: formatoTiempo
+                abrirPenalizacion: vm.sesionActual.tiempos.isEmpty ? nil : { mostrarPenalizacion = true }
             )
             .frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 240 : 140)
             .layoutPriority(1)

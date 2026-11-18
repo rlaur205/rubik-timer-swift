@@ -1,16 +1,20 @@
 import SwiftUI
-import Charts
 
 struct Item: Identifiable {
-    var id = UUID()
-    var value: Double
-    var fecha: String
+    let value: Double
+    let indice: Int
+    var id: Int { indice }
 }
 
 struct EstadisticasView: View {
     @ObservedObject var vm: RubikViewModel
     @Environment(\.temaApp) private var temaApp
-    var actual: [Double] { obtenerTiempos(sesion: vm.sesionActual) }
+    var actual: [Tiempo] { vm.sesionActual.tiempos }
+
+    private var estiloResumen: EstiloBloqueTema { temaApp.estilo(.resumen) }
+    private var estiloPromedios: EstiloBloqueTema { temaApp.estilo(.promedios) }
+    private var estiloRecords: EstiloBloqueTema { temaApp.estilo(.records) }
+    private var estiloProgreso: EstiloBloqueTema { temaApp.estilo(.progreso) }
 
     var body: some View {
         NavigationStack {
@@ -23,42 +27,31 @@ struct EstadisticasView: View {
                 } else {
                     Section {
                         TiemposBasicosView(actual: actual)
-                            .listRowBackground(temaApp.superficie)
-                            .listRowSeparatorTint(temaApp.linea)
+                            .listRowBackground(FondoBloqueEstadistico(estilo: estiloResumen))
+                            .listRowSeparator(.hidden)
                     } header: {
-                        Text("Resumen").font(.headline.weight(.bold)).foregroundStyle(temaApp.acento)
+                        EncabezadoBloqueEstadistico(titulo: "Resumen", sistema: "square.grid.2x2.fill", estilo: estiloResumen)
                     }
                     Section {
                         TiemposActualesView(actual: actual)
-                            .listRowBackground(temaApp.superficie)
-                            .listRowSeparatorTint(temaApp.linea)
+                            .listRowBackground(FondoBloqueEstadistico(estilo: estiloPromedios))
+                            .listRowSeparator(.hidden)
                     } header: {
-                        Text("Promedios actuales").font(.headline.weight(.bold)).foregroundStyle(EstiloVisual.mejor)
+                        EncabezadoBloqueEstadistico(titulo: "Promedios actuales", sistema: "chart.line.uptrend.xyaxis", estilo: estiloPromedios)
                     }
                     Section {
-                        TiemposPBView(actual: actual, sesionActual: vm.sesionActual)
-                            .listRowBackground(temaApp.superficie)
-                            .listRowSeparatorTint(temaApp.linea)
+                        TiemposPBView(actual: actual)
+                            .listRowBackground(FondoBloqueEstadistico(estilo: estiloRecords))
+                            .listRowSeparator(.hidden)
                     } header: {
-                        Label("Récords personales", systemImage: "trophy").font(.headline.weight(.bold)).foregroundStyle(.purple)
+                        EncabezadoBloqueEstadistico(titulo: "Récords personales", sistema: "trophy.fill", estilo: estiloRecords)
                     }
-                    Section("Progreso") {
-                        Chart(grafica(valores: actual)) { item in
-                            LineMark(x: .value("Resolución", Int(item.fecha) ?? 0), y: .value("Segundos", item.value))
-                                .foregroundStyle(temaApp.acento)
-                            PointMark(x: .value("Resolución", Int(item.fecha) ?? 0), y: .value("Segundos", item.value))
-                                .foregroundStyle(temaApp.acento)
-                                .symbolSize(12)
-                        }
-                        .chartXAxis { AxisMarks(values: .automatic(desiredCount: 5)) }
-                        .chartYAxis { AxisMarks(position: .leading, values: .automatic(desiredCount: 4)) }
-                        .chartXAxisLabel("Resolución")
-                        .chartYAxisLabel("Segundos")
-                        .frame(height: 200)
-                        .padding(.vertical, 12)
-                        .accessibilityLabel("Progreso de los tiempos de la sesión")
-                        .listRowBackground(temaApp.superficie)
-                        .listRowSeparatorTint(temaApp.linea)
+                    Section {
+                        GraficoProgresoEstadistico(actual: actual, estilo: estiloProgreso)
+                            .listRowBackground(FondoBloqueEstadistico(estilo: estiloProgreso))
+                            .listRowSeparator(.hidden)
+                    } header: {
+                        EncabezadoBloqueEstadistico(titulo: "Progreso", sistema: "chart.xyaxis.line", estilo: estiloProgreso)
                     }
                 }
             }

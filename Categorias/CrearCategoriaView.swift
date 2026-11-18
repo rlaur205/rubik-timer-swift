@@ -3,9 +3,8 @@ import SwiftUI
 // MARK: - Modelos internos
 
 private struct PuzzleOption {
-    let id: String          // identificador interno del puzzle
+    let id: String          // identificador interno/base del puzzle
     let display: String     // texto visible e.g. "3×3"
-    let sfSymbol: String
     let eventos: [EventoOption]
 }
 
@@ -18,38 +17,38 @@ private struct EventoOption: Identifiable {
 // MARK: - Catálogo de puzzles
 
 private let puzzleList: [PuzzleOption] = [
-    PuzzleOption(id: "2x2",      display: "2×2",      sfSymbol: "square.grid.2x2.fill",          eventos: [
+    PuzzleOption(id: "2x2",      display: "2×2",      eventos: [
         EventoOption(id: "2x2",      nombre: "Normal",    badge: "")
     ]),
-    PuzzleOption(id: "3x3",      display: "3×3",      sfSymbol: "square.grid.3x3.fill",          eventos: [
+    PuzzleOption(id: "3x3",      display: "3×3",      eventos: [
         EventoOption(id: "3x3",      nombre: "Normal",    badge: ""),
         EventoOption(id: "3x3 BLD",  nombre: "A ciegas",  badge: "BLD"),
         EventoOption(id: "3x3 OH",   nombre: "Una mano",  badge: "OH")
     ]),
-    PuzzleOption(id: "4x4",      display: "4×4",      sfSymbol: "square.grid.3x3",               eventos: [
+    PuzzleOption(id: "4x4",      display: "4×4",      eventos: [
         EventoOption(id: "4x4",      nombre: "Normal",    badge: ""),
         EventoOption(id: "4x4 BLD",  nombre: "A ciegas",  badge: "BLD")
     ]),
-    PuzzleOption(id: "5x5",      display: "5×5",      sfSymbol: "rectangle.split.3x3",           eventos: [
+    PuzzleOption(id: "5x5",      display: "5×5",      eventos: [
         EventoOption(id: "5x5",      nombre: "Normal",    badge: ""),
         EventoOption(id: "5x5 BLD",  nombre: "A ciegas",  badge: "BLD")
     ]),
-    PuzzleOption(id: "6x6",      display: "6×6",      sfSymbol: "square.grid.3x3.topleft.filled", eventos: [
+    PuzzleOption(id: "6x6",      display: "6×6",      eventos: [
         EventoOption(id: "6x6",      nombre: "Normal",    badge: "")
     ]),
-    PuzzleOption(id: "7x7",      display: "7×7",      sfSymbol: "square.grid.3x3.middleright.filled", eventos: [
+    PuzzleOption(id: "7x7",      display: "7×7",      eventos: [
         EventoOption(id: "7x7",      nombre: "Normal",    badge: "")
     ]),
-    PuzzleOption(id: "Pyraminx", display: "Pyraminx", sfSymbol: "triangle.fill",                 eventos: [
+    PuzzleOption(id: "Pyraminx", display: "Pyraminx", eventos: [
         EventoOption(id: "Pyraminx", nombre: "Normal",    badge: "")
     ]),
-    PuzzleOption(id: "Megaminx", display: "Megaminx", sfSymbol: "seal.fill",                     eventos: [
+    PuzzleOption(id: "Megaminx", display: "Megaminx", eventos: [
         EventoOption(id: "Megaminx", nombre: "Normal",    badge: "")
     ]),
-    PuzzleOption(id: "Skewb",    display: "Skewb",    sfSymbol: "rhombus",                       eventos: [
+    PuzzleOption(id: "Skewb",    display: "Skewb",    eventos: [
         EventoOption(id: "Skewb",    nombre: "Normal",    badge: "")
     ]),
-    PuzzleOption(id: "Square 1", display: "Square-1", sfSymbol: "square.on.square",              eventos: [
+    PuzzleOption(id: "Square 1", display: "Square-1", eventos: [
         EventoOption(id: "Square 1", nombre: "Normal",    badge: "")
     ])
 ]
@@ -141,6 +140,7 @@ struct CrearCategoriaView: View {
                 Button(action: crearSesion) {
                     Text("Crear sesión")
                         .font(.headline)
+                        .foregroundStyle(temaApp.textoSobreAcento)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
                 }
@@ -173,6 +173,7 @@ struct CrearCategoriaView: View {
     private func puzzleCell(_ p: PuzzleOption, idx: Int) -> some View {
         let isSelected = puzzleIdx == idx
         let tieneVariosEventos = p.eventos.count > 1
+        let iconCategoria = isSelected ? eventoId : p.id
 
         Button {
             let cambioDePuzzle = puzzleIdx != idx
@@ -187,8 +188,7 @@ struct CrearCategoriaView: View {
             }
         } label: {
             VStack(spacing: 6) {
-                Image(systemName: p.sfSymbol)
-                    .font(.system(size: 22))
+                IconoPuzzle(categoria: iconCategoria, size: 26)
                     .foregroundStyle(isSelected ? (temaApp.colorScheme == .dark ? Color.black : Color.white) : temaApp.texto)
                 Text(textoCelda(p, isSelected: isSelected))
                     .font(.caption2)

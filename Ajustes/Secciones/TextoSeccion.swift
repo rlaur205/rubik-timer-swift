@@ -1,38 +1,45 @@
 import SwiftUI
 
 struct TextoSeccion: View {
-    @Bindable var estado: AjustesEstado
+    @Binding var mostrarScramble: Bool
+    @Binding var tamanoScramble: TamanoScramble
+    @Binding var fuenteScramble: FuenteScrambleAjuste
     @Environment(\.temaApp) private var temaApp
 
     var body: some View {
         Section {
+            AjustesToggleFila(titulo: "Mostrar scramble", estaActivo: $mostrarScramble)
+                .filaTema(temaApp)
+
+            FuenteSelectorFila(
+                titulo: "Fuente del scramble",
+                ejemplo: "R U2 F′",
+                pesoPredeterminado: .medium,
+                identificador: "fuente-scramble",
+                seleccion: $fuenteScramble
+            )
+            .filaTema(temaApp)
+
             VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 12) {
-                    AjustesIcono(sistema: "textformat.size", color: .blue)
-                    Text("Tamaño del scramble")
-                    Spacer(minLength: 8)
-                    Text(estado.tamanoScramble.nombre)
-                        .font(.subheadline)
-                        .foregroundStyle(temaApp.texto.opacity(0.65))
-                }
+                Text("Tamaño del scramble")
 
                 Slider(value: indiceTamano, in: 0...2, step: 1)
                     .tint(temaApp.acento)
                     .accessibilityLabel("Tamaño del scramble")
-                    .accessibilityValue(estado.tamanoScramble.nombre)
+                    .accessibilityValue(tamanoScramble.nombre)
 
                 HStack {
                     ForEach(TamanoScramble.allCases) { tamano in
                         Text(tamano.nombre)
-                            .font(.caption2)
-                            .fontWeight(tamano == estado.tamanoScramble ? .semibold : .regular)
-                            .foregroundStyle(tamano == estado.tamanoScramble ? temaApp.acento : temaApp.texto.opacity(0.65))
+                            .font(.caption)
+                            .fontWeight(tamano == tamanoScramble ? .semibold : .regular)
+                            .foregroundStyle(tamano == tamanoScramble ? temaApp.acento : temaApp.texto.opacity(0.65))
                             .frame(maxWidth: .infinity, alignment: .center)
                     }
                 }
                 .accessibilityHidden(true)
 
-                AjustesVistaPreviaScramble(tamano: estado.tamanoScramble)
+                AjustesVistaPreviaScramble(tamano: tamanoScramble, fuente: fuenteScramble)
             }
             .padding(.vertical, 4)
             .filaTema(temaApp)
@@ -45,12 +52,12 @@ struct TextoSeccion: View {
     private var indiceTamano: Binding<Double> {
         Binding(
             get: {
-                Double(TamanoScramble.allCases.firstIndex(of: estado.tamanoScramble) ?? 1)
+                Double(TamanoScramble.allCases.firstIndex(of: tamanoScramble) ?? 1)
             },
             set: { nuevoValor in
                 let indice = Int(nuevoValor.rounded())
                 let limitado = min(max(indice, 0), TamanoScramble.allCases.count - 1)
-                estado.tamanoScramble = TamanoScramble.allCases[limitado]
+                tamanoScramble = TamanoScramble.allCases[limitado]
             }
         )
     }
@@ -59,7 +66,11 @@ struct TextoSeccion: View {
 #Preview {
     NavigationStack {
         List {
-            TextoSeccion(estado: AjustesEstado())
+            TextoSeccion(
+                mostrarScramble: .constant(AjustesInicioCronometro.mostrarScramblePredeterminado),
+                tamanoScramble: .constant(AjustesInicioCronometro.tamanoScramblePredeterminado),
+                fuenteScramble: .constant(AjustesInicioCronometro.fuenteScramblePredeterminada)
+            )
         }
         .listStyle(.insetGrouped)
         .navigationTitle("Ajustes")

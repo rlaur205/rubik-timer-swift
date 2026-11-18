@@ -1,27 +1,8 @@
 import SwiftUI
 
-// MARK: - Icono de fila
-
-/// Icono SF blanco dentro de un cuadrado redondeado de color, al estilo de Ajustes.
-struct AjustesIcono: View {
-    let sistema: String
-    let color: Color
-
-    var body: some View {
-        Image(systemName: sistema)
-            .font(.system(size: 14, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(width: 29, height: 29)
-            .background(color, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-            .accessibilityHidden(true)
-    }
-}
-
 // MARK: - Filas
 
 struct AjustesToggleFila: View {
-    let sistema: String
-    let color: Color
     let titulo: String
     var subtitulo: String?
     @Binding var estaActivo: Bool
@@ -30,16 +11,13 @@ struct AjustesToggleFila: View {
 
     var body: some View {
         Toggle(isOn: $estaActivo) {
-            HStack(spacing: 12) {
-                AjustesIcono(sistema: sistema, color: color)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(titulo)
-                    if let subtitulo {
-                        Text(subtitulo)
-                            .font(.footnote)
-                            .foregroundStyle(temaApp.texto.opacity(0.65))
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(titulo)
+                if let subtitulo {
+                    Text(subtitulo)
+                        .font(.footnote)
+                        .foregroundStyle(temaApp.texto.opacity(0.65))
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }
@@ -48,17 +26,15 @@ struct AjustesToggleFila: View {
 }
 
 struct AjustesFilaValor: View {
-    let sistema: String
-    let color: Color
     let titulo: String
     let valor: String
     var bloqueada = false
+    var muestraIndicador = false
 
     @Environment(\.temaApp) private var temaApp
 
     var body: some View {
         HStack(spacing: 12) {
-            AjustesIcono(sistema: sistema, color: color)
             Text(titulo)
             Spacer(minLength: 8)
             Text(valor)
@@ -68,6 +44,12 @@ struct AjustesFilaValor: View {
                 Image(systemName: "lock.fill")
                     .font(.caption2)
                     .foregroundStyle(temaApp.texto.opacity(0.4))
+                    .accessibilityHidden(true)
+            }
+            if muestraIndicador {
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(temaApp.texto.opacity(0.35))
                     .accessibilityHidden(true)
             }
         }
@@ -124,26 +106,16 @@ struct AjustesTarjetaTema: View {
         Button(action: accion) {
             VStack(spacing: 8) {
                 superficieMiniatura
+                    .padding(.horizontal, 4)
                 Text(tema.nombre)
-                    .font(.caption2)
-                    .foregroundStyle(seleccionado ? temaApp.acento : temaApp.texto.opacity(0.65))
+                    .font(seleccionado ? .footnote.bold() : .caption2)
+                    .foregroundStyle(seleccionado ? (temaApp.colorScheme == .dark ? Color.white : Color.black) : temaApp.texto.opacity(0.65))
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity)
-            .padding(4)
-            .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(seleccionado ? temaApp.acento.opacity(0.12) : Color.clear)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .strokeBorder(
-                        seleccionado ? temaApp.acento : temaApp.linea,
-                        lineWidth: seleccionado ? 2 : 1
-                    )
-            )
+            .padding(.vertical, 4)
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)
@@ -156,30 +128,40 @@ struct AjustesTarjetaTema: View {
     }
 
     private var superficieMiniatura: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 9, style: .continuous)
-                .fill(tema.fondo)
-
-            VStack(alignment: .leading, spacing: 4) {
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                    .fill(tema.superficie)
-                    .frame(height: 42)
-                    .overlay(alignment: .topLeading) {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Capsule().fill(tema.linea).frame(height: 3)
-                            Capsule().fill(tema.linea).frame(height: 3)
-                            Capsule().fill(tema.acento).frame(height: 3).padding(.trailing, 8)
+        RoundedRectangle(cornerRadius: 9, style: .continuous)
+            .fill(tema.fondo)
+            .frame(height: 66)
+            .overlay {
+                VStack(alignment: .leading, spacing: 4) {
+                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                        .fill(tema.superficie)
+                        .frame(height: 42)
+                        .overlay(alignment: .topLeading) {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Capsule().fill(tema.estilo(.resumen).acento).frame(height: 3)
+                                Capsule().fill(tema.estilo(.promedios).acento).frame(height: 3)
+                                Capsule().fill(tema.estilo(.records).acento).frame(height: 3).padding(.trailing, 8)
+                            }
+                            .padding(6)
                         }
-                        .padding(6)
-                    }
 
-                Capsule().fill(tema.linea).frame(height: 4).padding(.horizontal, 4)
-                Capsule().fill(tema.linea).frame(height: 4).padding(.horizontal, 4)
+                    Capsule().fill(tema.linea).frame(height: 4).padding(.horizontal, 4)
+                    Capsule().fill(tema.linea).frame(height: 4).padding(.horizontal, 4)
+                }
+                .padding(.horizontal, 7)
             }
-            .padding(7)
-        }
-        .frame(height: 66)
-        .accessibilityHidden(true)
+            .overlay(alignment: .bottomTrailing) {
+                if seleccionado {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundStyle(temaApp.colorScheme == .dark ? Color.black : Color.white)
+                        .frame(width: 16, height: 16)
+                        .background(temaApp.estilo(.resumen).acento, in: Circle())
+                        .padding(4)
+                        .accessibilityHidden(true)
+                }
+            }
+            .accessibilityHidden(true)
     }
 }
 
@@ -187,11 +169,14 @@ struct AjustesTarjetaTema: View {
 
 struct AjustesVistaPreviaScramble: View {
     let tamano: TamanoScramble
+    var fuente: FuenteScrambleAjuste = .predeterminado
     @Environment(\.temaApp) private var temaApp
 
     var body: some View {
         Text("R U2 F′ D L2 B R′ U")
-            .font(.system(size: tamano.tamanoFuente, weight: .medium, design: .monospaced))
+            // 3x3 es la categoría inicial; usa la misma escala que el cronómetro.
+            .font(fuente.font(tamano: tamano.tamanoFuenteAjustado(para: "3x3"), pesoPredeterminado: .medium))
+            .monospacedDigit()
             .foregroundStyle(temaApp.texto)
             .minimumScaleFactor(0.6)
             .lineLimit(2)
@@ -202,18 +187,21 @@ struct AjustesVistaPreviaScramble: View {
                 in: RoundedRectangle(cornerRadius: 10, style: .continuous)
             )
             .animation(.easeInOut(duration: 0.2), value: tamano)
+            .animation(.easeInOut(duration: 0.2), value: fuente)
             .accessibilityLabel("Vista previa del scramble: R U2 F prima D L2 B R prima U")
+            .accessibilityIdentifier("preview-scramble")
     }
 }
 
 struct AjustesVistaPreviaTimer: View {
     let tamano: Double
     let precision: PrecisionAjuste
+    var fuente: FuenteTimerAjuste = .predeterminado
     @Environment(\.temaApp) private var temaApp
 
     var body: some View {
         Text(precision.ejemplo)
-            .font(.system(size: CGFloat(tamano), weight: .semibold, design: .rounded))
+            .font(fuente.font(tamano: CGFloat(tamano), pesoPredeterminado: .semibold))
             .monospacedDigit()
             .foregroundStyle(temaApp.texto)
             .lineLimit(1)
@@ -227,8 +215,10 @@ struct AjustesVistaPreviaTimer: View {
             )
             .animation(.easeInOut(duration: 0.2), value: tamano)
             .animation(.easeInOut(duration: 0.2), value: precision)
+            .animation(.easeInOut(duration: 0.2), value: fuente)
             .accessibilityLabel("Vista previa del temporizador")
             .accessibilityValue(precision.ejemplo)
+            .accessibilityIdentifier("preview-timer")
     }
 }
 

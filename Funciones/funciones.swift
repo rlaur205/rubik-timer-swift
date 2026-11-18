@@ -1,30 +1,11 @@
 import Foundation
 
-func obtenerMejorPeor(listaTiempos: [Double], tipo: String) -> Double {
-    guard !listaTiempos.isEmpty else {
-        return 0.00
-    }
-    var tiempoSeleccionado: Double?
-    if tipo == "mejor" {
-        tiempoSeleccionado = listaTiempos.min()
-    } else if tipo == "peor" {
-        tiempoSeleccionado = listaTiempos.max()
-    }
-    if let tiempo = tiempoSeleccionado {
-        // Retornamos el tiempo formateado
-        return tiempo
-    }
-    
-    return 0.00
-}
-
-
-
-
 func formatoTiempo(_ segundosTotales: Double) -> String {
-    let minutos = Int(segundosTotales) / 60
-    let segundos = Int(segundosTotales) % 60
-    let decimas = Int((segundosTotales * 1000).truncatingRemainder(dividingBy: 1000))
+    // Corrige el error de representación binaria al caer justo en un milisegundo.
+    let milisegundos = Int((segundosTotales * 1000).nextUp)
+    let minutos = milisegundos / 60_000
+    let segundos = milisegundos / 1000 % 60
+    let decimas = milisegundos % 1000
     
     if minutos > 0 {
         return String(format: "%d:%02d.%03d", minutos, segundos, decimas)
@@ -86,33 +67,8 @@ func convertirAHoras(_ horaTexto: String) -> Double {
 
 
 func ordenarLista(_ lista: [Tiempo]) -> [Tiempo] {
-    if lista.count <= 1 {
-        return lista
-    } else {
-        // El pivote es el elemento en el medio del array
-        let pivote = lista[lista.count / 2].tiempo
-        
-        // Se crean tres arrays: izq, centro y der
-        var izq: [Tiempo] = []
-        var der: [Tiempo] = []
-        var centro: [Tiempo] = []
-        
-        // Iterar sobre cada elemento de la lista y distribuir en izq, centro o der según el valor de 'tiempo'
-        for item in lista {
-            if item.tiempo < pivote {
-                izq.append(item)
-            } else if item.tiempo == pivote {
-                centro.append(item)
-            } else {
-                der.append(item)
-            }
-        }
-        
-        return ordenarLista(izq) + centro + ordenarLista(der)
-    }
+    lista.sorted { ($0.segundosValidos ?? .infinity) < ($1.segundosValidos ?? .infinity) }
 }
-
-
 
 func obtenerTiemposRecorrer(categoria: String, nombreCategoria: String, listaSesiones: [Sesion]) -> [Tiempo] {
     var tiempos: [Tiempo] = []  // Inicializamos como array vacío
@@ -142,17 +98,6 @@ func obtenerSesionActual(categoria: String, nombreCategoria: String, listaSesion
     
     return sesionActual
 }
-
-func obtenerTiempos(sesion: Sesion) -> [Double] {
-    
-    var tiempos:[Double] = []
-    
-    for i in sesion.tiempos {
-        tiempos.append(i.tiempo)
-    }
-    return tiempos
-}
-
 
 func ordentiemposMostrar(orden: Orden, catSele: String, nomSele: String, tPrincipal: [Sesion]) -> [Tiempo] {
     if orden == .fecha {

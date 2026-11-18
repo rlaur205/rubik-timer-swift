@@ -4,11 +4,17 @@ import SwiftUI
 enum EstiloVisual {
     static let mejor = Color("BestTimeColor")
     static let peligro = Color("DestructiveColor")
-    static let preparado = Color("ReadyColor")
     static let columnas = [GridItem(.adaptive(minimum: 125), spacing: 20)]
 
-    static func tiempo(_ valor: Double, disponible: Bool = true) -> String {
-        disponible ? String(formatoTiempo(valor).dropLast()) : "—"
+    static func promedio(_ resultado: ResultadoPromedio) -> String {
+        switch resultado {
+        case .insuficiente:
+            return "—"
+        case .valor(let valor):
+            return String(formatoTiempo(valor).dropLast())
+        case .dnf:
+            return "DNF"
+        }
     }
 }
 

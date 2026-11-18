@@ -2,7 +2,7 @@ import SwiftUI
 
 struct TiempoRowView: View {
     let tiempo: Tiempo
-    var onEliminar: () -> Void
+    let abrirDetalle: () -> Void
     @Environment(\.temaApp) private var temaApp
 
     var body: some View {
@@ -18,22 +18,29 @@ struct TiempoRowView: View {
             Text(tiempo.scramble)
                 .font(.system(.footnote, design: .monospaced))
                 .foregroundStyle(temaApp.texto.opacity(0.65))
+                .lineLimit(2)
+                .truncationMode(.tail)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.vertical, 8)
-        .contextMenu {
-            Button("Eliminar tiempo", systemImage: "trash", role: .destructive, action: onEliminar)
-        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .onLongPressGesture(perform: abrirDetalle)
+        .accessibilityElement(children: .combine)
+        .accessibilityAction(named: Text("Ver detalle"), abrirDetalle)
     }
 
     private var valor: some View {
-        Text(formatoTiempo(tiempo.tiempo))
-            .font(.system(.title2, design: .rounded, weight: .semibold))
+        Text(tiempo.texto(largo: true))
+            .font(.system(.title, design: .rounded, weight: .bold))
             .monospacedDigit()
             .foregroundStyle(temaApp.texto)
     }
 
     private var fecha: some View {
-        Text(formatoFecha(tiempo.fecha)).font(.caption).foregroundStyle(temaApp.texto.opacity(0.65))
+        Text(formatoFecha(tiempo.fecha))
+            .font(.subheadline)
+            .monospacedDigit()
+            .foregroundStyle(temaApp.texto.opacity(0.8))
     }
 }

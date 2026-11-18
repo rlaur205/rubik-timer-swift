@@ -8,8 +8,6 @@ struct DatosSeccion: View {
     var body: some View {
         Section {
             AjustesToggleFila(
-                sistema: "icloud.fill",
-                color: .blue,
                 titulo: "Sincronizar con iCloud",
                 subtitulo: "Guarda tus sesiones en tu cuenta",
                 estaActivo: activarICloud
@@ -23,7 +21,6 @@ struct DatosSeccion: View {
                 )
             } label: {
                 HStack(spacing: 12) {
-                    AjustesIcono(sistema: "square.and.arrow.up", color: .green)
                     Text("Exportar tiempos")
                         .foregroundStyle(temaApp.texto)
                     Spacer(minLength: 8)
@@ -47,7 +44,6 @@ struct DatosSeccion: View {
                 )
             } label: {
                 HStack(spacing: 12) {
-                    AjustesIcono(sistema: "square.and.arrow.down", color: .blue)
                     Text("Importar tiempos")
                         .foregroundStyle(temaApp.texto)
                     Spacer(minLength: 8)
