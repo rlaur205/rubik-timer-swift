@@ -135,6 +135,7 @@ private struct RetroDetalleTiempo: View {
                 PenalizacionesRetro(seleccion: tiempo.penalizacion) {
                     vm.establecerPenalizacion($0, tiempoID: original.id)
                 }
+                .disabled(tiempo.esDNFDeInspeccion)
             }
             Button("Eliminar tiempo", role: .destructive) {
                 vm.eliminarTiempoSeleccionado(tiempo: original)

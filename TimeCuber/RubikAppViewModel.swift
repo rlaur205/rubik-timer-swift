@@ -28,12 +28,10 @@ class RubikViewModel: ObservableObject {
         return ultimo
     }
 
-    @Published var timerState = TimerState(
-        estaCorriendo: false,
-        tiempoInicio: nil,
-        tiempoTranscurrido: 0,
-        visibilidadPromedios: false
-    )
+    var puedePenalizarUltimoTiempo: Bool { sesionActual.tiempos.last?.esDNFDeInspeccion == false }
+
+    @Published private(set) var timerState = TimerState()
+    private var vencimientoInspeccion: Task<Void, Never>?
 
     init() {
         let sesionesGuardadas = Self.cargarSesiones()
@@ -136,7 +134,8 @@ class RubikViewModel: ObservableObject {
     }
 
     func establecerPenalizacion(_ penalizacion: PenalizacionTiempo, tiempoID: UUID) {
-        guard let indice = sesionActual.tiempos.firstIndex(where: { $0.id == tiempoID }) else { return }
+        guard let indice = sesionActual.tiempos.firstIndex(where: { $0.id == tiempoID }),
+              !sesionActual.tiempos[indice].esDNFDeInspeccion else { return }
 
         if sesionActual.tiempos.last?.id == tiempoID {
             idTiempoMostrado = tiempoID
@@ -152,21 +151,73 @@ class RubikViewModel: ObservableObject {
         actualizarTiempos()
     }
 
-    func registrarNuevoTiempo() {
-        if let inicio = timerState.tiempoInicio {
-            timerState.tiempoTranscurrido = Date().timeIntervalSince(inicio)
+    func iniciarInspeccion() {
+        guard scrambleListo, !timerState.intentoActivo else { return }
+        let reloj = ContinuousClock()
+        let inicio = reloj.now
+        timerState.fase = .inspeccion(inicio)
+
+        vencimientoInspeccion = Task { [weak self] in
+            do {
+                try await reloj.sleep(until: inicio.advanced(by: TimerState.finInspeccion))
+            } catch {
+                return
+            }
+
+            self?.vencerInspeccion(inicio: inicio)
+        }
+    }
+
+    func iniciarResolucion(desdeInspeccion: Bool) {
+        guard scrambleListo, !timerState.estaCorriendo,
+              timerState.enInspeccion == desdeInspeccion else { return }
+
+        var penalizacion = PenalizacionTiempo.ninguna
+        if case .inspeccion(let inicio) = timerState.fase {
+            let transcurrido = inicio.duration(to: ContinuousClock().now)
+            if transcurrido >= TimerState.finInspeccion {
+                vencerInspeccion(inicio: inicio)
+                return
+            }
+            if transcurrido >= TimerState.inspeccionSinPenalizacion {
+                penalizacion = .masDos
+            }
+            cancelarVencimientoInspeccion()
         }
 
-        timerState.tiempoInicio = nil
         idTiempoMostrado = nil
-        guard timerState.tiempoTranscurrido >= 0.01,
-              case .listo(let scramble) = estadoScramble else { return }
+        timerState = TimerState(fase: .resolucion(Date(), penalizacion))
+    }
 
+    func detenerResolucion() {
+        guard case .resolucion(let inicio, let penalizacion) = timerState.fase else { return }
+        let duracion = Date().timeIntervalSince(inicio)
+        timerState = TimerState(tiempoTranscurrido: duracion)
+        guard duracion >= 0.01 else { return }
+
+        registrarTiempo(duracion, penalizacion: penalizacion)
+    }
+
+    private func vencerInspeccion(inicio: ContinuousClock.Instant) {
+        guard case .inspeccion(let activa) = timerState.fase, activa == inicio else { return }
+        cancelarVencimientoInspeccion()
+        timerState = TimerState()
+        registrarTiempo(0, penalizacion: .dnf)
+    }
+
+    private func cancelarVencimientoInspeccion() {
+        vencimientoInspeccion?.cancel()
+        vencimientoInspeccion = nil
+    }
+
+    private func registrarTiempo(_ duracion: TimeInterval, penalizacion: PenalizacionTiempo) {
+        guard case .listo(let scramble) = estadoScramble else { return }
         let tiempo = Tiempo(
-            tiempo: timerState.tiempoTranscurrido,
+            tiempo: duracion,
             scramble: scramble,
             fecha: Date(),
-            categoria: sesionActual.categoria
+            categoria: sesionActual.categoria,
+            penalizacion: penalizacion
         )
         sesionActual.tiempos.append(tiempo)
         idTiempoMostrado = tiempo.id
@@ -175,21 +226,20 @@ class RubikViewModel: ObservableObject {
     }
 
     func borrarUltimoTiempo(id: UUID) {
-        guard !timerState.estaCorriendo, sesionActual.tiempos.last?.id == id else { return }
+        guard !timerState.intentoActivo, sesionActual.tiempos.last?.id == id else { return }
         sesionActual.tiempos.removeLast()
         limpiarResultadoCronometro()
         guardarCambiosSesionActual()
         nuevoScramble()
-        timerState.visibilidadPromedios = true
     }
 
     private func limpiarResultadoCronometro() {
         idTiempoMostrado = nil
-        if !timerState.estaCorriendo { timerState.tiempoTranscurrido = 0 }
+        if !timerState.intentoActivo { timerState.tiempoTranscurrido = 0 }
     }
 
     func seleccionarSesion(_ sesion: Sesion) {
-        guard let guardada = tiemposPrincipal.first(where: { $0.id == sesion.id }) else { return }
+        guard !timerState.intentoActivo, let guardada = tiemposPrincipal.first(where: { $0.id == sesion.id }) else { return }
         sesionActual = guardada
         guardarSeleccion()
         actualizarTiempos()
@@ -205,7 +255,7 @@ class RubikViewModel: ObservableObject {
     }
 
     func borrarCategoria(sesionAEliminar: Sesion) {
-        guard tiemposPrincipal.count > 1,
+        guard !timerState.intentoActivo, tiemposPrincipal.count > 1,
               let index = tiemposPrincipal.firstIndex(where: { $0.id == sesionAEliminar.id }) else { return }
         tiemposPrincipal.remove(at: index)
         if sesionActual.id == sesionAEliminar.id, let primeraSesion = tiemposPrincipal.first {

@@ -83,6 +83,7 @@ struct TiempoDetalleView: View {
                 .tag(PenalizacionTiempo.ninguna)
         }
         .pickerStyle(.segmented)
+        .disabled(tiempo.esDNFDeInspeccion)
         .frame(width: 144)
     }
 }

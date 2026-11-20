@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct TemporizadorSeccion: View {
-    @Bindable var estado: AjustesEstado
+    @Binding var inspeccionActivada: Bool
+    @Binding var ocultarTiempo: Bool
     @Binding var tamanoTimer: Double
     @Binding var fuenteTimer: FuenteTimerAjuste
     @Binding var mantenerParaIniciar: Bool
@@ -19,14 +20,18 @@ struct TemporizadorSeccion: View {
 
             AjustesToggleFila(
                 titulo: "Inspección de 15 s",
-                estaActivo: $estado.inspeccion15s
+                estaActivo: $inspeccionActivada
             )
             .filaTema(temaApp)
+
+            AjustesToggleFila(titulo: "Ocultar tiempo en curso", estaActivo: $ocultarTiempo)
+                .filaTema(temaApp)
 
             AjustesToggleFila(
                 titulo: "Mantener para iniciar",
                 estaActivo: $mantenerParaIniciar
             )
+            .disabled(inspeccionActivada)
             .filaTema(temaApp)
 
             filaEspera
@@ -84,11 +89,11 @@ struct TemporizadorSeccion: View {
 
             Slider(value: $tiempoEspera, in: AjustesInicioCronometro.rangoEspera, step: 0.1)
                 .tint(temaApp.acento)
-                .disabled(!mantenerParaIniciar)
+                .disabled(!inspeccionActivada && !mantenerParaIniciar)
                 .accessibilityLabel("Tiempo de espera")
                 .accessibilityValue(textoTiempoEspera)
         }
-        .opacity(mantenerParaIniciar ? 1 : 0.45)
+        .opacity(inspeccionActivada || mantenerParaIniciar ? 1 : 0.45)
         .padding(.vertical, 4)
     }
 
@@ -134,7 +139,8 @@ struct TemporizadorSeccion: View {
     NavigationStack {
         List {
             TemporizadorSeccion(
-                estado: AjustesEstado(),
+                inspeccionActivada: .constant(false),
+                ocultarTiempo: .constant(false),
                 tamanoTimer: .constant(AjustesInicioCronometro.tamanoTimerPredeterminado),
                 fuenteTimer: .constant(AjustesInicioCronometro.fuenteTimerPredeterminada),
                 mantenerParaIniciar: .constant(AjustesInicioCronometro.mantenerPredeterminado),

@@ -52,6 +52,8 @@ struct Tiempo: Codable, Identifiable, Equatable {
         set { penalizacionGuardada = newValue == .ninguna ? nil : newValue }
     }
 
+    var esDNFDeInspeccion: Bool { tiempo == 0 && penalizacion == .dnf }
+
     var segundosValidos: Double? {
         switch penalizacion {
         case .ninguna: tiempo
@@ -97,8 +99,27 @@ enum Orden: String, CaseIterable {
 }
 
 struct TimerState {
-    var estaCorriendo: Bool
-    var tiempoInicio: Date?
-    var tiempoTranscurrido:TimeInterval
-    var visibilidadPromedios: Bool
+    enum Fase {
+        case reposo
+        case inspeccion(ContinuousClock.Instant)
+        case resolucion(Date, PenalizacionTiempo)
+    }
+
+    static let inspeccionSinPenalizacion = Duration.seconds(15)
+    static let finInspeccion = Duration.seconds(17)
+
+    var fase: Fase = .reposo
+    var tiempoTranscurrido: TimeInterval = 0
+
+    var estaCorriendo: Bool {
+        if case .resolucion = fase { return true }
+        return false
+    }
+
+    var enInspeccion: Bool {
+        if case .inspeccion = fase { return true }
+        return false
+    }
+
+    var intentoActivo: Bool { enInspeccion || estaCorriendo }
 }

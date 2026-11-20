@@ -333,6 +333,10 @@ enum ColorListoAjuste: String, CaseIterable, Identifiable, Hashable {
 
 enum AjustesInicioCronometro {
     static let ejemploTemporizador = "12.34"
+    static let claveInspeccion = "inspeccion15s"
+    static let claveOcultarTiempo = "ocultarTiempoEnCurso"
+    static let inspeccionPredeterminada = false
+    static let ocultarTiempoPredeterminado = false
     static let claveMantenerParaIniciar = "mantenerParaIniciar"
     static let claveTiempoEspera = "tiempoEspera"
     static let claveColorListo = "colorListo"
@@ -371,16 +375,12 @@ final class AjustesEstado {
     // Apariencia
     var idioma: IdiomaAjuste = .sistema
 
-    // Temporizador
-    var inspeccion15s = true
-
     // Datos
     var sincronizarICloud = false
 
     /// Restablece únicamente el estado de esta pantalla.
     func restablecer() {
         idioma = .sistema
-        inspeccion15s = true
         sincronizarICloud = false
     }
 }

@@ -7,6 +7,8 @@ struct RetroAjustes: View {
     @AppStorage("temaDelSistema") private var temaDelSistema = true
     @AppStorage(AparienciaRetro.claveActivada) private var retroActivo = false
     @AppStorage(AparienciaRetro.claveOscura) private var retroOscuro = false
+    @AppStorage(AjustesInicioCronometro.claveInspeccion) private var inspeccionActivada = AjustesInicioCronometro.inspeccionPredeterminada
+    @AppStorage(AjustesInicioCronometro.claveOcultarTiempo) private var ocultarTiempo = AjustesInicioCronometro.ocultarTiempoPredeterminado
     @AppStorage(AjustesInicioCronometro.claveMantenerParaIniciar) private var mantener = AjustesInicioCronometro.mantenerPredeterminado
     @AppStorage(AjustesInicioCronometro.claveTiempoEspera) private var espera = AjustesInicioCronometro.esperaPredeterminada
     @AppStorage(AjustesInicioCronometro.claveColorListo) private var colorListo = AjustesInicioCronometro.colorPredeterminado
@@ -107,14 +109,17 @@ struct RetroAjustes: View {
                 .padding(8)
                 .cajaRetro(relieve: false)
                 .accessibilityLabel("Vista previa del temporizador")
-            Toggle("Inspección de 15 s", isOn: $estado.inspeccion15s)
+            Toggle("Inspección de 15 s", isOn: $inspeccionActivada)
+            Toggle("Ocultar tiempo en curso", isOn: $ocultarTiempo)
             Toggle("Mantener para iniciar", isOn: $mantener)
+                .disabled(inspeccionActivada)
+                .opacity(inspeccionActivada ? 0.45 : 1)
             controlNumerico("Tiempo de espera", valor: Binding(
                 get: { AjustesInicioCronometro.esperaValida(espera) },
                 set: { espera = $0 }
             ), rango: AjustesInicioCronometro.rangoEspera, paso: 0.1, texto: espera.formatted(.number.precision(.fractionLength(1))) + " s")
-                .disabled(!mantener)
-                .opacity(mantener ? 1 : 0.5)
+                .disabled(!inspeccionActivada && !mantener)
+                .opacity(inspeccionActivada || mantener ? 1 : 0.5)
             coloresListo
         }
         .toggleStyle(InterruptorRetro())
@@ -274,6 +279,8 @@ struct RetroAjustes: View {
 
     private func restaurarValores() {
         estado.restablecer()
+        inspeccionActivada = AjustesInicioCronometro.inspeccionPredeterminada
+        ocultarTiempo = AjustesInicioCronometro.ocultarTiempoPredeterminado
         mantener = AjustesInicioCronometro.mantenerPredeterminado
         espera = AjustesInicioCronometro.esperaPredeterminada
         colorListo = AjustesInicioCronometro.colorPredeterminado

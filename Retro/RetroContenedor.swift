@@ -43,11 +43,11 @@ struct RetroContenedor: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                if !vm.timerState.estaCorriendo {
+                if !vm.timerState.intentoActivo {
                     barra
                 }
             }
-            .padding(.bottom, vm.timerState.estaCorriendo ? zonaInferior : max(8, zonaInferior - 14))
+            .padding(.bottom, vm.timerState.intentoActivo ? zonaInferior : max(8, zonaInferior - 14))
             .ignoresSafeArea(.container, edges: .bottom)
         }
         .background(paleta.fondo.ignoresSafeArea())

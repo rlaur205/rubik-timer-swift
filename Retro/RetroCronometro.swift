@@ -19,7 +19,7 @@ struct RetroCronometro: View {
     @State private var expandido = false
 
     private var tiempos: [Tiempo] { vm.sesionActual.tiempos }
-    private var midiendo: Bool { vm.timerState.estaCorriendo }
+    private var intentoActivo: Bool { vm.timerState.intentoActivo }
 
     var body: some View {
         GeometryReader { espacio in
@@ -27,7 +27,7 @@ struct RetroCronometro: View {
                 ScrollView {
                     contenido.frame(minHeight: espacio.size.height)
                 }
-                .scrollDisabled(midiendo)
+                .scrollDisabled(intentoActivo)
                 .scrollBounceBehavior(.basedOnSize)
             } else {
                 contenido
@@ -59,7 +59,7 @@ struct RetroCronometro: View {
 
     private var contenido: some View {
         VStack(spacing: 14) {
-            if !midiendo {
+            if !intentoActivo {
                 encabezado
                 if mostrarScramble {
                     tarjetaScramble
@@ -69,7 +69,7 @@ struct RetroCronometro: View {
                 }
             }
             instrumento
-            if !midiendo {
+            if !intentoActivo {
                 if mostrarScramble && !tiempos.isEmpty { recientes }
                 resumen
             }
@@ -155,33 +155,22 @@ struct RetroCronometro: View {
 
     private var instrumento: some View {
         SuperficieCronometro(
-            stateTimer: $vm.timerState,
-            puedeIniciar: vm.scrambleListo,
+            vm: vm,
             mantenerParaIniciar: mantener,
             tiempoEspera: AjustesInicioCronometro.esperaValida(espera),
-            resultadoEnReposo: vm.resultadoCronometro,
-            registrarNuevoTiempo: vm.registrarNuevoTiempo,
-            abrirPenalizacion: tiempos.isEmpty ? nil : { mostrarPenalizacion = true }
+            abrirPenalizacion: vm.puedePenalizarUltimoTiempo ? { mostrarPenalizacion = true } : nil
         ) { valor, listo in
-            VStack(spacing: 8) {
-                SelloRetro(texto: midiendo ? "EN CURSO" : listo ? "LISTO" : "EN ESPERA",
-                           color: midiendo ? paleta.coral : paleta.lima)
-                Text(valor)
-                    .font(fuenteTimer == .predeterminado
-                          ? .system(size: AjustesInicioCronometro.tamanoTimerValido(tamanoTimer), weight: .black, design: .monospaced)
-                          : fuenteTimer.font(tamano: AjustesInicioCronometro.tamanoTimerValido(tamanoTimer), pesoPredeterminado: .black))
-                    .foregroundStyle(listo ? colorListo.color : paleta.texto)
-                    .monospacedDigit()
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.42)
-                    .accessibilityIdentifier("timer-digitos")
-                if !midiendo && vm.scrambleListo {
-                    Text(listo ? "Suelta para empezar" : mantener ? "Mantén para iniciar" : "Toca para iniciar")
-                        .font(.system(.caption, design: .monospaced, weight: .semibold))
-                        .foregroundStyle(paleta.secundario)
-                }
-            }
-            .padding(.horizontal, 10)
+            Text(valor)
+                .font(fuenteTimer == .predeterminado
+                      ? .system(size: AjustesInicioCronometro.tamanoTimerValido(tamanoTimer), weight: .black, design: .monospaced)
+                      : fuenteTimer.font(tamano: AjustesInicioCronometro.tamanoTimerValido(tamanoTimer), pesoPredeterminado: .black))
+                .foregroundStyle(listo ? colorListo.color : paleta.texto)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.42)
+                .padding(.horizontal, 10)
+                .offset(y: -8)
+                .accessibilityIdentifier("timer-digitos")
         }
         .frame(minHeight: tipoDinamico.isAccessibilitySize ? 240 : 152, maxHeight: .infinity)
         .cajaRetro(radio: 19)

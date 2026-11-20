@@ -77,6 +77,8 @@
 | Función | Qué puedes hacer |
 | --- | --- |
 | **Cronómetro** | Inicia por toque o con una pulsación configurable de 0.3 a 1.5 s. Los dígitos cambian de color cuando puedes soltar para empezar. |
+| **Inspección** | Inicia una cuenta ascendente con un toque y mantén pulsado para empezar la resolución. La app aplica **+2** a partir de 15 s y registra **DNF** al llegar a 17 s. |
+| **Tiempo oculto** | Muestra `...` durante la resolución. La cuenta de inspección y el resultado final siguen visibles. |
 | **Scrambles y diagramas** | Genera scrambles en el dispositivo para 14 categorías. Consulta su diagrama 2D desde el cronómetro o el detalle de una resolución. |
 | **Scramble oculto** | Lleva los cinco tiempos recientes arriba y abre el texto del scramble junto al diagrama desde el botón del cubo. |
 | **Historial y penalizaciones** | Ordena por fecha o duración y aplica **+2** o **DNF**. Cada resolución conserva el valor original, la fecha y el scramble. |
@@ -88,7 +90,7 @@
 
 1. Abre **Sesiones** y elige una existente o crea una con **+**.
 2. Lee el scramble en **Cronómetro**. El botón del cubo abre el diagrama.
-3. Mantén pulsado hasta que cambie el color, suelta para empezar y toca para detener. También puedes configurar el inicio por toque.
+3. Mantén pulsado hasta que cambie el color, suelta para empezar y toca para detener. También puedes configurar el inicio por toque. Si activas la inspección, el primer toque inicia la cuenta y la pulsación larga inicia la resolución al soltar.
 4. Desliza hacia abajo con el cronómetro detenido para penalizar el último tiempo. Desde **Tiempos**, mantén pulsada una fila para abrir sus detalles.
 5. En **Ajustes → Apariencia → Diseño de la app**, toca la tarjeta **Clásico** o **Retro**. Ambos diseños usan tus mismas sesiones y tiempos.
 

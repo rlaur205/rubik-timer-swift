@@ -3,6 +3,10 @@ import SwiftUI
 struct AjustesView: View {
     @State private var estado = AjustesEstado()
     @State private var mostrarSelectorTema = false
+    @AppStorage(AjustesInicioCronometro.claveInspeccion)
+    private var inspeccionActivada = AjustesInicioCronometro.inspeccionPredeterminada
+    @AppStorage(AjustesInicioCronometro.claveOcultarTiempo)
+    private var ocultarTiempo = AjustesInicioCronometro.ocultarTiempoPredeterminado
     @AppStorage(AjustesInicioCronometro.claveMantenerParaIniciar)
     private var mantenerParaIniciar = AjustesInicioCronometro.mantenerPredeterminado
     @AppStorage(AjustesInicioCronometro.claveTiempoEspera)
@@ -47,7 +51,8 @@ struct AjustesView: View {
                     fuenteScramble: $fuenteScramble
                 )
                 TemporizadorSeccion(
-                    estado: estado,
+                    inspeccionActivada: $inspeccionActivada,
+                    ocultarTiempo: $ocultarTiempo,
                     tamanoTimer: tamanoTimerConfigurado,
                     fuenteTimer: $fuenteTimer,
                     mantenerParaIniciar: $mantenerParaIniciar,
@@ -58,6 +63,8 @@ struct AjustesView: View {
                 AcercaDeSeccion(version: AjustesInformacionApp.version) {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         estado.restablecer()
+                        inspeccionActivada = AjustesInicioCronometro.inspeccionPredeterminada
+                        ocultarTiempo = AjustesInicioCronometro.ocultarTiempoPredeterminado
                         mantenerParaIniciar = AjustesInicioCronometro.mantenerPredeterminado
                         tiempoEspera = AjustesInicioCronometro.esperaPredeterminada
                         colorListo = AjustesInicioCronometro.colorPredeterminado

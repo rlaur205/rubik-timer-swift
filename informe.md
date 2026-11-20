@@ -50,9 +50,21 @@ Elige el diseño en **Ajustes → Apariencia → Diseño de la app**. Cada tarje
    Si el scramble se está preparando, espera a que esté listo para iniciar. Si la generación falla, toca **Reintentar**.
 5. Con el cronómetro detenido, desliza el dedo hacia abajo por el área de los dígitos para abrir las opciones **DNF**, **+2** y **Sin penalización**. La acción afecta al último tiempo de la sesión y está disponible cuando hay al menos una resolución.
 
-Con el scramble visible, se muestran hasta cinco tiempos recientes debajo del cronómetro. Al tocar el bloque de resumen puedes ver los promedios rápidos **Mo3**, **Ao5**, **Ao12** y **Ao50**. Durante una medición se ocultan el scramble, los controles de navegación y los indicadores de sesión. La papelera del cronómetro pide confirmación para eliminar el último tiempo.
+Con el scramble visible, se muestran hasta cinco tiempos recientes debajo del cronómetro. Al tocar el bloque de resumen puedes ver los promedios rápidos **Mo3**, **Ao5**, **Ao12** y **Ao50**. Durante la inspección y la resolución se ocultan el scramble, los controles de navegación y los indicadores de sesión. La papelera del cronómetro pide confirmación para eliminar el último tiempo.
 
 Con **Mostrar scramble** desactivado, los últimos cinco tiempos aparecen arriba. En Clásico se agrupan en una burbuja y en Retro cada uno conserva su recuadro. El botón del cubo abre el texto completo junto con el diagrama.
+
+#### Inspección y tiempo oculto
+
+Activa **Inspección de 15 s** en Ajustes. Con el scramble listo, toca el cronómetro para ver la cuenta ascendente desde 0. Mantén pulsado durante el **Tiempo de espera** configurado y suelta al ver el color de listo.
+
+| Cuándo sueltas | Resultado |
+| --- | --- |
+| Antes de 15 s | La resolución comienza sin penalización automática. |
+| Desde 15 s y antes de 17 s | La pantalla de inspección indica `15 +2` y suma dos segundos al tiempo final. |
+| Al llegar a 17 s sin iniciar | Termina la inspección, registra **DNF** con el scramble actual y prepara el siguiente. El registro lleva `0.00` como duración original porque la resolución no empezó. Puedes eliminar el registro desde Tiempos. |
+
+**Ocultar tiempo en curso** muestra `...` durante la resolución. Al detenerla ves el resultado final. La inspección siempre muestra su cuenta. Ambas opciones se guardan de forma independiente y vienen desactivadas.
 
 ### Tiempos
 
@@ -143,7 +155,9 @@ Para un récord personal (PB), la app recorre todas las ventanas consecutivas de
 | **Texto** | Tamaño del scramble | Pequeño, Mediano o Grande. Sus bases son 15, 19 y 24 pt, y se reducen para puzzles con scrambles largos. Predeterminado es Mediano. |
 | **Temporizador** | Fuente del timer | Selector independiente con 15 opciones y vista previa. Predeterminado usa la fuente redondeada del sistema en Clásico y monoespaciada en Retro. |
 | **Temporizador** | Tamaño del timer | De 40 a 100 pt, en pasos de 1 pt. Predeterminado es 70 pt. |
-| **Temporizador** | Mantener para iniciar | Activa la pulsación prolongada. Viene activado. |
+| **Temporizador** | Inspección de 15 s | Activa la cuenta ascendente, el +2 y el DNF automáticos. |
+| **Temporizador** | Ocultar tiempo en curso | Sustituye el tiempo de la resolución por `...` hasta detenerla. |
+| **Temporizador** | Mantener para iniciar | Activa la pulsación prolongada sin inspección. Durante la inspección siempre se usa una pulsación prolongada. |
 | **Temporizador** | Tiempo de espera | De 0.3 a 1.5 s, en pasos de 0.1 s. Predeterminado es 0.5 s. |
 | **Temporizador** | Color al estar listo | Verde, azul, amarillo, naranja o morado. Predeterminado es amarillo, con un tono distinto según el modo claro u oscuro. |
 | **Acerca de** | Restablecer ajustes | Restaura las preferencias de texto y temporizador y los controles de vista previa. Conserva las sesiones y el tema. |
@@ -158,7 +172,7 @@ Los temas de Clásico son **Claro**, **Oscuro**, **Noche**, **Bosque**, **Atarde
 
 </details>
 
-Otros controles están visibles con alcance limitado. **Idioma** e **Inspección de 15 s** conservan su selección solo durante la ejecución y carecen de integración con el resto de la app. **Sincronizar con iCloud**, **Exportar** e **Importar** muestran un aviso de disponibilidad futura. La pantalla de licencias en Ajustes es provisional y el inventario está en [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+Otros controles están visibles con alcance limitado. **Idioma** conserva su selección solo durante la ejecución y carece de integración con el resto de la app. **Sincronizar con iCloud**, **Exportar** e **Importar** muestran un aviso de disponibilidad futura. La pantalla de licencias en Ajustes es provisional y el inventario está en [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 ## Arquitectura y recorrido de una resolución
 
@@ -175,7 +189,7 @@ flowchart LR
 ```
 
 1. [TimeCuber.swift](TimeCuber/TimeCuber.swift) abre [ContentView.swift](TimeCuber/ContentView.swift) en un `WindowGroup`. La raíz crea una instancia de `RubikViewModel` con `@StateObject`, elige entre la barra de pestañas nativa de Clásico y `RetroContenedor`. Mantiene el mismo modelo y la pestaña seleccionada al cambiar de diseño.
-2. [SuperficieCronometro](Cronometro/TimerAreaView.swift%20.swift) comparte los gestos entre ambos diseños. Lleva el estado visual de listo con `@GestureState` y bloquea el inicio mientras el scramble no está disponible. Durante la medición, `TimelineView` actualiza los dígitos con la diferencia entre la hora actual y la hora de inicio. La vista desactiva el apagado automático de la pantalla mientras está presente.
+2. [SuperficieCronometro](Cronometro/TimerAreaView.swift%20.swift) comparte los gestos entre ambos diseños. Lleva el estado visual de listo con `@GestureState` y bloquea el inicio mientras el scramble no está disponible. El modelo controla las fases de reposo, inspección y resolución. Usa un reloj continuo y una tarea cancelable para la inspección. Durante la medición, `TimelineView` actualiza los dígitos con la diferencia entre la hora actual y la hora de inicio. La vista desactiva el apagado automático de la pantalla mientras está presente.
 3. Al detener, [RubikViewModel](TimeCuber/RubikAppViewModel.swift) mide la duración definitiva, descarta intentos inferiores a 0.01 s y requiere un scramble listo antes de registrar su tiempo y categoría. Agrega la resolución a la sesión, guarda el historial, actualiza las listas y solicita el siguiente scramble.
 4. Al modificar una penalización, el modelo localiza la resolución por UUID dentro de la sesión activa y guarda el cambio. Las vistas observan el mismo `ObservableObject` de `@MainActor` y vuelven a obtener sus métricas a partir de los datos publicados.
 5. Los controles funcionales de Ajustes se enlazan con `@AppStorage`. Los controles provisionales viven en un `AjustesEstado` observable, con enlazado local mediante `@Bindable`.
@@ -205,6 +219,7 @@ flowchart LR
 | `sesionSeleccionadaID` | UUID de la sesión activa. Si falta, se intenta migrar la selección anterior desde `categoriaSeleccionada` y `nombreSeleccionada`. |
 | `temaApp`, `temaDelSistema` | Tema personalizado de Clásico y preferencia de seguir la apariencia del sistema. |
 | `modoRetro`, `modoRetroOscuro` | Diseño activo y variante manual de Retro. |
+| `inspeccion15s`, `ocultarTiempoEnCurso` | Inspección previa y visibilidad del tiempo durante la resolución. |
 | `mantenerParaIniciar`, `tiempoEspera`, `colorListo` | Modo de inicio, duración de la pulsación y señal visual. |
 | `mostrarScramble`, `tamanoScramble`, `fuenteScramble` | Visibilidad, tamaño y tipografía del scramble. |
 | `tamanoTimer`, `fuenteTimer` | Tamaño y tipografía de los dígitos del cronómetro. |
@@ -274,7 +289,7 @@ El proyecto contiene el target de la app. Las capturas del informe se obtuvieron
 
 ## Alcance y limitaciones actuales
 
-- La app conserva los tiempos y ajustes en el dispositivo. iCloud y la transferencia JSON están pendientes de integración, junto con los controles de cronómetro indicados en [Ajustes](#ajustes).
+- La app conserva los tiempos y ajustes en el dispositivo. iCloud, la transferencia JSON y el cambio de idioma están pendientes de integración.
 - La protección del historial ante un fallo de decodificación está pendiente. Si ocurre, el modelo carga sesiones iniciales y una escritura posterior puede reemplazar los datos ilegibles.
 - El cronómetro mide la duración con la hora del sistema. Cambiar esa hora durante una resolución puede alterar el resultado.
 - El criterio de orden de Tiempos se conserva durante la ejecución. Al volver a abrir la app, se inicia por fecha.

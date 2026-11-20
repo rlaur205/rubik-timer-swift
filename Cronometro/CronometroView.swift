@@ -32,7 +32,7 @@ struct CronometroView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if dynamicTypeSize.isAccessibilitySize && !vm.timerState.estaCorriendo {
+                if dynamicTypeSize.isAccessibilitySize && !vm.timerState.intentoActivo {
                     ScrollView { contenido }
                 } else {
                     contenido
@@ -74,7 +74,7 @@ struct CronometroView: View {
                     }
                 }
             }
-            .toolbar(vm.timerState.estaCorriendo ? .hidden : .visible, for: .navigationBar, .tabBar)
+            .toolbar(vm.timerState.intentoActivo ? .hidden : .visible, for: .navigationBar, .tabBar)
             .toolbarBackground(temaApp.fondo, for: .navigationBar)
             .toolbarColorScheme(temaApp.colorScheme, for: .navigationBar)
             .alert("¿Eliminar último tiempo?", isPresented: $confirmarBorrado, presenting: vm.sesionActual.tiempos.last) { tiempo in
@@ -120,26 +120,23 @@ struct CronometroView: View {
 
     private var contenido: some View {
         VStack(spacing: 0) {
-            if !vm.timerState.estaCorriendo {
+            if !vm.timerState.intentoActivo {
                 contenidoSuperior
             }
 
             TimerAreaView(
-                stateTimer: $vm.timerState,
-                puedeIniciar: vm.scrambleListo,
+                vm: vm,
                 mantenerParaIniciar: mantenerParaIniciar,
                 tiempoEspera: AjustesInicioCronometro.esperaValida(tiempoEspera),
                 colorListo: colorListo.color,
                 tamanoTimer: AjustesInicioCronometro.tamanoTimerValido(tamanoTimer),
                 fuenteTimer: fuenteTimer,
-                resultadoEnReposo: vm.resultadoCronometro,
-                registrarNuevoTiempo: { vm.registrarNuevoTiempo() },
-                abrirPenalizacion: vm.sesionActual.tiempos.isEmpty ? nil : { mostrarPenalizacion = true }
+                abrirPenalizacion: vm.puedePenalizarUltimoTiempo ? { mostrarPenalizacion = true } : nil
             )
             .frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 240 : 140)
             .layoutPriority(1)
 
-            if !vm.timerState.estaCorriendo {
+            if !vm.timerState.intentoActivo {
                 VStack(spacing: 18) {
                     if mostrarScramble && !vm.sesionActual.tiempos.isEmpty {
                         TiemposRecientesCronometro(tiempos: vm.sesionActual.tiempos)
