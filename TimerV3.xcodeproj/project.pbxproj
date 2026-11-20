@@ -50,6 +50,7 @@
 		8C9F11E52F3B640100BC5C97 /* Estadisticas */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Estadisticas; sourceTree = "<group>"; };
 		8C9F11FD2F3B6A0800BC5C97 /* Funciones */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Funciones; sourceTree = "<group>"; };
 		8C9F12162F3B6B1500BC5C97 /* Cronometro */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Cronometro; sourceTree = "<group>"; };
+		8CA1F7E32F5A100100ABCDE0 /* Retro */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Retro; sourceTree = "<group>"; };
 		8CA1F7E32F5A100100ABCDEF /* Ajustes */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Ajustes; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
@@ -82,6 +83,7 @@
 				8C9F11FD2F3B6A0800BC5C97 /* Funciones */,
 				8C9F11E52F3B640100BC5C97 /* Estadisticas */,
 				8CA1F7E32F5A100100ABCDEF /* Ajustes */,
+				8CA1F7E32F5A100100ABCDE0 /* Retro */,
 				B61584F82B92C6B200C20F12 /* TimeCuber */,
 				8CF000052F51000000ABCDEF /* Frameworks */,
 				B61584F72B92C6B200C20F12 /* Products */,
@@ -140,6 +142,7 @@
 				8C9F11E52F3B640100BC5C97 /* Estadisticas */,
 				8C9F11FD2F3B6A0800BC5C97 /* Funciones */,
 				8C9F12162F3B6B1500BC5C97 /* Cronometro */,
+				8CA1F7E32F5A100100ABCDE0 /* Retro */,
 				8CA1F7E32F5A100100ABCDEF /* Ajustes */,
 			);
 			name = TimerV3;

@@ -9,10 +9,7 @@ struct SesionTimeView: View {
 
     var body: some View {
         Button {
-            vm.idActual = sesion.id
-            vm.nombreSeleccionada = sesion.nombre
-            vm.categoriaSeleccionada = sesion.categoria
-            vm.nuevoScramble()
+            vm.seleccionarSesion(sesion)
         } label: {
             HStack(spacing: 14) {
                 IconoPuzzle(categoria: sesion.categoria, size: 36, multiplicadorTrazo: 1.45)

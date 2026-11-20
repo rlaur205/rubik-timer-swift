@@ -3,7 +3,6 @@ import SwiftUI
 struct TimerAreaView: View {
     @Binding var stateTimer: TimerState
     @Environment(\.temaApp) private var temaApp
-    @GestureState private var estaPreparado = false
 
     let mantenerParaIniciar: Bool
     let tiempoEspera: TimeInterval
@@ -13,6 +12,38 @@ struct TimerAreaView: View {
     let resultadoEnReposo: Tiempo?
     let registrarNuevoTiempo: () -> Void
     let abrirPenalizacion: (() -> Void)?
+
+    var body: some View {
+        SuperficieCronometro(
+            stateTimer: $stateTimer,
+            mantenerParaIniciar: mantenerParaIniciar,
+            tiempoEspera: tiempoEspera,
+            resultadoEnReposo: resultadoEnReposo,
+            registrarNuevoTiempo: registrarNuevoTiempo,
+            abrirPenalizacion: abrirPenalizacion
+        ) { texto, listo in
+            Text(texto)
+                .font(fuenteTimer.font(tamano: CGFloat(tamanoTimer), pesoPredeterminado: .bold))
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.45)
+                .padding(.horizontal, 24)
+                .foregroundStyle(listo ? colorListo : temaApp.texto)
+                .accessibilityIdentifier("timer-digitos")
+        }
+    }
+}
+
+struct SuperficieCronometro<Contenido: View>: View {
+    @Binding var stateTimer: TimerState
+    @GestureState private var estaPreparado = false
+
+    let mantenerParaIniciar: Bool
+    let tiempoEspera: TimeInterval
+    let resultadoEnReposo: Tiempo?
+    let registrarNuevoTiempo: () -> Void
+    let abrirPenalizacion: (() -> Void)?
+    @ViewBuilder var contenido: (String, Bool) -> Contenido
 
     var body: some View {
         ZStack {
@@ -35,24 +66,15 @@ struct TimerAreaView: View {
 
     private var area: some View {
         ZStack {
-            Rectangle()
-                .fill(Color.clear)
-                .frame(maxHeight: .infinity)
-
+            Rectangle().fill(Color.clear).frame(maxHeight: .infinity)
             TimelineView(.animation) { _ in
                 let tiempo = stateTimer.estaCorriendo
                     ? Date().timeIntervalSince(stateTimer.tiempoInicio ?? Date())
                     : stateTimer.tiempoTranscurrido
 
                 let resultado = stateTimer.estaCorriendo ? nil : resultadoEnReposo
-                Text(resultado?.texto(largo: false) ?? String(formatoTiempo(tiempo).dropLast()))
-                    .font(fuenteTimer.font(tamano: CGFloat(tamanoTimer), pesoPredeterminado: .bold))
-                    .monospacedDigit()
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.45)
-                    .padding(.horizontal, 24)
-                    .foregroundStyle(estaPreparado && !stateTimer.estaCorriendo ? colorListo : temaApp.texto)
-                    .accessibilityIdentifier("timer-digitos")
+                let texto = resultado?.texto(largo: false) ?? String(formatoTiempo(tiempo).dropLast())
+                contenido(texto, estaPreparado && !stateTimer.estaCorriendo)
             }
         }
         .contentShape(Rectangle())

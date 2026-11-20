@@ -7,6 +7,9 @@ struct AparienciaSeccion: View {
     @AppStorage("temaApp") private var temaElegido: TemaApp = .claro
     @AppStorage("temaDelSistema") private var temaDelSistema = true
 
+    @AppStorage(AparienciaRetro.claveActivada) private var retroActivo = false
+    @AppStorage(AparienciaRetro.claveOscura) private var retroOscuro = false
+
     var body: some View {
         Section {
             NavigationLink {
@@ -30,17 +33,27 @@ struct AparienciaSeccion: View {
             .accessibilityIdentifier("tema-del-sistema")
             .filaTema(temaApp)
 
+            SelectorDiseno(
+                retroActivo: $retroActivo,
+                esquemaClasico: temaApp.colorScheme,
+                esquemaRetro: temaDelSistema ? temaApp.colorScheme : retroOscuro ? .dark : .light,
+                texto: temaApp.texto,
+                linea: temaApp.linea,
+                seleccion: temaApp.acento
+            )
+            .filaTema(temaApp)
+
             Button(action: abrirSelectorTema) {
                 AjustesFilaValor(
                     titulo: "Tema de la app",
                     valor: temaDelSistema ? "Sistema" : temaElegido.nombre,
-                    bloqueada: temaDelSistema,
-                    muestraIndicador: !temaDelSistema
+                    bloqueada: temaDelSistema || retroActivo,
+                    muestraIndicador: !temaDelSistema && !retroActivo
                 )
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .disabled(temaDelSistema)
+            .disabled(temaDelSistema || retroActivo)
             .accessibilityIdentifier("abrir-selector-tema")
             .filaTema(temaApp)
         } header: {

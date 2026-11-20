@@ -241,22 +241,33 @@ class RubikViewModel: ObservableObject {
         }
     }
     
-    func borrarCategoria(sesionAEliminar: Sesion){
-        if let index = tiemposPrincipal.firstIndex(where: { $0.id == sesionAEliminar.id }) {
-            tiemposPrincipal.remove(at: index)
-
-            if idActual == sesionAEliminar.id {
-                if let firstSesion = tiemposPrincipal.first {
-                    idActual = firstSesion.id
-                    nombreSeleccionada = firstSesion.nombre
-                    categoriaSeleccionada = firstSesion.categoria
-                } else {
-                    idActual = nil
-                }
-            }
-        }
+    func seleccionarSesion(_ sesion: Sesion) {
+        idActual = sesion.id
+        nombreSeleccionada = sesion.nombre
+        categoriaSeleccionada = sesion.categoria
+        sesionActual = sesion
+        cambiarOrden(ordenActual)
+        nuevoScramble()
     }
-    
+
+    func crearSesion(nombre: String, categoria: String) -> Bool {
+        let nombreLimpio = nombre.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !nombreLimpio.isEmpty, nombreLimpio.count <= 10 else { return false }
+        tiemposPrincipal.append(Sesion(tiempos: [], nombre: nombreLimpio, categoria: categoria))
+        guardarSesiones()
+        return true
+    }
+
+    func borrarCategoria(sesionAEliminar: Sesion) {
+        guard tiemposPrincipal.count > 1,
+              let index = tiemposPrincipal.firstIndex(where: { $0.id == sesionAEliminar.id }) else { return }
+        tiemposPrincipal.remove(at: index)
+        if idActual == sesionAEliminar.id, let primeraSesion = tiemposPrincipal.first {
+            seleccionarSesion(primeraSesion)
+        }
+        guardarSesiones()
+    }
+
     func nuevoScramble() {
         scrambleActual = ScrambleService.shared.siguiente(categoria: categoriaSeleccionada)
     }

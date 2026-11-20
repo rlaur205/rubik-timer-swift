@@ -1,11 +1,16 @@
 import SwiftUI
-import SwiftData
+
+enum PestanaTimeCuber: CaseIterable {
+    case cronometro, tiempos, estadisticas, sesiones, ajustes
+}
 
 struct ContentView: View {
-    
     @StateObject var vm = RubikViewModel()
     @AppStorage("temaApp") private var temaElegido: TemaApp = .claro
     @AppStorage("temaDelSistema") private var temaDelSistema = true
+    @AppStorage(AparienciaRetro.claveActivada) private var retroActivo = false
+    @AppStorage(AparienciaRetro.claveOscura) private var retroOscuro = false
+    @State private var pestana: PestanaTimeCuber = .cronometro
     @Environment(\.colorScheme) private var colorScheme
 
     private var temaEfectivo: TemaApp {
@@ -13,28 +18,50 @@ struct ContentView: View {
         return colorScheme == .dark ? .oscuro : .claro
     }
 
+    private var esquemaManual: ColorScheme {
+        retroActivo ? (retroOscuro ? .dark : .light) : temaElegido.colorScheme
+    }
+
     var body: some View {
-   
-        TabView{
-            vistaCronometro()
-            .tabItem {Image(systemName: "stopwatch.fill")}
-            
-            vistaListaTiempos()
-            .tabItem {Image(systemName: "tray")}
-            
-            vistaEstadisticas()
-            .tabItem {Image(systemName: "chart.bar")}
-            
-            vistaCategorias()
-                .tabItem {Image(systemName: "archivebox")}
-            
-            vistaAjustes()
-            .tabItem {
-                Image(systemName: "gearshape")
-                    .accessibilityLabel("Ajustes")
-                    .accessibilityIdentifier("tab-ajustes")
+        Group {
+            if retroActivo {
+                RetroContenedor(vm: vm, pestana: $pestana)
+            } else {
+                interfazOriginal
             }
-            
+        }
+        .preferredColorScheme(temaDelSistema ? nil : esquemaManual)
+    }
+
+    private var interfazOriginal: some View {
+        TabView(selection: $pestana) {
+            CronometroView(vm: vm)
+                .onAppear { vm.actualizarVista() }
+                .tabItem { Image(systemName: "stopwatch.fill") }
+                .tag(PestanaTimeCuber.cronometro)
+
+            ListaTiemposView(vm: vm)
+                .onAppear { vm.actualizarVista() }
+                .tabItem { Image(systemName: "tray") }
+                .tag(PestanaTimeCuber.tiempos)
+
+            EstadisticasView(vm: vm)
+                .onAppear { vm.actualizarVista() }
+                .tabItem { Image(systemName: "chart.bar") }
+                .tag(PestanaTimeCuber.estadisticas)
+
+            CategoriasView(vm: vm)
+                .onAppear { vm.actualizarVista() }
+                .tabItem { Image(systemName: "archivebox") }
+                .tag(PestanaTimeCuber.sesiones)
+
+            AjustesView()
+                .tabItem {
+                    Image(systemName: "gearshape")
+                        .accessibilityLabel("Ajustes")
+                        .accessibilityIdentifier("tab-ajustes")
+                }
+                .tag(PestanaTimeCuber.ajustes)
         }
         .tint(temaEfectivo.acento)
         .background(temaEfectivo.fondo.ignoresSafeArea())
@@ -42,45 +69,9 @@ struct ContentView: View {
         .toolbarBackground(temaEfectivo.fondo, for: .tabBar)
         .toolbarBackground(.visible, for: .tabBar)
         .toolbarColorScheme(temaEfectivo.colorScheme, for: .tabBar)
-        .preferredColorScheme(temaDelSistema ? nil : temaElegido.colorScheme)
         .environment(\.temaApp, temaEfectivo)
         .environment(\.colorScheme, temaEfectivo.colorScheme)
- 
     }
-    
-    
-    func vistaCronometro() -> some View {
-        CronometroView(vm: vm)
-        .onAppear {
-            vm.actualizarVista()
-        }
-    }
-
-    func vistaListaTiempos() -> some View {
-        ListaTiemposView(vm: vm)
-        .onAppear {
-            vm.actualizarVista()
-        }
-    }
-    
-    func vistaEstadisticas() -> some View {
-        EstadisticasView(vm: vm)
-        .onAppear {
-            vm.actualizarVista()
-        }
-    }
-    
-    func vistaCategorias() -> some View {
-        CategoriasView(vm: vm)
-        .onAppear {
-            vm.actualizarVista()
-        }
-    }
-    
-    func vistaAjustes() -> some View {
-        AjustesView()
-    }
-
 }
 
 #Preview {
