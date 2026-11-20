@@ -2,10 +2,11 @@
 
 TimeCuber es un cronómetro de speedcubing para iPhone. Cada sesión reúne las resoluciones de una categoría, sus scrambles y sus estadísticas. La app genera los scrambles, dibuja los diagramas y guarda el historial en el dispositivo.
 
-Las capturas se tomaron en un iPhone 15 simulado, con el tema **Noche** y datos de demostración.
+Las capturas se tomaron en un iPhone 15 simulado con datos de demostración. Muestran **Clásico** con el tema Noche y **Retro** en sus variantes clara y oscura.
 
 ## Contenido
 
+- [Diseños Clásico y Retro](#diseños-clásico-y-retro)
 - [Guía de uso](#guía-de-uso)
 - [Penalizaciones y cálculos](#penalizaciones-y-cálculos)
 - [Ajustes](#ajustes)
@@ -15,13 +16,31 @@ Las capturas se tomaron en un iPhone 15 simulado, con el tema **Noche** y datos 
 - [Compilación y mantenimiento](#compilación-y-mantenimiento)
 - [Alcance y limitaciones actuales](#alcance-y-limitaciones-actuales)
 
+## Diseños Clásico y Retro
+
+Elige el diseño en **Ajustes → Apariencia → Diseño de la app**. Cada tarjeta muestra una ilustración abstracta del estilo y marca el diseño activo. Al cambiar, permaneces en Ajustes y sigues usando las mismas sesiones, tiempos y preferencias del cronómetro.
+
+| Diseño | Apariencia y navegación |
+| --- | --- |
+| **Clásico** | Barra de pestañas nativa de iOS, superficies suaves y 16 temas personalizables. |
+| **Retro** | Tarjetas con bordes marcados, esquinas redondeadas y sombras sólidas. La barra inferior usa un indicador deslizante y la transición de pantalla respeta **Reducir movimiento**. La variante oscura usa negro puro de fondo y gris oscuro en las superficies. |
+
+**Tema del sistema** sigue la apariencia del iPhone en ambos diseños. Con ese ajuste apagado, Clásico usa **Tema de la app** y Retro ofrece su propio selector **Claro / Oscuro**. La app conserva ambas preferencias al alternar entre diseños.
+
+<p align="center">
+  <img src="Capturas/Documentacion/ajustes.png" width="195" alt="Selector de diseño en Ajustes de Clásico">
+  <img src="Capturas/Documentacion/retro-ajustes.png" width="195" alt="Selector de diseño en Ajustes de Retro">
+  <img src="Capturas/Documentacion/retro-oculto.png" width="195" alt="Retro oscuro con fondo negro y cinco tiempos recientes en la parte superior">
+</p>
+
 ## Guía de uso
 
 ### Cronómetro
 
 <p align="center">
-  <img src="Capturas/Documentacion/cronometro.png" width="250" alt="Cronómetro con un scramble de 3×3 y el resumen de la sesión">
-  <img src="Capturas/Documentacion/diagrama.png" width="250" alt="Panel emergente con las seis caras del 3×3 desplegadas en un diagrama 2D">
+  <img src="Capturas/Documentacion/cronometro.png" width="195" alt="Cronómetro Clásico con un scramble de 3×3 y el resumen de la sesión">
+  <img src="Capturas/Documentacion/retro-cronometro.png" width="195" alt="Cronómetro Retro con panel táctil, scramble y resumen">
+  <img src="Capturas/Documentacion/retro-scramble-diagrama.png" width="195" alt="Panel oscuro con el texto completo y el diagrama 2D del 7×7">
 </p>
 
 1. Selecciona una sesión. Su nombre aparece en la barra superior y su categoría determina el scramble.
@@ -31,26 +50,28 @@ Las capturas se tomaron en un iPhone 15 simulado, con el tema **Noche** y datos 
    Si el scramble se está preparando, espera a que esté listo para iniciar. Si la generación falla, toca **Reintentar**.
 5. Con el cronómetro detenido, desliza el dedo hacia abajo por el área de los dígitos para abrir las opciones **DNF**, **+2** y **Sin penalización**. La acción afecta al último tiempo de la sesión y está disponible cuando hay al menos una resolución.
 
-La barra inferior muestra hasta cinco tiempos recientes. Al tocar el bloque de resumen puedes ver los promedios rápidos **Mo3**, **Ao5**, **Ao12** y **Ao50**. Durante una medición se ocultan el scramble, los controles de navegación y los indicadores de sesión. La papelera del cronómetro pide confirmación para eliminar el último tiempo.
+Con el scramble visible, se muestran hasta cinco tiempos recientes debajo del cronómetro. Al tocar el bloque de resumen puedes ver los promedios rápidos **Mo3**, **Ao5**, **Ao12** y **Ao50**. Durante una medición se ocultan el scramble, los controles de navegación y los indicadores de sesión. La papelera del cronómetro pide confirmación para eliminar el último tiempo.
 
-Con **Mostrar scramble** desactivado, los últimos cinco tiempos aparecen arriba en ambos diseños. El botón del cubo abre un panel con el texto completo y el diagrama juntos.
+Con **Mostrar scramble** desactivado, los últimos cinco tiempos aparecen arriba. En Clásico se agrupan en una burbuja y en Retro cada uno conserva su recuadro. El botón del cubo abre el texto completo junto con el diagrama.
 
 ### Tiempos
 
 <p align="center">
-  <img src="Capturas/Documentacion/tiempos.png" width="250" alt="Historial de resoluciones de la sesión, con penalizaciones +2 y DNF">
-  <img src="Capturas/Documentacion/detalle.png" width="250" alt="Detalle de un tiempo de 16.25 con +2, scramble completo y diagrama 2D">
+  <img src="Capturas/Documentacion/tiempos.png" width="195" alt="Historial Clásico con penalizaciones +2 y DNF">
+  <img src="Capturas/Documentacion/retro-tiempos.png" width="195" alt="Historial Retro con colores por penalización">
+  <img src="Capturas/Documentacion/retro-detalle.png" width="195" alt="Detalle Retro de un tiempo de 16.25 con +2 y diagrama 2D">
 </p>
 
-La lista muestra el resultado, la fecha y hora (`dd/MM/aa HH:mm`) y hasta dos líneas del scramble de cada resolución de la sesión activa. Empieza por los registros más recientes. El botón de orden permite alternar entre fecha, menor tiempo y mayor tiempo. El orden por tiempo usa el valor con **+2** aplicado y trata el **DNF** como peor que cualquier tiempo válido.
+La lista muestra el resultado, la fecha y hora (`dd/MM/aa HH:mm`) y hasta dos líneas del scramble de cada resolución de la sesión activa. Empieza por los registros más recientes. El botón de orden permite alternar entre fecha, menor tiempo y mayor tiempo. El orden por tiempo usa el valor con **+2** aplicado y trata el **DNF** como peor que cualquier tiempo válido. La lista conserva el orden al registrar, borrar o penalizar y al volver a la pestaña.
 
-Mantén pulsada una fila para ver el tiempo, la fecha, el scramble completo y el diagrama. En el selector inferior, **DNF** invalida la resolución, **+2** suma dos segundos y el icono de verificación quita la penalización. Puedes borrar la resolución desde el mismo panel. La papelera de la barra superior pide confirmación para vaciar el historial de la sesión activa.
+Mantén pulsada una fila para ver el tiempo, la fecha, el scramble completo y el diagrama. En el selector inferior, **DNF** invalida la resolución, **+2** suma dos segundos y el icono de verificación quita la penalización. Puedes borrar la resolución desde el mismo panel. Si era el resultado que mostraba el cronómetro, este vuelve a `0.00`. La papelera de la barra superior pide confirmación para vaciar el historial de la sesión activa.
 
 ### Estadísticas
 
 <p align="center">
-  <img src="Capturas/Documentacion/estadisticas.png" width="250" alt="Estadísticas con 18 resoluciones, resumen y promedios actuales">
-  <img src="Capturas/Documentacion/records.png" width="250" alt="Récords personales por tamaño de ventana y comienzo de la gráfica de progreso">
+  <img src="Capturas/Documentacion/estadisticas.png" width="195" alt="Estadísticas Clásicas con 18 resoluciones y promedios actuales">
+  <img src="Capturas/Documentacion/retro-estadisticas.png" width="195" alt="Resumen y promedios actuales en Retro">
+  <img src="Capturas/Documentacion/retro-promedio.png" width="195" alt="Desglose de las tres resoluciones que componen Mo3">
 </p>
 
 | Bloque | Qué muestra |
@@ -65,11 +86,12 @@ Los detalles de los promedios presentan todas las resoluciones de la ventana de 
 ### Sesiones
 
 <p align="center">
-  <img src="Capturas/Documentacion/sesiones.png" width="250" alt="Sesiones con iconos de 3×3, 2×2, 7×7, Pyraminx y Square-1">
-  <img src="Capturas/Documentacion/nueva-sesion.png" width="250" alt="Formulario de nueva sesión con nombre e iconos de los diez puzzles">
+  <img src="Capturas/Documentacion/sesiones.png" width="195" alt="Lista de sesiones en Clásico con iconos de cada puzzle">
+  <img src="Capturas/Documentacion/retro-sesiones.png" width="195" alt="Lista de sesiones en Retro con su número de resoluciones">
+  <img src="Capturas/Documentacion/retro-nueva-sesion.png" width="195" alt="Formulario Retro para crear una sesión y elegir el evento">
 </p>
 
-Toca una fila para activarla. La marca de verificación identifica la sesión activa. Para agregar una, toca **+**, escribe un nombre de hasta diez caracteres y elige el puzzle. En los puzzles con variantes puedes elegir el evento correspondiente. Los espacios en los extremos del nombre se quitan al guardar. Cada fila usa el icono del puzzle de su categoría.
+Toca una fila para activarla. La marca de verificación en Clásico y la etiqueta **ACTIVA** en Retro identifican la sesión elegida. Para agregar una, toca **+**, escribe un nombre de hasta diez caracteres y elige el puzzle. En los puzzles con variantes puedes elegir el evento correspondiente. Los espacios en los extremos del nombre se quitan al guardar. Cada fila usa el icono de su puzzle. Las sesiones tienen un identificador propio, así que el historial permanece separado aunque coincidan el nombre y la categoría.
 
 Mantén pulsada una fila para acceder a la opción de eliminar. La app mantiene al menos una sesión y elige una disponible si eliminas la activa.
 
@@ -107,25 +129,26 @@ Para un récord personal (PB), la app recorre todas las ventanas consecutivas de
 ## Ajustes
 
 <p align="center">
-  <img src="Capturas/Documentacion/ajustes.png" width="250" alt="Secciones Apariencia y Texto con el tema Noche y la vista previa del scramble">
   <img src="Capturas/Documentacion/fuentes.png" width="250" alt="Selector emergente de fuentes del scramble con muestras en cada fila">
 </p>
 
 | Sección | Control | Comportamiento |
 | --- | --- | --- |
 | **Apariencia** | Tema del sistema | Sigue la preferencia clara u oscura del iPhone. Viene activado. |
-| **Apariencia** | Tema de la app | Permite elegir uno de 16 temas cuando el modo del sistema está desactivado. |
-| **Texto** | Mostrar scramble | Viene activado. Al desactivarlo, lleva la secuencia al panel del diagrama. |
-| **Texto** | Fuente del scramble | Selector emergente con 15 opciones y vista previa. Predeterminado usa los caracteres monoespaciados del sistema. |
+| **Apariencia** | Diseño de la app | Cambia entre Clásico y Retro con dos tarjetas ilustradas. |
+| **Apariencia** | Tema de la app | En Clásico, permite elegir uno de 16 temas cuando el modo del sistema está apagado. |
+| **Apariencia** | Apariencia Retro | Permite elegir Claro u Oscuro cuando Retro está activo y el modo del sistema está apagado. |
+| **Texto** | Mostrar scramble | Viene activado. Al desactivarlo, mueve los tiempos recientes arriba y lleva la secuencia al panel del diagrama. |
+| **Texto** | Fuente del scramble | Selector con 15 opciones y vista previa. Predeterminado usa los caracteres monoespaciados del sistema. |
 | **Texto** | Tamaño del scramble | Pequeño, Mediano o Grande. Sus bases son 15, 19 y 24 pt, y se reducen para puzzles con scrambles largos. Predeterminado es Mediano. |
-| **Temporizador** | Fuente del timer | Selector independiente con 15 opciones y vista previa. Predeterminado usa la fuente redondeada del sistema. |
+| **Temporizador** | Fuente del timer | Selector independiente con 15 opciones y vista previa. Predeterminado usa la fuente redondeada del sistema en Clásico y monoespaciada en Retro. |
 | **Temporizador** | Tamaño del timer | De 40 a 100 pt, en pasos de 1 pt. Predeterminado es 70 pt. |
 | **Temporizador** | Mantener para iniciar | Activa la pulsación prolongada. Viene activado. |
 | **Temporizador** | Tiempo de espera | De 0.3 a 1.5 s, en pasos de 0.1 s. Predeterminado es 0.5 s. |
 | **Temporizador** | Color al estar listo | Verde, azul, amarillo, naranja o morado. Predeterminado es amarillo, con un tono distinto según el modo claro u oscuro. |
 | **Acerca de** | Restablecer ajustes | Restaura las preferencias de texto y temporizador y los controles de vista previa. Conserva las sesiones y el tema. |
 
-Los temas disponibles son **Claro**, **Oscuro**, **Noche**, **Bosque**, **Atardecer**, **Cósmico**, **Océano**, **Arena**, **Glaciar**, **Lavanda**, **Aurora**, **Eclipse**, **Sakura**, **Menta**, **Grafito** y **Volcán**. Cada paleta define fondos, texto, acento y colores de contraste para controles como **Crear sesión**. Las fuentes con nombre usan variantes disponibles en iOS y recurren a una fuente del sistema si la variante solicitada falta. El catálogo y sus valores están en [TemaApp.swift](Ajustes/TemaApp.swift) y [AjustesModelo.swift](Ajustes/AjustesModelo.swift).
+Los temas de Clásico son **Claro**, **Oscuro**, **Noche**, **Bosque**, **Atardecer**, **Cósmico**, **Océano**, **Arena**, **Glaciar**, **Lavanda**, **Aurora**, **Eclipse**, **Sakura**, **Menta**, **Grafito** y **Volcán**. Cada paleta define fondos, texto, acento y colores de contraste para controles como **Crear sesión**. Las fuentes con nombre usan variantes disponibles en iOS y recurren a una fuente del sistema si la variante solicitada falta. El catálogo y sus valores están en [TemaApp.swift](Ajustes/TemaApp.swift) y [AjustesModelo.swift](Ajustes/AjustesModelo.swift).
 
 <details>
 <summary>Fuentes disponibles en cada selector</summary>
@@ -146,14 +169,14 @@ flowchart LR
     G["ScrambleService y TNoodle"] --> C
     C --> D["Sesión activa y resoluciones"]
     D --> E["UserDefaults"]
-    D --> F["Cronómetro, Tiempos y Estadísticas"]
+    D --> F["Vistas Clásicas y Retro"]
     H["Ajustes y UserDefaults"] --> B
     D --> I["Visor local del scramble"]
 ```
 
-1. [TimeCuber.swift](TimeCuber/TimeCuber.swift) abre [ContentView.swift](TimeCuber/ContentView.swift) en un `WindowGroup`. La raíz crea una instancia de `RubikViewModel` con `@StateObject`, configura la barra de cinco pestañas y aplica el tema mediante el entorno de SwiftUI.
-2. [TimerAreaView](Cronometro/TimerAreaView.swift%20.swift) lleva el estado visual de listo con `@GestureState`. Durante la medición, `TimelineView` actualiza los dígitos con la diferencia entre la hora actual y la hora de inicio. La vista desactiva el apagado automático de la pantalla mientras está presente.
-3. Al detener, [RubikViewModel](TimeCuber/RubikAppViewModel.swift) mide la duración definitiva, descarta intentos inferiores a 0.01 s y asocia el valor al scramble y la categoría vigentes. Agrega la resolución a la sesión, guarda el historial, actualiza las listas y solicita el siguiente scramble.
+1. [TimeCuber.swift](TimeCuber/TimeCuber.swift) abre [ContentView.swift](TimeCuber/ContentView.swift) en un `WindowGroup`. La raíz crea una instancia de `RubikViewModel` con `@StateObject`, elige entre la barra de pestañas nativa de Clásico y `RetroContenedor`. Mantiene el mismo modelo y la pestaña seleccionada al cambiar de diseño.
+2. [SuperficieCronometro](Cronometro/TimerAreaView.swift%20.swift) comparte los gestos entre ambos diseños. Lleva el estado visual de listo con `@GestureState` y bloquea el inicio mientras el scramble no está disponible. Durante la medición, `TimelineView` actualiza los dígitos con la diferencia entre la hora actual y la hora de inicio. La vista desactiva el apagado automático de la pantalla mientras está presente.
+3. Al detener, [RubikViewModel](TimeCuber/RubikAppViewModel.swift) mide la duración definitiva, descarta intentos inferiores a 0.01 s y requiere un scramble listo antes de registrar su tiempo y categoría. Agrega la resolución a la sesión, guarda el historial, actualiza las listas y solicita el siguiente scramble.
 4. Al modificar una penalización, el modelo localiza la resolución por UUID dentro de la sesión activa y guarda el cambio. Las vistas observan el mismo `ObservableObject` de `@MainActor` y vuelven a obtener sus métricas a partir de los datos publicados.
 5. Los controles funcionales de Ajustes se enlazan con `@AppStorage`. Los controles provisionales viven en un `AjustesEstado` observable, con enlazado local mediante `@Bindable`.
 
@@ -162,6 +185,7 @@ flowchart LR
 | Ruta | Responsabilidad |
 | --- | --- |
 | [TimeCuber/](TimeCuber/) | Entrada de la app, navegación, estado compartido, modelos, assets y recursos del visor. |
+| [Retro/](Retro/) | Interfaz Retro, navegación animada y componentes visuales de sus cinco pestañas. |
 | [Cronometro/](Cronometro/) | Medición, gestos, panel de scramble, resultados recientes y promedios rápidos. |
 | [ListaTiempos/](ListaTiempos/) | Ordenamiento y presentación del historial, detalle, penalización y eliminación. |
 | [Estadisticas/](Estadisticas/) | Resumen, promedios actuales, récords y gráfica de progreso. |
@@ -179,10 +203,13 @@ flowchart LR
 | --- | --- |
 | `savedSesiones` | Arreglo de sesiones codificado como JSON en un valor `Data`, con fechas ISO 8601. |
 | `sesionSeleccionadaID` | UUID de la sesión activa. Si falta, se intenta migrar la selección anterior desde `categoriaSeleccionada` y `nombreSeleccionada`. |
-| `temaApp`, `temaDelSistema` | Identificador del tema personalizado y preferencia de seguir el tema del sistema. |
+| `temaApp`, `temaDelSistema` | Tema personalizado de Clásico y preferencia de seguir la apariencia del sistema. |
+| `modoRetro`, `modoRetroOscuro` | Diseño activo y variante manual de Retro. |
 | `mantenerParaIniciar`, `tiempoEspera`, `colorListo` | Modo de inicio, duración de la pulsación y señal visual. |
 | `mostrarScramble`, `tamanoScramble`, `fuenteScramble` | Visibilidad, tamaño y tipografía del scramble. |
 | `tamanoTimer`, `fuenteTimer` | Tamaño y tipografía de los dígitos del cronómetro. |
+
+Los cambios de historial operan sobre la sesión activa por UUID. La lista de Tiempos aplica un criterio de orden común al registrar, borrar, penalizar o actualizar su vista.
 
 Las sesiones iniciales son `Standard` (3×3), `Standard2` (2×2), `Standard4` (4×4), `Standard3` (5×5) y `Standard6` (5×5). Se usan cuando falta el historial guardado o falla su decodificación. El almacenamiento es local al contenedor de la app. Los cambios de penalización, el registro y la eliminación de resoluciones actualizan el historial persistido.
 
@@ -213,13 +240,13 @@ Las sesiones iniciales son `Standard` (3×3), `Standard2` (2×2), `Standard4` (4
 
 [ImagenScrambleView](Funciones/Scramble/ImagenScrambleView.swift) usa un `WKWebView` sin desplazamiento. [ScrambleEngine](Funciones/Scramble/ScrambleEngine.swift) arranca y reutiliza un servidor HTTP que sirve el paquete de recursos en una dirección local `127.0.0.1` y un puerto dinámico. Así WebKit puede cargar los módulos JavaScript empaquetados mediante HTTP local. [viewer.html](TimeCuber/ScrambleEngine/viewer.html) recibe el identificador del puzzle y la secuencia desde Swift y configura el `TwistyPlayer` 2D de cubing.js.
 
-Si el visor tarda demasiado o falla al cargar, muestra un aviso y ofrece **Reintentar**. El detalle de un tiempo reconstruye el diagrama a partir de la categoría y el texto del scramble almacenados con la resolución. El historial conserva la información necesaria para volver a dibujarlo sin almacenar imágenes por separado ni solicitar recursos a un servidor externo.
+El estado pasa de carga a listo cuando JavaScript valida la secuencia y obtiene el patrón y los recursos 2D. Si la navegación falla, WebKit termina su proceso o se supera el límite de carga, aparece **Reintentar** y se crea una vista nueva. Un fallo de navegación también invalida el puerto local que falló. El detalle de un tiempo reconstruye el diagrama a partir de la categoría y el texto del scramble almacenados con la resolución. El historial conserva la información necesaria para volver a dibujarlo sin almacenar imágenes por separado ni solicitar recursos a un servidor externo.
 
 ## Compilación y mantenimiento
 
 ### Ejecutar la app
 
-Abre [TimerV3.xcodeproj](TimerV3.xcodeproj) con Xcode compatible con Swift 6. Selecciona el esquema **TimerV3** y un iPhone con iOS 17.4 o posterior. El framework incluido tiene variantes ARM64 para dispositivo y simulador. En Mac con Apple Silicon puedes compilar para el simulador desde la terminal.
+Abre [TimerV3.xcodeproj](TimerV3.xcodeproj) con Xcode compatible con Swift 6 y el SDK de iOS 26 o posterior. Selecciona el esquema **TimerV3** y un iPhone con iOS 17.4 o posterior. El framework incluido tiene variantes ARM64 para dispositivo y simulador. En Mac con Apple Silicon puedes compilar para el simulador desde la terminal.
 
 ```bash
 xcodebuild -project TimerV3.xcodeproj -scheme TimerV3 \
@@ -248,5 +275,7 @@ El proyecto contiene el target de la app. Las capturas del informe se obtuvieron
 ## Alcance y limitaciones actuales
 
 - La app conserva los tiempos y ajustes en el dispositivo. iCloud y la transferencia JSON están pendientes de integración, junto con los controles de cronómetro indicados en [Ajustes](#ajustes).
+- La protección del historial ante un fallo de decodificación está pendiente. Si ocurre, el modelo carga sesiones iniciales y una escritura posterior puede reemplazar los datos ilegibles.
+- El cronómetro mide la duración con la hora del sistema. Cambiar esa hora durante una resolución puede alterar el resultado.
 - El criterio de orden de Tiempos se conserva durante la ejecución. Al volver a abrir la app, se inicia por fecha.
 - El recorte de AoN elimina una resolución por extremo también en ventanas grandes como Ao100 y Ao1000. El mismo criterio se aplica a sus récords personales.
