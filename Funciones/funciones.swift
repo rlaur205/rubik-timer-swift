@@ -64,47 +64,13 @@ func convertirAHoras(_ horaTexto: String) -> Double {
 }
 
 
-
-
-func ordenarLista(_ lista: [Tiempo]) -> [Tiempo] {
-    lista.sorted { ($0.segundosValidos ?? .infinity) < ($1.segundosValidos ?? .infinity) }
-}
-
-func obtenerTiemposRecorrer(categoria: String, nombreCategoria: String, listaSesiones: [Sesion]) -> [Tiempo] {
-    var tiempos: [Tiempo] = []  // Inicializamos como array vacío
-    
-    // Recorremos las sesiones
-    for sesion in listaSesiones {
-        if sesion.nombre == nombreCategoria && sesion.categoria == categoria {
-            tiempos = sesion.tiempos
-            break
-        }
-    }
-    
-    return tiempos
-}
-
-
-func obtenerSesionActual(categoria: String, nombreCategoria: String, listaSesiones: [Sesion]) -> Sesion {
-
-    var sesionActual: Sesion = Sesion(tiempos: [], nombre: "", categoria: "")
-    
-    for sesion in listaSesiones {
-        if sesion.nombre == nombreCategoria && sesion.categoria == categoria {
-            sesionActual = sesion
-            break
-        }
-    }
-    
-    return sesionActual
-}
-
-func ordentiemposMostrar(orden: Orden, catSele: String, nomSele: String, tPrincipal: [Sesion]) -> [Tiempo] {
-    if orden == .fecha {
-        return obtenerTiemposRecorrer(categoria: catSele, nombreCategoria: nomSele, listaSesiones: tPrincipal).reversed()
-    } else if orden == .ascendente {
-        return ordenarLista(obtenerTiemposRecorrer(categoria: catSele, nombreCategoria: nomSele, listaSesiones: tPrincipal))
-    } else {
-        return ordenarLista(obtenerTiemposRecorrer(categoria: catSele, nombreCategoria: nomSele, listaSesiones: tPrincipal)).reversed()
+func ordenarTiempos(_ tiempos: [Tiempo], por orden: Orden) -> [Tiempo] {
+    switch orden {
+    case .fecha:
+        return tiempos.reversed()
+    case .ascendente:
+        return tiempos.sorted { ($0.segundosValidos ?? .infinity) < ($1.segundosValidos ?? .infinity) }
+    case .descendente:
+        return ordenarTiempos(tiempos, por: .ascendente).reversed()
     }
 }

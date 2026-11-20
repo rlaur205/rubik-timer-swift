@@ -35,13 +35,28 @@
 
     window.__setScramble = async function (puzzle, alg) {
         await window.__listo;
-        if (window.__aplicarScramble) {
-            window.__aplicarScramble(puzzle, alg);
+        if (!window.__aplicarScramble) {
+            throw new Error(window.__errorVisor || "El visor no está disponible.");
         }
+
+        window.__aplicarScramble(puzzle, alg);
+        const modelo = document.querySelector("twisty-player").experimentalModel;
+        const { issues } = await modelo.puzzleSetupAlg.get();
+        if (issues.errors.length) {
+            throw new Error(issues.errors.join("\n"));
+        }
+
+        // El setter solo encola el cambio. Comprueba el modelo y los recursos 2D.
+        const loader = await modelo.puzzleLoader.get();
+        await Promise.all([loader.svg(), modelo.legacyPosition.get()]);
+        return true;
     };
 </script>
 <script type="module">
-    import "./viewer.js";
+    import("./viewer.js").catch(function (error) {
+        window.__errorVisor = String(error);
+        window.__listoResolve();
+    });
 </script>
 </body>
 </html>

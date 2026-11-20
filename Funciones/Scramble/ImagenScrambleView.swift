@@ -1,19 +1,71 @@
 import SwiftUI
 import WebKit
 
-/// Diagrama 2D del scramble, dibujado con el `TwistyPlayer` de cubing.js dentro de
-/// un `WKWebView` transparente y sin interacción.
-///
-/// La página del visor se sirve desde el servidor local de `ScrambleEngine`; si ese
-/// servidor no arranca, simplemente no se dibuja nada. Los scrambles los genera
-/// TNoodle en el propio dispositivo (ver `TNoodleScrambler`).
-struct ImagenScrambleView: UIViewRepresentable {
-
+struct ImagenScrambleView: View {
     let scramble: String
     let categoria: String
 
+    var body: some View {
+        let solicitud = SolicitudDiagrama(scramble: scramble, categoria: categoria)
+        VisorDiagrama(solicitud: solicitud)
+            .id(solicitud)
+    }
+}
+
+private struct SolicitudDiagrama: Hashable {
+    let scramble: String
+    let categoria: String
+}
+
+private enum EstadoDiagrama {
+    case cargando
+    case listo
+    case error
+}
+
+private struct VisorDiagrama: View {
+    let solicitud: SolicitudDiagrama
+    @State private var estado: EstadoDiagrama = .cargando
+    @State private var intento = 0
+
+    var body: some View {
+        ZStack {
+            DiagramaWeb(solicitud: solicitud, cambiarEstado: { estado = $0 })
+                .id(intento)
+                .opacity(estado == .listo ? 1 : 0)
+                .accessibilityHidden(estado != .listo)
+                .accessibilityLabel("Diagrama del scramble")
+                .accessibilityIdentifier("diagrama-scramble")
+
+            switch estado {
+            case .cargando:
+                ProgressView("Cargando diagrama…").font(.subheadline)
+            case .listo:
+                EmptyView()
+            case .error:
+                VStack(spacing: 8) {
+                    Text("No se pudo cargar el diagrama.")
+                        .font(.subheadline)
+                        .multilineTextAlignment(.center)
+                    Button("Reintentar") {
+                        estado = .cargando
+                        intento += 1
+                    }
+                    .buttonStyle(.bordered)
+                    .accessibilityIdentifier("reintentar-diagrama")
+                }
+                .padding(8)
+            }
+        }
+    }
+}
+
+private struct DiagramaWeb: UIViewRepresentable {
+    let solicitud: SolicitudDiagrama
+    let cambiarEstado: (EstadoDiagrama) -> Void
+
     func makeCoordinator() -> Coordinador {
-        Coordinador()
+        Coordinador(solicitud: solicitud, cambiarEstado: cambiarEstado)
     }
 
     func makeUIView(context: Context) -> WKWebView {
@@ -29,119 +81,111 @@ struct ImagenScrambleView: UIViewRepresentable {
         vista.scrollView.backgroundColor = .clear
         vista.scrollView.contentInsetAdjustmentBehavior = .never
         vista.navigationDelegate = context.coordinator
-
-        context.coordinator.configurar(vista)
+        context.coordinator.cargar(en: vista)
         return vista
     }
 
-    func updateUIView(_ webView: WKWebView, context: Context) {
-        context.coordinator.mostrar(scramble: scramble, categoria: categoria)
-    }
-}
+    func updateUIView(_ webView: WKWebView, context: Context) {}
 
-extension ImagenScrambleView {
+    static func dismantleUIView(_ webView: WKWebView, coordinator: Coordinador) {
+        coordinator.cancelar()
+        webView.navigationDelegate = nil
+        webView.stopLoading()
+    }
 
     @MainActor
     final class Coordinador: NSObject, WKNavigationDelegate {
+        private let solicitud: SolicitudDiagrama
+        private let cambiarEstado: (EstadoDiagrama) -> Void
+        private var tarea: Task<Void, Never>?
+        private var limite: Task<Void, Never>?
+        private var navegacion: WKNavigation?
+        private var url: URL?
 
-        private weak var webView: WKWebView?
-        private var cargando = false
-        private var paginaLista = false
-        private var pendiente: (puzzle: String, alg: String)?
-        private var aplicadoPuzzle: String?
-        private var aplicadoAlg: String?
-
-        func configurar(_ webView: WKWebView) {
-            self.webView = webView
+        init(solicitud: SolicitudDiagrama, cambiarEstado: @escaping (EstadoDiagrama) -> Void) {
+            self.solicitud = solicitud
+            self.cambiarEstado = cambiarEstado
         }
 
-        /// Guarda el scramble y lo pinta cuando la página esté lista.
-        func mostrar(scramble: String, categoria: String) {
-            guard let puzzle = Self.puzzle(para: categoria), !scramble.isEmpty else {
-                return
+        func cargar(en vista: WKWebView) {
+            limite = Task { [weak self, weak vista] in
+                do { try await Task.sleep(for: .seconds(12)) } catch { return }
+                guard let self, let vista else { return }
+                if navegacion != nil, let url { ScrambleEngine.shared.invalidarServidorVisor(en: url) }
+                finalizar(.error)
+                vista.stopLoading()
             }
 
-            pendiente = (puzzle: puzzle, alg: scramble)
-            cargarSiHaceFalta()
-            aplicarPendiente()
-        }
-
-        // MARK: - Carga
-
-        private func cargarSiHaceFalta() {
-            guard webView != nil, !cargando, !paginaLista else { return }
-            cargando = true
-
-            Task { @MainActor in
-                // `viewerURL()` arranca el motor si aún no estaba listo, así que
-                // puede tardar un poco. Reintentamos por si el motor se reconstruye.
-                for intento in 0..<3 {
-                    if let url = try? await ScrambleEngine.shared.viewerURL() {
-                        webView?.load(URLRequest(url: url))
-                        return
-                    }
-
-                    cargando = false
-                    if intento < 2 {
-                        try? await Task.sleep(nanoseconds: 2_000_000_000)
-                        cargando = true
-                    }
+            tarea = Task { [weak self, weak vista] in
+                do {
+                    let url = try await ScrambleEngine.shared.viewerURL()
+                    guard !Task.isCancelled, let self, let vista else { return }
+                    self.url = url
+                    navegacion = vista.load(URLRequest(url: url))
+                    if navegacion == nil { finalizar(.error) }
+                } catch {
+                    if !Task.isCancelled { self?.finalizar(.error) }
                 }
-
-                cargando = false
             }
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            paginaLista = true
-            cargando = false
-            #if DEBUG
-            NSLog("[Scramble] visor cargado")
-            #endif
-            aplicarPendiente()
-        }
+            guard let navegacion, navegacion === navigation else { return }
+            self.navegacion = nil
+            guard let puzzle = Self.puzzle(para: solicitud.categoria) else {
+                finalizar(.error)
+                return
+            }
 
-        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-            #if DEBUG
-            NSLog("[Scramble] visor fallo: \(error.localizedDescription)")
-            #endif
-        }
-
-        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-            #if DEBUG
-            NSLog("[Scramble] visor fallo provisional: \(error.localizedDescription)")
-            #endif
-        }
-
-        // MARK: - Dibujo
-
-        private func aplicarPendiente() {
-            guard paginaLista, let webView, let pendiente else { return }
-            guard aplicadoPuzzle != pendiente.puzzle || aplicadoAlg != pendiente.alg else { return }
-
-            aplicadoPuzzle = pendiente.puzzle
-            aplicadoAlg = pendiente.alg
-
-            Task { @MainActor in
+            let alg = solicitud.scramble
+            tarea = Task { [weak self, weak webView] in
+                guard let webView else { return }
                 do {
-                    _ = try await webView.callAsyncJavaScript(
+                    let resultado = try await webView.callAsyncJavaScript(
                         "return await window.__setScramble(puzzle, alg);",
-                        arguments: ["puzzle": pendiente.puzzle, "alg": pendiente.alg],
+                        arguments: ["puzzle": puzzle, "alg": alg],
                         in: nil,
                         contentWorld: .page
                     )
-                    #if DEBUG
-                    NSLog("[Scramble] visor pintado \(pendiente.puzzle)")
-                    #endif
+                    if !Task.isCancelled {
+                        self?.finalizar((resultado as? Bool) == true ? .listo : .error)
+                    }
                 } catch {
-                    #if DEBUG
-                    NSLog("[Scramble] visor error al pintar: \(error.localizedDescription)")
-                    #endif
+                    if !Task.isCancelled { self?.finalizar(.error) }
                 }
             }
         }
 
-        // MARK: - Categorías
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            falloNavegacion(navigation)
+        }
+
+        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            falloNavegacion(navigation)
+        }
+
+        func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+            finalizar(.error)
+        }
+
+        private func falloNavegacion(_ navigation: WKNavigation?) {
+            guard let navegacion, navegacion === navigation else { return }
+            if let url { ScrambleEngine.shared.invalidarServidorVisor(en: url) }
+            finalizar(.error)
+        }
+
+        private func finalizar(_ estado: EstadoDiagrama) {
+            cancelar()
+            cambiarEstado(estado)
+        }
+
+        func cancelar() {
+            tarea?.cancel()
+            limite?.cancel()
+            tarea = nil
+            limite = nil
+            navegacion = nil
+        }
 
         /// Identificador de puzzle que entiende cubing.js.
         static func puzzle(para categoria: String) -> String? {

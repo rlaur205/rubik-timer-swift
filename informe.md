@@ -28,11 +28,12 @@ Las capturas se tomaron en un iPhone 15 simulado, con el tema **Noche** y datos 
 2. Lee la secuencia de movimientos. El botón del cubo abre el diagrama del estado que debe tener el puzzle después de aplicar el scramble.
 3. Con **Mantener para iniciar** activado, pulsa el área central hasta que los dígitos adopten el color de listo. Entonces suelta para empezar. Una pulsación breve deja el cronómetro en reposo. Si desactivas ese ajuste, un toque inicia la medición.
 4. Toca de nuevo para detener el cronómetro. La resolución válida se guarda con el scramble aplicado y se prepara el siguiente.
+   Si el scramble se está preparando, espera a que esté listo para iniciar. Si la generación falla, toca **Reintentar**.
 5. Con el cronómetro detenido, desliza el dedo hacia abajo por el área de los dígitos para abrir las opciones **DNF**, **+2** y **Sin penalización**. La acción afecta al último tiempo de la sesión y está disponible cuando hay al menos una resolución.
 
-La barra inferior muestra hasta cinco tiempos recientes. Al tocar el bloque de resumen puedes ver los promedios rápidos **Mo3**, **Ao5**, **Ao12** y **Ao50**. Durante una medición se ocultan el scramble, los controles de navegación y los indicadores de sesión. La papelera del cronómetro elimina el último tiempo de inmediato.
+La barra inferior muestra hasta cinco tiempos recientes. Al tocar el bloque de resumen puedes ver los promedios rápidos **Mo3**, **Ao5**, **Ao12** y **Ao50**. Durante una medición se ocultan el scramble, los controles de navegación y los indicadores de sesión. La papelera del cronómetro pide confirmación para eliminar el último tiempo.
 
-Con **Mostrar scramble** desactivado, arriba aparece el icono 2D de la categoría. El botón del cubo abre un panel con el texto completo y el diagrama juntos. La secuencia y el diagrama siguen disponibles desde ese panel.
+Con **Mostrar scramble** desactivado, los últimos cinco tiempos aparecen arriba en ambos diseños. El botón del cubo abre un panel con el texto completo y el diagrama juntos.
 
 ### Tiempos
 
@@ -70,7 +71,7 @@ Los detalles de los promedios presentan todas las resoluciones de la ventana de 
 
 Toca una fila para activarla. La marca de verificación identifica la sesión activa. Para agregar una, toca **+**, escribe un nombre de hasta diez caracteres y elige el puzzle. En los puzzles con variantes puedes elegir el evento correspondiente. Los espacios en los extremos del nombre se quitan al guardar. Cada fila usa el icono del puzzle de su categoría.
 
-Mantén pulsada una fila para acceder a la opción de eliminar. La app mantiene al menos una sesión y elige una disponible si eliminas la activa. El comportamiento de guardado de esta operación se detalla en [Alcance y limitaciones actuales](#alcance-y-limitaciones-actuales).
+Mantén pulsada una fila para acceder a la opción de eliminar. La app mantiene al menos una sesión y elige una disponible si eliminas la activa.
 
 ## Penalizaciones y cálculos
 
@@ -134,7 +135,7 @@ Los temas disponibles son **Claro**, **Oscuro**, **Noche**, **Bosque**, **Atarde
 
 </details>
 
-Otros controles están visibles con alcance limitado. **Idioma**, **Inspección de 15 s** y **Vibración** conservan su selección solo durante la ejecución y carecen de integración con el resto de la app. **Precisión** alterna entre dos y tres decimales solo en la vista previa. **Sincronizar con iCloud**, **Exportar** e **Importar** muestran un aviso de disponibilidad futura. La pantalla de licencias en Ajustes es provisional y el inventario está en [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+Otros controles están visibles con alcance limitado. **Idioma** e **Inspección de 15 s** conservan su selección solo durante la ejecución y carecen de integración con el resto de la app. **Sincronizar con iCloud**, **Exportar** e **Importar** muestran un aviso de disponibilidad futura. La pantalla de licencias en Ajustes es provisional y el inventario está en [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 ## Arquitectura y recorrido de una resolución
 
@@ -177,7 +178,7 @@ flowchart LR
 | Claves de `UserDefaults` | Datos |
 | --- | --- |
 | `savedSesiones` | Arreglo de sesiones codificado como JSON en un valor `Data`, con fechas ISO 8601. |
-| `categoriaSeleccionada`, `nombreSeleccionada` | Categoría y nombre de la sesión activa. Predeterminado es `3x3` y `Standard`. |
+| `sesionSeleccionadaID` | UUID de la sesión activa. Si falta, se intenta migrar la selección anterior desde `categoriaSeleccionada` y `nombreSeleccionada`. |
 | `temaApp`, `temaDelSistema` | Identificador del tema personalizado y preferencia de seguir el tema del sistema. |
 | `mantenerParaIniciar`, `tiempoEspera`, `colorListo` | Modo de inicio, duración de la pulsación y señal visual. |
 | `mostrarScramble`, `tamanoScramble`, `fuenteScramble` | Visibilidad, tamaño y tipografía del scramble. |
@@ -204,7 +205,7 @@ Las sesiones iniciales son `Standard` (3×3), `Standard2` (2×2), `Standard4` (4
 
 ### Motor local
 
-- [ScrambleService](Funciones/Scramble/ScrambleService.swift) mantiene en memoria una cola de hasta cinco scrambles por categoría. Realiza un calentamiento inicial de 2×2 y precarga la categoría activa. Al consumir un scramble, repone la cola en segundo plano y avisa al modelo si acaba de llegar el primer resultado de una cola vacía.
+- [ScrambleService](Funciones/Scramble/ScrambleService.swift) mantiene en memoria una cola de hasta cinco scrambles por categoría. Realiza un calentamiento inicial de 2×2 y precarga la categoría activa. Al consumir un scramble, repone la cola en segundo plano y avisa al modelo cuando llega el primer resultado de una cola vacía o falla la generación.
 - [TNoodleScrambler](Funciones/Scramble/TNoodleScrambler.swift) traduce cada categoría a un índice de TNoodle y llama a la biblioteca nativa. Cada llamada crea, usa y libera un aislamiento de GraalVM. Un bloqueo serializa las invocaciones. OH reutiliza 3×3, 3×3 BLD usa el generador sin inspección y las variantes BLD de 4×4 y 5×5 reutilizan su generador base.
 - [IconoPuzzle](Categorias/IconoPuzzle.swift) dibuja los iconos 2D de sesión mediante `Canvas`. Son siluetas fijas del tipo de puzzle. El visor, en cambio, dibuja el estado que produce un scramble concreto.
 
@@ -212,7 +213,7 @@ Las sesiones iniciales son `Standard` (3×3), `Standard2` (2×2), `Standard4` (4
 
 [ImagenScrambleView](Funciones/Scramble/ImagenScrambleView.swift) usa un `WKWebView` sin desplazamiento. [ScrambleEngine](Funciones/Scramble/ScrambleEngine.swift) arranca y reutiliza un servidor HTTP que sirve el paquete de recursos en una dirección local `127.0.0.1` y un puerto dinámico. Así WebKit puede cargar los módulos JavaScript empaquetados mediante HTTP local. [viewer.html](TimeCuber/ScrambleEngine/viewer.html) recibe el identificador del puzzle y la secuencia desde Swift y configura el `TwistyPlayer` 2D de cubing.js.
 
-El detalle de un tiempo reconstruye el diagrama a partir de la categoría y el texto del scramble almacenados con la resolución. El historial conserva la información necesaria para volver a dibujarlo sin almacenar imágenes por separado ni solicitar recursos a un servidor externo.
+Si el visor tarda demasiado o falla al cargar, muestra un aviso y ofrece **Reintentar**. El detalle de un tiempo reconstruye el diagrama a partir de la categoría y el texto del scramble almacenados con la resolución. El historial conserva la información necesaria para volver a dibujarlo sin almacenar imágenes por separado ni solicitar recursos a un servidor externo.
 
 ## Compilación y mantenimiento
 
@@ -247,7 +248,5 @@ El proyecto contiene el target de la app. Las capturas del informe se obtuvieron
 ## Alcance y limitaciones actuales
 
 - La app conserva los tiempos y ajustes en el dispositivo. iCloud y la transferencia JSON están pendientes de integración, junto con los controles de cronómetro indicados en [Ajustes](#ajustes).
-- Al eliminar una sesión, el modelo la quita de la lista en memoria. El cambio llega a `savedSesiones` con la siguiente operación que guarde el historial. Cerrar y volver a abrir antes de ese guardado puede hacer que reaparezca.
-- La selección persistida se resuelve por nombre y categoría. Si dos sesiones comparten ambos valores, el modelo encuentra la primera coincidencia.
-- El criterio de orden de Tiempos dura durante la ejecución. Algunas actualizaciones de la sesión reconstruyen el historial por fecha, incluida la navegación entre pestañas que lo recargan.
+- El criterio de orden de Tiempos se conserva durante la ejecución. Al volver a abrir la app, se inicia por fecha.
 - El recorte de AoN elimina una resolución por extremo también en ventanas grandes como Ao100 y Ao1000. El mismo criterio se aplica a sus récords personales.

@@ -5,7 +5,7 @@ struct SesionTimeView: View {
     let sesion: Sesion
     let eliminarTiempo: () -> Void
     @Environment(\.temaApp) private var temaApp
-    private var seleccionada: Bool { vm.idActual == sesion.id }
+    private var seleccionada: Bool { vm.sesionActual.id == sesion.id }
 
     var body: some View {
         Button {

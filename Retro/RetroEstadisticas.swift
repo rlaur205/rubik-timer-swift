@@ -139,7 +139,7 @@ struct RetroEstadisticas: View {
         }
         .padding(8)
         .frame(maxWidth: .infinity, minHeight: 55, alignment: .leading)
-        .cajaRetro(relieve: false, radio: 5)
+        .cajaRetro(relieve: false, radio: 10)
         .accessibilityElement(children: .combine)
     }
 

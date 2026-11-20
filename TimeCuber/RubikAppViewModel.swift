@@ -3,250 +3,196 @@ import SwiftUI
 
 @MainActor
 class RubikViewModel: ObservableObject {
-    
-    @Published var tiemposPrincipal: [Sesion] = []
-    @Published var sesionActual: Sesion = Sesion(tiempos: [], nombre: "", categoria: "")
-    @Published var tiemposRecorrer: [Tiempo] = []
-    @Published var scrambleActual: String = ""
-    @Published var idActual: UUID? = nil //id de la session actual
-    @Published var ordenActual = Orden.fecha
+    private static let claveHistorial = "savedSesiones"
+    private static let claveSesionSeleccionada = "sesionSeleccionadaID"
+
+    @Published private(set) var tiemposPrincipal: [Sesion]
+    @Published private(set) var sesionActual: Sesion
+    @Published private(set) var tiemposRecorrer: [Tiempo] = []
+    @Published private(set) var estadoScramble = EstadoScramble.preparando
+    @Published private(set) var ordenActual = Orden.fecha
     @Published private var idTiempoMostrado: UUID?
+
+    var scrambleActual: String {
+        if case .listo(let scramble) = estadoScramble { return scramble }
+        return ""
+    }
+
+    var scrambleListo: Bool {
+        if case .listo = estadoScramble { return true }
+        return false
+    }
 
     var resultadoCronometro: Tiempo? {
         guard let ultimo = sesionActual.tiempos.last, ultimo.id == idTiempoMostrado else { return nil }
         return ultimo
     }
-    
+
     @Published var timerState = TimerState(
         estaCorriendo: false,
         tiempoInicio: nil,
         tiempoTranscurrido: 0,
         visibilidadPromedios: false
     )
-    
-    @Published var categoriaSeleccionada: String = UserDefaults.standard.string(forKey: "categoriaSeleccionada") ?? "3x3" {
-        didSet {
-            // Cuando esta variable cambie, guardamos el nuevo valor en la memoria del teléfono
-            UserDefaults.standard.set(categoriaSeleccionada, forKey: "categoriaSeleccionada")
-            // Y vamos preparando scrambles de la nueva categoría en segundo plano
-            ScrambleService.shared.precargar(categoria: categoriaSeleccionada)
-        }
-    }
-        
-    @Published var nombreSeleccionada: String = UserDefaults.standard.string(forKey: "nombreSeleccionada") ?? "Standard" {
-        didSet {
-            // Lo mismo: si cambia el nombre, lo guardamos
-            UserDefaults.standard.set(nombreSeleccionada, forKey: "nombreSeleccionada")
-        }
-    }
-    
+
     init() {
-        cargarSesiones()
-        actualizarVista()
-        // Cuando el motor termine el primer scramble, lo mostramos si la pantalla
-        // sigue vacía (al arrancar la cola todavía está en marcha).
-        ScrambleService.shared.alPrimerScramble = { [weak self] categoria in
-            guard let self,
-                  self.scrambleActual.isEmpty,
-                  categoria == self.categoriaSeleccionada
-            else { return }
+        let sesionesGuardadas = Self.cargarSesiones()
+        let sesiones = sesionesGuardadas.flatMap { $0.isEmpty ? nil : $0 } ?? Self.sesionesIniciales()
+        tiemposPrincipal = sesiones
+        sesionActual = Self.recuperarSeleccion(en: sesiones) ?? sesiones[0]
 
-            self.scrambleActual = ScrambleService.shared.siguiente(categoria: categoria)
+        // Los UUID de las sesiones nuevas deben sobrevivir aunque aún no tengan tiempos.
+        if UserDefaults.standard.object(forKey: Self.claveHistorial) == nil || sesionesGuardadas?.isEmpty == true {
+            guardarSesiones()
         }
-        // Arranca el motor de scrambles y empieza a precargar en segundo plano
-        ScrambleService.shared.iniciar(categoria: categoriaSeleccionada)
+        guardarSeleccion()
+        actualizarVista()
+
+        ScrambleService.shared.alPrimerScramble = { [weak self] categoria in
+            guard let self, self.estadoScramble == .preparando,
+                  categoria == self.sesionActual.categoria else { return }
+            self.nuevoScramble()
+        }
+        ScrambleService.shared.alFallar = { [weak self] categoria in
+            guard let self, self.estadoScramble == .preparando,
+                  categoria == self.sesionActual.categoria else { return }
+            self.estadoScramble = .error
+        }
+        estadoScramble = ScrambleService.shared.iniciar(categoria: sesionActual.categoria)
     }
 
-    func guardarSesiones() {
+    private static func cargarSesiones() -> [Sesion]? {
+        guard let datos = UserDefaults.standard.data(forKey: claveHistorial) else { return nil }
+        let decodificador = JSONDecoder()
+        decodificador.dateDecodingStrategy = .iso8601
+        return try? decodificador.decode([Sesion].self, from: datos)
+    }
+
+    private static func sesionesIniciales() -> [Sesion] {
+        [
+            Sesion(tiempos: [], nombre: "Standard", categoria: "3x3"),
+            Sesion(tiempos: [], nombre: "Standard2", categoria: "2x2"),
+            Sesion(tiempos: [], nombre: "Standard4", categoria: "4x4"),
+            Sesion(tiempos: [], nombre: "Standard3", categoria: "5x5"),
+            Sesion(tiempos: [], nombre: "Standard6", categoria: "5x5")
+        ]
+    }
+
+    private static func recuperarSeleccion(en sesiones: [Sesion]) -> Sesion? {
+        let preferencias = UserDefaults.standard
+        if let valor = preferencias.string(forKey: claveSesionSeleccionada),
+           let id = UUID(uuidString: valor) {
+            return sesiones.first { $0.id == id }
+        }
+
+        // Las versiones anteriores guardaban únicamente el nombre y la categoría.
+        let nombre = preferencias.string(forKey: "nombreSeleccionada") ?? "Standard"
+        let categoria = preferencias.string(forKey: "categoriaSeleccionada") ?? "3x3"
+        return sesiones.first { $0.nombre == nombre && $0.categoria == categoria }
+    }
+
+    private func guardarSeleccion() {
+        UserDefaults.standard.set(sesionActual.id.uuidString, forKey: Self.claveSesionSeleccionada)
+    }
+
+    private func guardarSesiones() {
         let codificador = JSONEncoder()
         codificador.dateEncodingStrategy = .iso8601
-        
+
         do {
-            let datosCodificados = try codificador.encode(tiemposPrincipal)
-            
-            // CAMBIO 3: Guardamos "datosCodificados" en UserDefaults
-            UserDefaults.standard.set(datosCodificados, forKey: "savedSesiones")
-            
-            print("Sesiones guardadas exitosamente")
+            let datos = try codificador.encode(tiemposPrincipal)
+            UserDefaults.standard.set(datos, forKey: Self.claveHistorial)
         } catch {
             print("Error al guardar sesiones: \(error)")
         }
     }
 
-    func cargarSesiones() {
-        let decodificador = JSONDecoder()
-        decodificador.dateDecodingStrategy = .iso8601
+    private func actualizarTiempos() {
+        tiemposRecorrer = ordenarTiempos(sesionActual.tiempos, por: ordenActual)
+    }
 
-        if let datosGuardados = UserDefaults.standard.data(forKey: "savedSesiones"),
-           let datosDecodificados = try? decodificador.decode([Sesion].self, from: datosGuardados) {
-            
-            tiemposPrincipal = datosDecodificados
-            print("Sesiones cargadas exitosamente")
-            
-        } else {
-            print("No hay sesiones guardadas, cargando defaults")
-            tiemposPrincipal = [
-                Sesion(tiempos: [], nombre: "Standard", categoria: "3x3"),
-                Sesion(tiempos: [], nombre: "Standard2", categoria: "2x2"),
-                Sesion(tiempos: [], nombre: "Standard4", categoria: "4x4"),
-                Sesion(tiempos: [], nombre: "Standard3", categoria: "5x5"),
-                Sesion(tiempos: [], nombre: "Standard6", categoria: "5x5")
-            ]
-        }
-    }
-    
-    
-    // ESTA ES LA FUNCIÓN QUE CALCULA TODO
-    func actualizarVista() {
-        // 1. Calculamos la lista de tiempos a mostrar (usando TU función global)
-        tiemposRecorrer = obtenerTiemposRecorrer(
-            categoria: categoriaSeleccionada,
-            nombreCategoria: nombreSeleccionada,
-            listaSesiones: tiemposPrincipal
-        ).reversed()
-        
-        // 2. Buscamos la sesión actual (usando TU función global)
-        sesionActual = obtenerSesionActual(
-            categoria: categoriaSeleccionada,
-            nombreCategoria: nombreSeleccionada,
-            listaSesiones: tiemposPrincipal
-        )
-        
-        // 3. Actualizamos el ID para que la vista sepa cuál es
-        idActual = sesionActual.id
-        
-        // 4. Si no hay scramble (mezcla), generamos uno nuevo
-        if scrambleActual.isEmpty {
-            scrambleActual = ScrambleService.shared.siguiente(categoria: categoriaSeleccionada)
-        }
-    }
-    
-    
-    func eliminarTiempoSeleccionado(tiempo:Tiempo){
-        for index in tiemposPrincipal.indices {
-            if tiemposPrincipal[index].id == idActual {
-                tiemposPrincipal[index].tiempos.removeAll { $0.id == tiempo.id }
-                tiemposRecorrer = ordentiemposMostrar(orden: ordenActual, catSele: categoriaSeleccionada, nomSele: nombreSeleccionada, tPrincipal: tiemposPrincipal)
-                guardarSesiones()
-                return
-            }
-        }
-    }
-    
-    func eliminarTodosTiempos(){
-        tiemposRecorrer = []
-        for i in tiemposPrincipal{
-            if i.id == idActual{
-                i.tiempos = []
-            }
-        }
+    private func guardarCambiosSesionActual() {
+        actualizarTiempos()
         guardarSesiones()
+    }
+
+    func actualizarVista() {
+        actualizarTiempos()
+    }
+
+    func eliminarTiempoSeleccionado(tiempo: Tiempo) {
+        guard let indice = sesionActual.tiempos.firstIndex(where: { $0.id == tiempo.id }) else { return }
+        sesionActual.tiempos.remove(at: indice)
+        if idTiempoMostrado == tiempo.id {
+            limpiarResultadoCronometro()
+        }
+        guardarCambiosSesionActual()
+    }
+
+    func eliminarTodosTiempos() {
+        sesionActual.tiempos.removeAll()
+        limpiarResultadoCronometro()
+        guardarCambiosSesionActual()
     }
 
     func establecerPenalizacion(_ penalizacion: PenalizacionTiempo, tiempoID: UUID) {
-        guard let sesion = tiemposPrincipal.first(where: { $0.id == sesionActual.id }),
-              let indice = sesion.tiempos.firstIndex(where: { $0.id == tiempoID }) else { return }
+        guard let indice = sesionActual.tiempos.firstIndex(where: { $0.id == tiempoID }) else { return }
 
-        if sesion.tiempos.last?.id == tiempoID {
+        if sesionActual.tiempos.last?.id == tiempoID {
             idTiempoMostrado = tiempoID
         }
-        guard sesion.tiempos[indice].penalizacion != penalizacion else { return }
+        guard sesionActual.tiempos[indice].penalizacion != penalizacion else { return }
 
-        sesion.tiempos[indice].penalizacion = penalizacion
-        sesionActual = sesion
-        tiemposRecorrer = ordentiemposMostrar(
-            orden: ordenActual,
-            catSele: categoriaSeleccionada,
-            nomSele: nombreSeleccionada,
-            tPrincipal: tiemposPrincipal
-        )
-        guardarSesiones()
+        sesionActual.tiempos[indice].penalizacion = penalizacion
+        guardarCambiosSesionActual()
     }
-    
-    func cambiarOrden(_ orden: Orden){
-        
+
+    func cambiarOrden(_ orden: Orden) {
         ordenActual = orden
-        
-            tiemposRecorrer = ordentiemposMostrar(
-                orden: orden,
-                catSele: categoriaSeleccionada,
-                nomSele: nombreSeleccionada,
-                tPrincipal: tiemposPrincipal
-            )
-        }
-    
-    
+        actualizarTiempos()
+    }
+
     func registrarNuevoTiempo() {
-        
         if let inicio = timerState.tiempoInicio {
             timerState.tiempoTranscurrido = Date().timeIntervalSince(inicio)
-            }
-            
+        }
+
         timerState.tiempoInicio = nil
         idTiempoMostrado = nil
-        
-        guard timerState.tiempoTranscurrido >= 0.01 else { return }
-        
-        if let index = tiemposPrincipal.firstIndex(where: { $0.id == sesionActual.id }) {
-            let tiempo = Tiempo(
-                tiempo: timerState.tiempoTranscurrido,
-                scramble: scrambleActual,
-                fecha: Date(),
-                categoria: sesionActual.categoria
-            )
-            tiemposPrincipal[index].tiempos.append(tiempo)
-            idTiempoMostrado = tiempo.id
-            tiemposRecorrer = obtenerTiemposRecorrer(
-                categoria: sesionActual.categoria,
-                nombreCategoria: sesionActual.nombre,
-                listaSesiones: tiemposPrincipal
-            ).reversed()
-            sesionActual = tiemposPrincipal[index]
-            guardarSesiones()
-        }
-        scrambleActual = ScrambleService.shared.siguiente(categoria: sesionActual.categoria)
+        guard timerState.tiempoTranscurrido >= 0.01,
+              case .listo(let scramble) = estadoScramble else { return }
+
+        let tiempo = Tiempo(
+            tiempo: timerState.tiempoTranscurrido,
+            scramble: scramble,
+            fecha: Date(),
+            categoria: sesionActual.categoria
+        )
+        sesionActual.tiempos.append(tiempo)
+        idTiempoMostrado = tiempo.id
+        guardarCambiosSesionActual()
+        nuevoScramble()
     }
 
-    func borrarUltimoTiempo() {
-        
-        if !sesionActual.tiempos.isEmpty {
-            idTiempoMostrado = nil
-            timerState.estaCorriendo = false
-            timerState.tiempoTranscurrido = 0
-            
-            for i in tiemposPrincipal {
-                if i.id == sesionActual.id {
-                    if let index = tiemposPrincipal.firstIndex(where: { $0.id == sesionActual.id }) {
-                        tiemposPrincipal[index].tiempos.removeLast()
-                        
-                        // Forzar actualización de tiemposRecorrer
-                        tiemposRecorrer = obtenerTiemposRecorrer(
-                            categoria: sesionActual.categoria,
-                            nombreCategoria: sesionActual.nombre,
-                            listaSesiones: tiemposPrincipal
-                        ).reversed()
-                        
-                        sesionActual = tiemposPrincipal[index]
-                        
-                        guardarSesiones()
-                    }
-                    break
-                }
-            }
-            
-            scrambleActual = ScrambleService.shared.siguiente(categoria: sesionActual.categoria)
-            timerState.visibilidadPromedios = true
-
-        
-        }
+    func borrarUltimoTiempo(id: UUID) {
+        guard !timerState.estaCorriendo, sesionActual.tiempos.last?.id == id else { return }
+        sesionActual.tiempos.removeLast()
+        limpiarResultadoCronometro()
+        guardarCambiosSesionActual()
+        nuevoScramble()
+        timerState.visibilidadPromedios = true
     }
-    
+
+    private func limpiarResultadoCronometro() {
+        idTiempoMostrado = nil
+        if !timerState.estaCorriendo { timerState.tiempoTranscurrido = 0 }
+    }
+
     func seleccionarSesion(_ sesion: Sesion) {
-        idActual = sesion.id
-        nombreSeleccionada = sesion.nombre
-        categoriaSeleccionada = sesion.categoria
-        sesionActual = sesion
-        cambiarOrden(ordenActual)
+        guard let guardada = tiemposPrincipal.first(where: { $0.id == sesion.id }) else { return }
+        sesionActual = guardada
+        guardarSeleccion()
+        actualizarTiempos()
         nuevoScramble()
     }
 
@@ -262,15 +208,18 @@ class RubikViewModel: ObservableObject {
         guard tiemposPrincipal.count > 1,
               let index = tiemposPrincipal.firstIndex(where: { $0.id == sesionAEliminar.id }) else { return }
         tiemposPrincipal.remove(at: index)
-        if idActual == sesionAEliminar.id, let primeraSesion = tiemposPrincipal.first {
+        if sesionActual.id == sesionAEliminar.id, let primeraSesion = tiemposPrincipal.first {
             seleccionarSesion(primeraSesion)
         }
         guardarSesiones()
     }
 
-    func nuevoScramble() {
-        scrambleActual = ScrambleService.shared.siguiente(categoria: categoriaSeleccionada)
+    func reintentarScramble() {
+        guard estadoScramble == .error else { return }
+        nuevoScramble()
     }
 
-    
+    private func nuevoScramble() {
+        estadoScramble = ScrambleService.shared.siguiente(categoria: sesionActual.categoria)
+    }
 }

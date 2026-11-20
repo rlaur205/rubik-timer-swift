@@ -23,6 +23,7 @@ struct CronometroView: View {
     @State private var mostrarDiagrama = false
     @State private var mostrarPromedios = false
     @State private var mostrarPenalizacion = false
+    @State private var confirmarBorrado = false
 
     private var tamanoScrambleAjustado: CGFloat {
         tamanoScramble.tamanoFuenteAjustado(para: vm.sesionActual.categoria)
@@ -44,13 +45,15 @@ struct CronometroView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Eliminar último tiempo", systemImage: "trash", role: .destructive) {
-                        vm.borrarUltimoTiempo()
+                        confirmarBorrado = true
                     }
+                    .disabled(vm.sesionActual.tiempos.isEmpty)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(mostrarScramble ? "Ver diagrama" : "Ver scramble y diagrama", systemImage: "cube.transparent") {
-                        if !vm.scrambleActual.isEmpty { mostrarDiagrama = true }
+                        mostrarDiagrama = true
                     }
+                    .disabled(!vm.scrambleListo)
                     .popover(isPresented: $mostrarDiagrama, arrowEdge: .top) {
                         VStack(spacing: 16) {
                             if !mostrarScramble {
@@ -74,6 +77,12 @@ struct CronometroView: View {
             .toolbar(vm.timerState.estaCorriendo ? .hidden : .visible, for: .navigationBar, .tabBar)
             .toolbarBackground(temaApp.fondo, for: .navigationBar)
             .toolbarColorScheme(temaApp.colorScheme, for: .navigationBar)
+            .alert("¿Eliminar último tiempo?", isPresented: $confirmarBorrado, presenting: vm.sesionActual.tiempos.last) { tiempo in
+                Button("Eliminar", role: .destructive) { vm.borrarUltimoTiempo(id: tiempo.id) }
+                Button("Cancelar", role: .cancel) {}
+            } message: { tiempo in
+                Text("Se eliminará el tiempo \(tiempo.texto(largo: true)) de esta sesión.")
+            }
             .confirmationDialog(
                 "Penalización del último tiempo",
                 isPresented: $mostrarPenalizacion,
@@ -112,33 +121,12 @@ struct CronometroView: View {
     private var contenido: some View {
         VStack(spacing: 0) {
             if !vm.timerState.estaCorriendo {
-                Group {
-                    if !mostrarScramble {
-                        ZStack {
-                            IconoPuzzle(categoria: vm.sesionActual.categoria, size: 38)
-                                .foregroundStyle(temaApp.texto)
-                        }
-                        .accessibilityElement(children: .ignore)
-                        .accessibilityLabel(Text(vm.sesionActual.categoria))
-                        .accessibilityAddTraits(.isImage)
-                    } else if vm.scrambleActual.isEmpty {
-                        ProgressView("Preparando mezcla…").font(.subheadline)
-                    } else if mostrarPromedios && mezclaLarga {
-                        ScrollView {
-                            mezcla
-                        }
-                        .frame(height: 180)
-                        .scrollBounceBehavior(.basedOnSize)
-                    } else {
-                        mezcla
-                    }
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 16)
+                contenidoSuperior
             }
 
             TimerAreaView(
                 stateTimer: $vm.timerState,
+                puedeIniciar: vm.scrambleListo,
                 mantenerParaIniciar: mantenerParaIniciar,
                 tiempoEspera: AjustesInicioCronometro.esperaValida(tiempoEspera),
                 colorListo: colorListo.color,
@@ -152,10 +140,59 @@ struct CronometroView: View {
             .layoutPriority(1)
 
             if !vm.timerState.estaCorriendo {
-                EstadisticasCronometroView(vm: vm, mostrarPromedios: $mostrarPromedios)
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 16)
+                VStack(spacing: 18) {
+                    if mostrarScramble && !vm.sesionActual.tiempos.isEmpty {
+                        TiemposRecientesCronometro(tiempos: vm.sesionActual.tiempos)
+                    }
+                    EstadisticasCronometroView(vm: vm, mostrarPromedios: $mostrarPromedios)
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 16)
             }
+        }
+    }
+
+    @ViewBuilder
+    private var contenidoSuperior: some View {
+        if mostrarScramble {
+            Group {
+                if !vm.scrambleListo {
+                    avisoScramble
+                } else if mostrarPromedios && mezclaLarga {
+                    ScrollView {
+                        mezcla
+                    }
+                    .frame(height: 180)
+                    .scrollBounceBehavior(.basedOnSize)
+                } else {
+                    mezcla
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 16)
+        } else if !vm.sesionActual.tiempos.isEmpty || !vm.scrambleListo {
+            VStack(spacing: 10) {
+                if !vm.sesionActual.tiempos.isEmpty {
+                    TiemposRecientesCronometro(tiempos: vm.sesionActual.tiempos, agrupados: true)
+                }
+                if !vm.scrambleListo { avisoScramble }
+            }
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+        }
+    }
+
+    @ViewBuilder
+    private var avisoScramble: some View {
+        if vm.estadoScramble == .error {
+            VStack(spacing: 6) {
+                Text("No se pudo generar el scramble.").font(.subheadline)
+                Button("Reintentar", action: vm.reintentarScramble)
+                    .buttonStyle(.bordered)
+            }
+        } else {
+            ProgressView("Preparando mezcla…").font(.subheadline)
         }
     }
 

@@ -28,22 +28,27 @@ struct RetroContenedor: View {
     @State private var estadoAjustes = AjustesEstado()
     @Environment(\.colorScheme) private var esquema
     @Environment(\.accessibilityReduceMotion) private var reducirMovimiento
-    @Namespace private var indicador
 
     private var paleta: PaletaRetro { PaletaRetro(oscura: esquema == .dark) }
+    private let separacionPestanas: CGFloat = 2
 
     var body: some View {
-        VStack(spacing: 0) {
-            ZStack {
-                pantalla
-                    .id(pestana)
-                    .transition(.opacity)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        GeometryReader { espacio in
+            let zonaInferior = espacio.safeAreaInsets.bottom
+            VStack(spacing: 0) {
+                ZStack {
+                    pantalla
+                        .id(pestana)
+                        .transition(.opacity.combined(with: .offset(y: 9)))
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            if !vm.timerState.estaCorriendo {
-                barra
+                if !vm.timerState.estaCorriendo {
+                    barra
+                }
             }
+            .padding(.bottom, vm.timerState.estaCorriendo ? zonaInferior : max(8, zonaInferior - 14))
+            .ignoresSafeArea(.container, edges: .bottom)
         }
         .background(paleta.fondo.ignoresSafeArea())
         .foregroundStyle(paleta.texto)
@@ -62,26 +67,20 @@ struct RetroContenedor: View {
     }
 
     private var barra: some View {
-        HStack(spacing: 2) {
+        HStack(spacing: separacionPestanas) {
             ForEach(PestanaTimeCuber.allCases, id: \.self) { opcion in
                 let elegida = pestana == opcion
                 Button {
-                    withAnimation(reducirMovimiento ? nil : .snappy(duration: 0.32)) {
+                    withAnimation(reducirMovimiento ? nil : .spring(response: 0.40, dampingFraction: 0.78)) {
                         pestana = opcion
                     }
                 } label: {
                     Image(systemName: opcion.icono)
                         .font(.system(size: 21, weight: .bold))
-                        .scaleEffect(elegida ? 1.12 : 1)
+                        .scaleEffect(elegida && !reducirMovimiento ? 1.15 : 1)
+                        .offset(y: elegida && !reducirMovimiento ? -1 : 0)
                         .frame(maxWidth: .infinity)
                         .frame(height: 48)
-                        .background {
-                            if elegida {
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(paleta.lima)
-                                    .matchedGeometryEffect(id: "pestaña-activa", in: indicador)
-                            }
-                        }
                         .foregroundStyle(elegida ? paleta.tinta : paleta.texto)
                         .contentShape(Rectangle())
                 }
@@ -91,10 +90,22 @@ struct RetroContenedor: View {
                 .accessibilityIdentifier("retro-tab-\(opcion)")
             }
         }
+        .background {
+            GeometryReader { espacio in
+                let pestanas = PestanaTimeCuber.allCases
+                let ancho = (espacio.size.width - separacionPestanas * CGFloat(pestanas.count - 1)) / CGFloat(pestanas.count)
+                let indice = CGFloat(pestanas.firstIndex(of: pestana) ?? 0)
+                Capsule()
+                    .fill(paleta.lima)
+                    .frame(width: max(0, ancho), height: espacio.size.height)
+                    .offset(x: indice * (ancho + separacionPestanas))
+            }
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+        }
         .padding(4)
-        .cajaRetro()
+        .cajaRetro(radio: 28)
         .padding(.horizontal, 16)
         .padding(.top, 7)
-        .padding(.bottom, 8)
     }
 }

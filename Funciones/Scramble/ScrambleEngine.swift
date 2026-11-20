@@ -71,6 +71,13 @@ final class ScrambleEngine {
         return url
     }
 
+    func invalidarServidorVisor(en url: URL) {
+        guard let puerto, url.port == Int(puerto) else { return }
+        server?.cancel()
+        server = nil
+        self.puerto = nil
+    }
+
     private func servidorLocal() async throws -> UInt16 {
         if let puerto {
             return puerto

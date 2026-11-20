@@ -97,7 +97,7 @@ struct RetroAjustes: View {
                 set: { tamanoTimer = $0 }
             ), rango: AjustesInicioCronometro.rangoTamanoTimer, paso: 1, texto: "\(Int(tamanoTimer)) pt")
             botonFila("Fuente del timer", detalle: fuenteTimer.nombre) { panel = .fuenteTimer }
-            Text(estado.precision.ejemplo)
+            Text(AjustesInicioCronometro.ejemploTemporizador)
                 .font(fuenteTimer == .predeterminado
                       ? .system(size: AjustesInicioCronometro.tamanoTimerValido(tamanoTimer), weight: .black, design: .monospaced)
                       : fuenteTimer.font(tamano: AjustesInicioCronometro.tamanoTimerValido(tamanoTimer), pesoPredeterminado: .black))
@@ -116,8 +116,6 @@ struct RetroAjustes: View {
                 .disabled(!mantener)
                 .opacity(mantener ? 1 : 0.5)
             coloresListo
-            opciones("Precisión", valores: PrecisionAjuste.allCases, seleccion: $estado.precision) { $0.titulo }
-            Toggle("Vibración", isOn: $estado.vibracion)
         }
         .toggleStyle(InterruptorRetro())
     }
@@ -194,7 +192,7 @@ struct RetroAjustes: View {
                     .font(.footnote)
             }
         case .fuenteTimer:
-            selectorFuente("Fuente del timer", ejemplo: estado.precision.ejemplo, seleccion: $fuenteTimer)
+            selectorFuente("Fuente del timer", ejemplo: AjustesInicioCronometro.ejemploTemporizador, seleccion: $fuenteTimer)
         case .fuenteScramble:
             selectorFuente("Fuente del scramble", ejemplo: "R U2 F’", seleccion: $fuenteScramble)
         case .licencias:
@@ -316,14 +314,14 @@ private struct InterruptorRetro: ToggleStyle {
                 Spacer(minLength: 6)
                 HStack(spacing: 0) {
                     if configuration.isOn { Spacer(minLength: 0) }
-                    RoundedRectangle(cornerRadius: 4)
+                    RoundedRectangle(cornerRadius: 6)
                         .fill(configuration.isOn ? paleta.tinta : paleta.texto)
                         .frame(width: 17, height: 16)
                     if !configuration.isOn { Spacer(minLength: 0) }
                 }
                 .padding(4)
                 .frame(width: 48, height: 25)
-                .cajaRetro(configuration.isOn ? paleta.lima : nil, relieve: false, radio: 7)
+                .cajaRetro(configuration.isOn ? paleta.lima : nil, relieve: false, radio: 12)
             }
             .frame(minHeight: 44)
             .contentShape(Rectangle())

@@ -45,7 +45,7 @@ extension EnvironmentValues {
 }
 
 extension View {
-    func cajaRetro(_ relleno: Color? = nil, relieve: Bool = true, radio: CGFloat = 9) -> some View {
+    func cajaRetro(_ relleno: Color? = nil, relieve: Bool = true, radio: CGFloat = 16) -> some View {
         modifier(CajaRetro(relleno: relleno, relieve: relieve, radio: radio))
     }
 }
@@ -57,7 +57,7 @@ private struct CajaRetro: ViewModifier {
     let radio: CGFloat
 
     func body(content: Content) -> some View {
-        let forma = RoundedRectangle(cornerRadius: radio)
+        let forma = RoundedRectangle(cornerRadius: radio, style: .continuous)
         content
             .background(relleno ?? paleta.papel, in: forma)
             .background {
@@ -81,7 +81,7 @@ struct BotonRetro: ButtonStyle {
             .padding(.horizontal, 12)
             .frame(minHeight: 44)
             .contentShape(Rectangle())
-            .cajaRetro(relleno, relieve: !configuration.isPressed, radio: 7)
+            .cajaRetro(relleno, relieve: !configuration.isPressed, radio: 12)
             .offset(x: configuration.isPressed ? 2 : 0, y: configuration.isPressed ? 2 : 0)
             .opacity(habilitado ? 1 : 0.45)
     }
@@ -114,7 +114,7 @@ struct SelloRetro: View {
             .padding(.horizontal, 7)
             .padding(.vertical, 4)
             .foregroundStyle(color == nil ? paleta.texto : paleta.tinta)
-            .cajaRetro(color, relieve: false, radio: 4)
+            .cajaRetro(color, relieve: false, radio: 7)
     }
 }
 

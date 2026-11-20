@@ -8,77 +8,24 @@ struct EstadisticasCronometroView: View {
     private var tiempos: [Tiempo] { vm.sesionActual.tiempos }
 
     var body: some View {
-        VStack(spacing: 18) {
-            if !tiempos.isEmpty {
-                Group {
-                    if dynamicTypeSize.isAccessibilitySize {
-                        ScrollView(.horizontal, showsIndicators: false) { ultimosTiempos }
-                    } else {
-                        ultimosTiempos
-                    }
-                }
-                .accessibilityLabel("Últimos tiempos")
+        Button {
+            withAnimation(.easeInOut(duration: 0.22)) {
+                mostrarPromedios.toggle()
             }
-            Button {
-                withAnimation(.easeInOut(duration: 0.22)) {
-                    mostrarPromedios.toggle()
+        } label: {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: dynamicTypeSize.isAccessibilitySize ? 2 : 4), spacing: 18) {
+                ForEach(0..<(mostrarPromedios ? metricas.count : 4), id: \.self) { index in
+                    resumen(metricas[index].0, valor: metricas[index].1)
+                        .transition(.opacity)
                 }
-            } label: {
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: dynamicTypeSize.isAccessibilitySize ? 2 : 4), spacing: 18) {
-                    ForEach(0..<(mostrarPromedios ? metricas.count : 4), id: \.self) { index in
-                        resumen(metricas[index].0, valor: metricas[index].1)
-                            .transition(.opacity)
-                    }
-                }
-                .padding(16)
-                .background(FondoBloqueEstadistico(estilo: temaApp.estilo(.resumen), radio: 20))
-                .contentShape(RoundedRectangle(cornerRadius: 20))
             }
-            .buttonStyle(.plain)
-            .accessibilityValue(mostrarPromedios ? "Expandido" : "Contraído")
-            .accessibilityHint(mostrarPromedios ? "Toca para ocultar los promedios" : "Toca para mostrar Mo3, Ao5, Ao12 y Ao50")
+            .padding(16)
+            .background(FondoBloqueEstadistico(estilo: temaApp.estilo(.resumen), radio: 20))
+            .contentShape(RoundedRectangle(cornerRadius: 20))
         }
-    }
-
-    private var ultimosTiempos: some View {
-        let ultimos = Array(tiempos.suffix(5))
-        let validos = ultimos.compactMap(\.segundosValidos)
-        let mejorValido = validos.min()
-        let peorValido = validos.max()
-
-        return HStack(spacing: 8) {
-            ForEach(ultimos.reversed()) { tiempo in
-                Text(tiempo.texto(largo: false))
-                    .font(.system(.title3, design: .rounded, weight: .bold).monospacedDigit())
-                    .foregroundStyle(
-                        colorUltimoTiempo(
-                            tiempo,
-                            mejorValido: mejorValido,
-                            peorValido: peorValido
-                        )
-                    )
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                    .frame(maxWidth: .infinity)
-            }
-        }
-    }
-
-    private func colorUltimoTiempo(
-        _ tiempo: Tiempo,
-        mejorValido: Double?,
-        peorValido: Double?
-    ) -> Color {
-        guard let segundos = tiempo.segundosValidos else {
-            return EstiloVisual.peligro
-        }
-        if segundos == peorValido {
-            return EstiloVisual.peligro
-        }
-        if segundos == mejorValido {
-            return EstiloVisual.mejor
-        }
-        return temaApp.texto
+        .buttonStyle(.plain)
+        .accessibilityValue(mostrarPromedios ? "Expandido" : "Contraído")
+        .accessibilityHint(mostrarPromedios ? "Toca para ocultar los promedios" : "Toca para mostrar Mo3, Ao5, Ao12 y Ao50")
     }
 
     private var metricas: [(String, String)] {
@@ -111,4 +58,78 @@ struct EstadisticasCronometroView: View {
         .accessibilityElement(children: .combine)
     }
 
+}
+
+struct TiemposRecientesCronometro: View {
+    let tiempos: [Tiempo]
+    var agrupados = false
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.temaApp) private var temaApp
+
+    var body: some View {
+        Group {
+            if agrupados {
+                fila
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 12)
+                    .background(FondoBloqueEstadistico(estilo: temaApp.estilo(.resumen), radio: 20))
+            } else {
+                fila
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Últimos tiempos")
+        .accessibilityIdentifier("cronometro-tiempos-recientes")
+    }
+
+    @ViewBuilder
+    private var fila: some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            ScrollView(.horizontal, showsIndicators: false) { ultimosTiempos }
+        } else {
+            ultimosTiempos
+        }
+    }
+
+    private var ultimosTiempos: some View {
+        let ultimos = Array(tiempos.suffix(5))
+        let validos = ultimos.compactMap(\.segundosValidos)
+        let mejorValido = validos.min()
+        let peorValido = validos.max()
+
+        return HStack(spacing: 8) {
+            ForEach(ultimos.reversed()) { tiempo in
+                Text(tiempo.texto(largo: false))
+                    .font(.system(.title3, design: .rounded, weight: .bold).monospacedDigit())
+                    .foregroundStyle(
+                        colorUltimoTiempo(
+                            tiempo,
+                            mejorValido: mejorValido,
+                            peorValido: peorValido
+                        )
+                    )
+                    .lineLimit(1)
+                    .minimumScaleFactor(agrupados ? 0.6 : 0.7)
+                    .frame(maxWidth: .infinity)
+            }
+        }
+    }
+
+    private func colorUltimoTiempo(
+        _ tiempo: Tiempo,
+        mejorValido: Double?,
+        peorValido: Double?
+    ) -> Color {
+        guard let segundos = tiempo.segundosValidos else {
+            return EstiloVisual.peligro
+        }
+        if segundos == peorValido {
+            return EstiloVisual.peligro
+        }
+        if segundos == mejorValido {
+            return EstiloVisual.mejor
+        }
+        return temaApp.texto
+    }
 }

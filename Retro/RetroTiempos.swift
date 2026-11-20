@@ -72,7 +72,7 @@ struct RetroTiempos: View {
                     .foregroundStyle(paleta.tinta)
                     .padding(.horizontal, 7)
                     .padding(.vertical, 3)
-                    .cajaRetro(colorTiempo, relieve: false, radio: 5)
+                    .cajaRetro(colorTiempo, relieve: false, radio: 8)
                     .layoutPriority(1)
                 Spacer(minLength: 0)
                 Text(formatoFecha(tiempo.fecha))

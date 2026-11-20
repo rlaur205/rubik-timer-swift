@@ -33,14 +33,6 @@ struct TemporizadorSeccion: View {
                 .filaTema(temaApp)
             filaColorListo
                 .filaTema(temaApp)
-            filaPrecision
-                .filaTema(temaApp)
-
-            AjustesToggleFila(
-                titulo: "Vibración",
-                estaActivo: $estado.vibracion
-            )
-            .filaTema(temaApp)
         } header: {
             Text("TEMPORIZADOR")
         }
@@ -63,7 +55,7 @@ struct TemporizadorSeccion: View {
                 .accessibilityLabel("Tamaño del timer")
                 .accessibilityValue("\(Int(tamanoTimer)) puntos")
 
-            AjustesVistaPreviaTimer(tamano: tamanoTimer, precision: estado.precision, fuente: fuenteTimer)
+            AjustesVistaPreviaTimer(tamano: tamanoTimer, fuente: fuenteTimer)
         }
         .padding(.vertical, 4)
     }
@@ -71,7 +63,7 @@ struct TemporizadorSeccion: View {
     private var filaFuenteTimer: some View {
         FuenteSelectorFila(
             titulo: "Fuente del timer",
-            ejemplo: estado.precision.ejemplo,
+            ejemplo: AjustesInicioCronometro.ejemploTemporizador,
             pesoPredeterminado: .semibold,
             identificador: "fuente-timer",
             seleccion: $fuenteTimer
@@ -136,22 +128,6 @@ struct TemporizadorSeccion: View {
         .accessibilityElement(children: .contain)
     }
 
-    // MARK: - Precisión
-
-    private var filaPrecision: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Precisión")
-
-            Picker("Precisión", selection: $estado.precision) {
-                ForEach(PrecisionAjuste.allCases) { precision in
-                    Text(precision.titulo).tag(precision)
-                }
-            }
-            .pickerStyle(.segmented)
-            .accessibilityLabel("Precisión del temporizador")
-        }
-        .padding(.vertical, 4)
-    }
 }
 
 #Preview {

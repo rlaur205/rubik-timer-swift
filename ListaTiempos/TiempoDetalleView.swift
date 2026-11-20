@@ -34,7 +34,6 @@ struct TiempoDetalleView: View {
                         ImagenScrambleView(scramble: tiempo.scramble, categoria: categoria)
                             .frame(height: 180)
                             .frame(maxWidth: .infinity)
-                            .accessibilityLabel("Diagrama del scramble")
                     }
 
                     HStack(spacing: 12) {

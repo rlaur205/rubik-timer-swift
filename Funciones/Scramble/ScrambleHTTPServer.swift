@@ -32,10 +32,14 @@ final class ScrambleHTTPServer: @unchecked Sendable {
 
                     let listener = try NWListener(using: parameters, on: .any)
 
-                    listener.stateUpdateHandler = { state in
+                    listener.stateUpdateHandler = { [weak listener] state in
                         switch state {
                         case .ready:
-                            box.resume(.success(listener.port?.rawValue ?? 0))
+                            if let port = listener?.port {
+                                box.resume(.success(port.rawValue))
+                            } else {
+                                box.resume(.failure(URLError(.cannotConnectToHost)))
+                            }
                         case .failed(let error):
                             box.resume(.failure(error))
                         case .cancelled:
@@ -51,6 +55,11 @@ final class ScrambleHTTPServer: @unchecked Sendable {
 
                     self.listener = listener
                     listener.start(queue: self.queue)
+                    queue.asyncAfter(deadline: .now() + 5) { [weak listener] in
+                        if box.resume(.failure(URLError(.timedOut))) {
+                            listener?.cancel()
+                        }
+                    }
                 } catch {
                     box.resume(.failure(error))
                 }
@@ -189,11 +198,14 @@ private final class ContinuationBox: @unchecked Sendable {
         self.continuation = continuation
     }
 
-    func resume(_ result: Result<UInt16, Error>) {
+    @discardableResult
+    func resume(_ result: Result<UInt16, Error>) -> Bool {
         lock.lock()
         let continuation = self.continuation
         self.continuation = nil
         lock.unlock()
-        continuation?.resume(with: result)
+        guard let continuation else { return false }
+        continuation.resume(with: result)
+        return true
     }
 }

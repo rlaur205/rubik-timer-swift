@@ -45,7 +45,7 @@ struct RetroSesiones: View {
                 IconoPuzzle(categoria: sesion.categoria, size: 30, multiplicadorTrazo: 1.55)
                     .foregroundStyle(paleta.tinta)
                     .frame(width: 50, height: 50)
-                    .cajaRetro(activa ? paleta.lima : paleta.lavanda, relieve: false, radio: 6)
+                    .cajaRetro(activa ? paleta.lima : paleta.lavanda, relieve: false, radio: 11)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(sesion.nombre).font(.title3.weight(.black))
@@ -158,7 +158,7 @@ private struct RetroNuevaSesion: View {
             .foregroundStyle(seleccionada ? paleta.tinta : paleta.texto)
             .frame(maxWidth: .infinity, minHeight: 62)
             .contentShape(Rectangle())
-            .cajaRetro(seleccionada ? paleta.lima : nil, relieve: false, radio: 6)
+            .cajaRetro(seleccionada ? paleta.lima : nil, relieve: false, radio: 11)
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(seleccionada ? .isSelected : [])

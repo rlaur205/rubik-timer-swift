@@ -195,12 +195,11 @@ struct AjustesVistaPreviaScramble: View {
 
 struct AjustesVistaPreviaTimer: View {
     let tamano: Double
-    let precision: PrecisionAjuste
     var fuente: FuenteTimerAjuste = .predeterminado
     @Environment(\.temaApp) private var temaApp
 
     var body: some View {
-        Text(precision.ejemplo)
+        Text(AjustesInicioCronometro.ejemploTemporizador)
             .font(fuente.font(tamano: CGFloat(tamano), pesoPredeterminado: .semibold))
             .monospacedDigit()
             .foregroundStyle(temaApp.texto)
@@ -214,10 +213,9 @@ struct AjustesVistaPreviaTimer: View {
                 in: RoundedRectangle(cornerRadius: 10, style: .continuous)
             )
             .animation(.easeInOut(duration: 0.2), value: tamano)
-            .animation(.easeInOut(duration: 0.2), value: precision)
             .animation(.easeInOut(duration: 0.2), value: fuente)
             .accessibilityLabel("Vista previa del temporizador")
-            .accessibilityValue(precision.ejemplo)
+            .accessibilityValue(AjustesInicioCronometro.ejemploTemporizador)
             .accessibilityIdentifier("preview-timer")
     }
 }

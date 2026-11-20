@@ -15,14 +15,11 @@ struct RetroCronometro: View {
     @AppStorage(AjustesInicioCronometro.claveFuenteScramble) private var fuenteScramble = AjustesInicioCronometro.fuenteScramblePredeterminada
     @State private var mostrarDiagrama = false
     @State private var mostrarPenalizacion = false
+    @State private var tiempoPorEliminar: Tiempo?
     @State private var expandido = false
 
     private var tiempos: [Tiempo] { vm.sesionActual.tiempos }
     private var midiendo: Bool { vm.timerState.estaCorriendo }
-    private var scrambleLargo: Bool {
-        let categoria = vm.sesionActual.categoria
-        return categoria.hasPrefix("5x5") || ["6x6", "7x7", "Megaminx"].contains(categoria)
-    }
 
     var body: some View {
         GeometryReader { espacio in
@@ -49,22 +46,36 @@ struct RetroCronometro: View {
                 .presentationDetents(tipoDinamico.isAccessibilitySize ? [.large] : [.height(235)])
             }
         }
+        .sheet(item: $tiempoPorEliminar) { tiempo in
+            ConfirmacionRetro(
+                titulo: "¿Eliminar último tiempo?",
+                mensaje: "Se eliminará el tiempo \(tiempo.texto(largo: true)) de esta sesión.",
+                accionTitulo: "Eliminar"
+            ) {
+                vm.borrarUltimoTiempo(id: tiempo.id)
+            }
+        }
     }
 
     private var contenido: some View {
         VStack(spacing: 14) {
             if !midiendo {
                 encabezado
-                tarjetaScramble
+                if mostrarScramble {
+                    tarjetaScramble
+                } else {
+                    if !tiempos.isEmpty { recientes }
+                    if !vm.scrambleListo { tarjetaScramble }
+                }
             }
             instrumento
             if !midiendo {
-                if !tiempos.isEmpty { recientes }
+                if mostrarScramble && !tiempos.isEmpty { recientes }
                 resumen
             }
         }
         .padding(.horizontal, 17)
-        .padding(.top, 12)
+        .padding(.top, 2)
         .padding(.bottom, 10)
         .frame(maxHeight: .infinity)
     }
@@ -78,21 +89,21 @@ struct RetroCronometro: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .foregroundStyle(paleta.tinta)
-                .cajaRetro(paleta.naranja, radio: 8)
+                .cajaRetro(paleta.naranja, radio: 12)
                 .rotationEffect(.degrees(-2))
                 .accessibilityAddTraits(.isHeader)
 
             Spacer(minLength: 0)
 
             HStack(spacing: 6) {
-                if !tiempos.isEmpty {
-                    IconoBotonRetro(titulo: "Eliminar último tiempo", icono: "trash") { vm.borrarUltimoTiempo() }
+                if let ultimo = tiempos.last {
+                    IconoBotonRetro(titulo: "Eliminar último tiempo", icono: "trash") { tiempoPorEliminar = ultimo }
                 }
                 IconoBotonRetro(
                     titulo: mostrarScramble ? "Ver diagrama" : "Ver scramble y diagrama",
                     icono: "cube.transparent", relleno: paleta.amarillo
                 ) { mostrarDiagrama = true }
-                .disabled(vm.scrambleActual.isEmpty)
+                .disabled(!vm.scrambleListo)
                 .popover(isPresented: $mostrarDiagrama, arrowEdge: .top) {
                     VStack(spacing: 12) {
                         if !mostrarScramble { textoScramble }
@@ -110,26 +121,23 @@ struct RetroCronometro: View {
     }
 
     private var tarjetaScramble: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if !mostrarScramble {
-                IconoPuzzle(categoria: vm.sesionActual.categoria, size: 33, multiplicadorTrazo: 1.4)
-                    .frame(maxWidth: .infinity)
-                    .accessibilityLabel(vm.sesionActual.categoria)
-            } else {
-                SelloRetro(texto: "SCRAMBLE", color: paleta.lavanda)
-                if vm.scrambleActual.isEmpty {
-                    ProgressView("Preparando mezcla…")
-                } else if scrambleLargo {
-                    ScrollView { textoScramble }
-                        .scrollBounceBehavior(.basedOnSize)
-                        .frame(height: 100)
-                } else {
-                    textoScramble
+        Group {
+            switch vm.estadoScramble {
+            case .listo:
+                textoScramble
+            case .preparando:
+                ProgressView("Preparando mezcla…").font(.subheadline)
+            case .error:
+                VStack(spacing: 8) {
+                    Text("No se pudo generar el scramble.").font(.subheadline)
+                    Button("Reintentar", action: vm.reintentarScramble)
+                        .buttonStyle(BotonRetro(relleno: paleta.amarillo))
                 }
             }
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity)
         .fixedSize(horizontal: false, vertical: true)
         .cajaRetro()
     }
@@ -148,6 +156,7 @@ struct RetroCronometro: View {
     private var instrumento: some View {
         SuperficieCronometro(
             stateTimer: $vm.timerState,
+            puedeIniciar: vm.scrambleListo,
             mantenerParaIniciar: mantener,
             tiempoEspera: AjustesInicioCronometro.esperaValida(espera),
             resultadoEnReposo: vm.resultadoCronometro,
@@ -166,7 +175,7 @@ struct RetroCronometro: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.42)
                     .accessibilityIdentifier("timer-digitos")
-                if !midiendo {
+                if !midiendo && vm.scrambleListo {
                     Text(listo ? "Suelta para empezar" : mantener ? "Mantén para iniciar" : "Toca para iniciar")
                         .font(.system(.caption, design: .monospaced, weight: .semibold))
                         .foregroundStyle(paleta.secundario)
@@ -175,7 +184,7 @@ struct RetroCronometro: View {
             .padding(.horizontal, 10)
         }
         .frame(minHeight: tipoDinamico.isAccessibilitySize ? 240 : 152, maxHeight: .infinity)
-        .cajaRetro(radio: 13)
+        .cajaRetro(radio: 19)
         .layoutPriority(1)
     }
 
@@ -192,7 +201,7 @@ struct RetroCronometro: View {
                     .padding(.vertical, 7)
                     .padding(.horizontal, muestraMinutos ? 6 : 3)
                     .foregroundStyle(tiempo.penalizacion == .ninguna ? paleta.texto : paleta.tinta)
-                    .cajaRetro(tiempo.penalizacion == .dnf ? paleta.coral : tiempo.penalizacion == .masDos ? paleta.amarillo : nil, relieve: false, radio: 4)
+                    .cajaRetro(tiempo.penalizacion == .dnf ? paleta.coral : tiempo.penalizacion == .masDos ? paleta.amarillo : nil, relieve: false, radio: 8)
             }
         }
         .fixedSize(horizontal: false, vertical: true)

@@ -4,6 +4,7 @@ struct TimerAreaView: View {
     @Binding var stateTimer: TimerState
     @Environment(\.temaApp) private var temaApp
 
+    let puedeIniciar: Bool
     let mantenerParaIniciar: Bool
     let tiempoEspera: TimeInterval
     let colorListo: Color
@@ -16,6 +17,7 @@ struct TimerAreaView: View {
     var body: some View {
         SuperficieCronometro(
             stateTimer: $stateTimer,
+            puedeIniciar: puedeIniciar,
             mantenerParaIniciar: mantenerParaIniciar,
             tiempoEspera: tiempoEspera,
             resultadoEnReposo: resultadoEnReposo,
@@ -38,6 +40,7 @@ struct SuperficieCronometro<Contenido: View>: View {
     @Binding var stateTimer: TimerState
     @GestureState private var estaPreparado = false
 
+    let puedeIniciar: Bool
     let mantenerParaIniciar: Bool
     let tiempoEspera: TimeInterval
     let resultadoEnReposo: Tiempo?
@@ -47,10 +50,12 @@ struct SuperficieCronometro<Contenido: View>: View {
 
     var body: some View {
         ZStack {
-            if stateTimer.estaCorriendo || !mantenerParaIniciar {
+            if stateTimer.estaCorriendo || (puedeIniciar && !mantenerParaIniciar) {
                 area.onTapGesture(perform: responderAlToque)
-            } else {
+            } else if puedeIniciar {
                 area.gesture(gestoMantener)
+            } else {
+                area
             }
         }
         .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
@@ -114,6 +119,7 @@ struct SuperficieCronometro<Contenido: View>: View {
     }
 
     private func iniciar() {
+        guard puedeIniciar else { return }
         stateTimer.estaCorriendo = true
         stateTimer.tiempoInicio = Date()
         stateTimer.tiempoTranscurrido = 0

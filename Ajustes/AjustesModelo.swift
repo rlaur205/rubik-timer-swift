@@ -331,28 +331,8 @@ enum ColorListoAjuste: String, CaseIterable, Identifiable, Hashable {
     }
 }
 
-enum PrecisionAjuste: String, CaseIterable, Identifiable, Hashable {
-    case centesimas
-    case milesimas
-
-    var id: String { rawValue }
-
-    var titulo: String {
-        switch self {
-        case .centesimas: "0.00"
-        case .milesimas: "0.000"
-        }
-    }
-
-    var ejemplo: String {
-        switch self {
-        case .centesimas: "12.34"
-        case .milesimas: "12.345"
-        }
-    }
-}
-
 enum AjustesInicioCronometro {
+    static let ejemploTemporizador = "12.34"
     static let claveMantenerParaIniciar = "mantenerParaIniciar"
     static let claveTiempoEspera = "tiempoEspera"
     static let claveColorListo = "colorListo"
@@ -393,8 +373,6 @@ final class AjustesEstado {
 
     // Temporizador
     var inspeccion15s = true
-    var precision: PrecisionAjuste = .centesimas
-    var vibracion = true
 
     // Datos
     var sincronizarICloud = false
@@ -403,8 +381,6 @@ final class AjustesEstado {
     func restablecer() {
         idioma = .sistema
         inspeccion15s = true
-        precision = .centesimas
-        vibracion = true
         sincronizarICloud = false
     }
 }
