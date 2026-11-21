@@ -97,7 +97,7 @@ struct RetroCronometro: View {
 
             HStack(spacing: 6) {
                 if let ultimo = tiempos.last {
-                    IconoBotonRetro(titulo: "Eliminar último tiempo", icono: "trash") { tiempoPorEliminar = ultimo }
+                    IconoBotonRetro(titulo: "Eliminar último tiempo", icono: "trash", relleno: paleta.coral) { tiempoPorEliminar = ultimo }
                 }
                 IconoBotonRetro(
                     titulo: mostrarScramble ? "Ver diagrama" : "Ver scramble y diagrama",
@@ -135,11 +135,13 @@ struct RetroCronometro: View {
                 }
             }
         }
+        .foregroundStyle(paleta.tinta)
+        .tint(paleta.tinta)
         .padding(.horizontal, 10)
         .padding(.vertical, 12)
         .frame(maxWidth: .infinity)
         .fixedSize(horizontal: false, vertical: true)
-        .cajaRetro()
+        .cajaRetro(paleta.lavanda)
     }
 
     private var textoScramble: some View {

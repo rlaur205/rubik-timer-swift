@@ -110,9 +110,14 @@ struct SuperficieCronometro<Contenido: View>: View {
             .onChanged { _ in
                 guard inicioContacto == nil else { return }
                 inicioContacto = ContinuousClock().now
+                if vm.timerState.enInspeccion && !mantenerParaIniciar {
+                    vm.iniciarResolucion(desdeInspeccion: true)
+                    return
+                }
                 if !vm.timerState.enInspeccion { vm.iniciarInspeccion() }
                 guard case .inspeccion(let inicio) = vm.timerState.fase else { return }
                 inspeccionContacto = inicio
+                guard mantenerParaIniciar else { return }
                 tareaPreparacion = Task { @MainActor in
                     do {
                         try await Task.sleep(for: .seconds(tiempoEspera))
@@ -127,7 +132,7 @@ struct SuperficieCronometro<Contenido: View>: View {
                 let inicio = inicioContacto
                 let inspeccion = inspeccionContacto
                 limpiarContacto()
-                guard let inicio, let inspeccion,
+                guard mantenerParaIniciar, let inicio, let inspeccion,
                       case .inspeccion(let actual) = vm.timerState.fase, actual == inspeccion,
                       inicio.duration(to: ContinuousClock().now) >= .seconds(tiempoEspera) else { return }
                 vm.iniciarResolucion(desdeInspeccion: true)

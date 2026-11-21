@@ -42,7 +42,7 @@ struct RetroEstadisticas: View {
     }
 
     private var resumen: some View {
-        SeccionRetro(titulo: "RESUMEN", color: paleta.lima) {
+        SeccionRetro(titulo: "RESUMEN", color: paleta.lima, tituloDestacado: true) {
             cuadricula {
                 metrica("Solves", valor: "\(tiempos.count)")
                 metrica("Media", valor: EstiloVisual.promedio(mediaTotal(tiempos: tiempos)))
@@ -53,7 +53,7 @@ struct RetroEstadisticas: View {
     }
 
     private var promedios: some View {
-        SeccionRetro(titulo: "PROMEDIOS ACTUALES", color: paleta.amarillo) {
+        SeccionRetro(titulo: "PROMEDIOS ACTUALES", color: paleta.amarillo, tituloDestacado: true) {
             cuadricula {
                 metrica("Último", valor: tiempos.last?.texto(largo: false) ?? "—")
                 ForEach(cantidades, id: \.self) { cantidad in
@@ -66,7 +66,7 @@ struct RetroEstadisticas: View {
     }
 
     private var records: some View {
-        SeccionRetro(titulo: "RÉCORDS PERSONALES", color: paleta.lavanda) {
+        SeccionRetro(titulo: "RÉCORDS PERSONALES", color: paleta.lavanda, tituloDestacado: true) {
             cuadricula {
                 ForEach(cantidades, id: \.self) { cantidad in
                     let pb = cantidad == 3 ? PBmo3(tiempos: tiempos) : PBavg(tiempos: tiempos, cantidad: cantidad)
@@ -78,7 +78,7 @@ struct RetroEstadisticas: View {
     }
 
     private var progreso: some View {
-        SeccionRetro(titulo: "PROGRESO", color: paleta.menta) {
+        SeccionRetro(titulo: "PROGRESO", color: paleta.menta, tituloDestacado: true) {
             let puntos = grafica(tiempos: tiempos)
             if puntos.isEmpty {
                 Text("Aún no hay tiempos válidos para graficar.").font(.subheadline)
@@ -124,9 +124,21 @@ struct RetroEstadisticas: View {
     }
 
     private func metrica(_ titulo: String, valor: String, detalle: Bool = false) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
+        let titulos = ["Solves", "Media", "Mejor tiempo", "Peor tiempo", "Último", "Mo3", "Ao5", "Ao12", "Ao25", "Ao50", "Ao100", "Ao200", "Ao500", "Ao1000", "Desviación"]
+        let colores: [Color] = [
+            paleta.lima, paleta.amarillo, paleta.menta, paleta.coral,
+            paleta.naranja, paleta.lavanda,
+            Color(red: 0.67, green: 0.83, blue: 0.97),
+            Color(red: 0.98, green: 0.72, blue: 0.77),
+            Color(red: 0.76, green: 0.88, blue: 0.68),
+            Color(red: 0.94, green: 0.80, blue: 0.62)
+        ]
+        let fondo = colores[(titulos.firstIndex(of: titulo) ?? 0) % colores.count]
+
+        return VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 3) {
-                Text(titulo).font(.caption.weight(.semibold)).foregroundStyle(paleta.secundario)
+                Text(titulo).font(.subheadline.weight(.bold))
+                    .foregroundStyle(paleta.tinta)
                 Spacer(minLength: 0)
                 if detalle {
                     Image(systemName: "arrow.up.right").font(.caption2.weight(.bold)).accessibilityHidden(true)
@@ -137,9 +149,10 @@ struct RetroEstadisticas: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.55)
         }
+        .foregroundStyle(paleta.tinta)
         .padding(8)
         .frame(maxWidth: .infinity, minHeight: 55, alignment: .leading)
-        .cajaRetro(relieve: false, radio: 10)
+        .cajaRetro(fondo, radio: 10, desplazamiento: 1.5)
         .accessibilityElement(children: .combine)
     }
 

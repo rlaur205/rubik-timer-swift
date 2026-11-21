@@ -112,14 +112,12 @@ struct RetroAjustes: View {
             Toggle("Inspección de 15 s", isOn: $inspeccionActivada)
             Toggle("Ocultar tiempo en curso", isOn: $ocultarTiempo)
             Toggle("Mantener para iniciar", isOn: $mantener)
-                .disabled(inspeccionActivada)
-                .opacity(inspeccionActivada ? 0.45 : 1)
             controlNumerico("Tiempo de espera", valor: Binding(
                 get: { AjustesInicioCronometro.esperaValida(espera) },
                 set: { espera = $0 }
             ), rango: AjustesInicioCronometro.rangoEspera, paso: 0.1, texto: espera.formatted(.number.precision(.fractionLength(1))) + " s")
-                .disabled(!inspeccionActivada && !mantener)
-                .opacity(inspeccionActivada || mantener ? 1 : 0.5)
+                .disabled(!mantener)
+                .opacity(mantener ? 1 : 0.5)
             coloresListo
         }
         .toggleStyle(InterruptorRetro())

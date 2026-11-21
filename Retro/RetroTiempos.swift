@@ -11,7 +11,7 @@ struct RetroTiempos: View {
         PantallaRetro {
             EncabezadoRetro(titulo: "Tiempos", contexto: vm.sesionActual.nombre) {
                 HStack(spacing: 6) {
-                    IconoBotonRetro(titulo: "Ordenar tiempos", icono: "arrow.up.arrow.down") { mostrarOrden = true }
+                    IconoBotonRetro(titulo: "Ordenar tiempos", icono: "arrow.up.arrow.down", relleno: paleta.lavanda) { mostrarOrden = true }
                     IconoBotonRetro(titulo: "Eliminar tiempos", icono: "trash", relleno: paleta.coral) { confirmarBorrado = true }
                         .disabled(vm.tiemposRecorrer.isEmpty)
                 }

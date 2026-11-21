@@ -31,7 +31,6 @@ struct TemporizadorSeccion: View {
                 titulo: "Mantener para iniciar",
                 estaActivo: $mantenerParaIniciar
             )
-            .disabled(inspeccionActivada)
             .filaTema(temaApp)
 
             filaEspera
@@ -89,11 +88,11 @@ struct TemporizadorSeccion: View {
 
             Slider(value: $tiempoEspera, in: AjustesInicioCronometro.rangoEspera, step: 0.1)
                 .tint(temaApp.acento)
-                .disabled(!inspeccionActivada && !mantenerParaIniciar)
+                .disabled(!mantenerParaIniciar)
                 .accessibilityLabel("Tiempo de espera")
                 .accessibilityValue(textoTiempoEspera)
         }
-        .opacity(inspeccionActivada || mantenerParaIniciar ? 1 : 0.45)
+        .opacity(mantenerParaIniciar ? 1 : 0.45)
         .padding(.vertical, 4)
     }
 

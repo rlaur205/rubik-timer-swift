@@ -45,8 +45,8 @@ extension EnvironmentValues {
 }
 
 extension View {
-    func cajaRetro(_ relleno: Color? = nil, relieve: Bool = true, radio: CGFloat = 16) -> some View {
-        modifier(CajaRetro(relleno: relleno, relieve: relieve, radio: radio))
+    func cajaRetro(_ relleno: Color? = nil, relieve: Bool = true, radio: CGFloat = 16, desplazamiento: CGFloat = 3) -> some View {
+        modifier(CajaRetro(relleno: relleno, relieve: relieve, radio: radio, desplazamiento: desplazamiento))
     }
 }
 
@@ -55,6 +55,7 @@ private struct CajaRetro: ViewModifier {
     let relleno: Color?
     let relieve: Bool
     let radio: CGFloat
+    let desplazamiento: CGFloat
 
     func body(content: Content) -> some View {
         let forma = RoundedRectangle(cornerRadius: radio, style: .continuous)
@@ -62,7 +63,7 @@ private struct CajaRetro: ViewModifier {
             .background(relleno ?? paleta.papel, in: forma)
             .background {
                 if relieve {
-                    forma.fill(paleta.sombra).offset(x: 3, y: 4)
+                    forma.fill(paleta.sombra).offset(x: desplazamiento, y: desplazamiento + 1)
                 }
             }
             .overlay { forma.strokeBorder(paleta.linea, lineWidth: 1.6).allowsHitTesting(false) }
@@ -106,10 +107,11 @@ struct SelloRetro: View {
     @Environment(\.retro) private var paleta
     let texto: String
     var color: Color? = nil
+    var destacado = false
 
     var body: some View {
         Text(texto)
-            .font(.system(.caption2, design: .monospaced, weight: .heavy))
+            .font(.system(destacado ? .caption : .caption2, design: .monospaced, weight: .heavy))
             .tracking(1)
             .padding(.horizontal, 7)
             .padding(.vertical, 4)
@@ -180,11 +182,12 @@ struct PanelRetro<Contenido: View>: View {
 struct SeccionRetro<Contenido: View>: View {
     let titulo: String
     let color: Color
+    var tituloDestacado = false
     @ViewBuilder var contenido: () -> Contenido
 
     var body: some View {
         VStack(alignment: .leading, spacing: 11) {
-            SelloRetro(texto: titulo, color: color).accessibilityAddTraits(.isHeader)
+            SelloRetro(texto: titulo, color: color, destacado: tituloDestacado).accessibilityAddTraits(.isHeader)
             VStack(alignment: .leading, spacing: 13, content: contenido)
                 .padding(13)
                 .frame(maxWidth: .infinity, alignment: .leading)

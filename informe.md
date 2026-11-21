@@ -56,9 +56,9 @@ Con **Mostrar scramble** desactivado, los últimos cinco tiempos aparecen arriba
 
 #### Inspección y tiempo oculto
 
-Activa **Inspección de 15 s** en Ajustes. Con el scramble listo, toca el cronómetro para ver la cuenta ascendente desde 0. Mantén pulsado durante el **Tiempo de espera** configurado y suelta al ver el color de listo.
+Activa **Inspección de 15 s** en Ajustes. Con el scramble listo, toca el cronómetro para ver la cuenta ascendente desde 0. Con **Mantener para iniciar** activado, mantén pulsado durante el **Tiempo de espera** y suelta al ver el color de listo. Si está desactivado, toca otra vez para comenzar inmediatamente.
 
-| Cuándo sueltas | Resultado |
+| Cuándo comienza la resolución | Resultado |
 | --- | --- |
 | Antes de 15 s | La resolución comienza sin penalización automática. |
 | Desde 15 s y antes de 17 s | La pantalla de inspección indica `15 +2` y suma dos segundos al tiempo final. |
@@ -157,7 +157,7 @@ Para un récord personal (PB), la app recorre todas las ventanas consecutivas de
 | **Temporizador** | Tamaño del timer | De 40 a 100 pt, en pasos de 1 pt. Predeterminado es 70 pt. |
 | **Temporizador** | Inspección de 15 s | Activa la cuenta ascendente, el +2 y el DNF automáticos. |
 | **Temporizador** | Ocultar tiempo en curso | Sustituye el tiempo de la resolución por `...` hasta detenerla. |
-| **Temporizador** | Mantener para iniciar | Activa la pulsación prolongada sin inspección. Durante la inspección siempre se usa una pulsación prolongada. |
+| **Temporizador** | Mantener para iniciar | Activa la pulsación prolongada para iniciar, con inspección o sin ella. Al desactivarlo, la resolución comienza con un toque. |
 | **Temporizador** | Tiempo de espera | De 0.3 a 1.5 s, en pasos de 0.1 s. Predeterminado es 0.5 s. |
 | **Temporizador** | Color al estar listo | Verde, azul, amarillo, naranja o morado. Predeterminado es amarillo, con un tono distinto según el modo claro u oscuro. |
 | **Acerca de** | Restablecer ajustes | Restaura las preferencias de texto y temporizador y los controles de vista previa. Conserva las sesiones y el tema. |
