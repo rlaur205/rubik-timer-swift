@@ -1,8 +1,10 @@
 import SwiftUI
 
 struct AjustesView: View {
+    let vm: RubikViewModel
     @State private var estado = AjustesEstado()
     @State private var mostrarSelectorTema = false
+    @State private var mostrarImportador = false
     @AppStorage(AjustesInicioCronometro.claveInspeccion)
     private var inspeccionActivada = AjustesInicioCronometro.inspeccionPredeterminada
     @AppStorage(AjustesInicioCronometro.claveOcultarTiempo)
@@ -59,7 +61,7 @@ struct AjustesView: View {
                     tiempoEspera: esperaConfigurada,
                     colorListo: $colorListo
                 )
-                DatosSeccion(estado: estado)
+                DatosSeccion { mostrarImportador = true }
                 AcercaDeSeccion(version: AjustesInformacionApp.version) {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         estado.restablecer()
@@ -91,9 +93,12 @@ struct AjustesView: View {
         .sheet(isPresented: $mostrarSelectorTema) {
             TemaSelectorView()
         }
+        .sheet(isPresented: $mostrarImportador) {
+            ImportarTiemposView(vm: vm)
+        }
     }
 }
 
 #Preview("Ajustes") {
-    AjustesView()
+    AjustesView(vm: RubikViewModel())
 }

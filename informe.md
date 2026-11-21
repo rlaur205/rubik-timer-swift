@@ -48,7 +48,7 @@ Elige el diseño en **Ajustes → Apariencia → Diseño de la app**. Cada tarje
 3. Con **Mantener para iniciar** activado, pulsa el área central hasta que los dígitos adopten el color de listo. Entonces suelta para empezar. Una pulsación breve deja el cronómetro en reposo. Si desactivas ese ajuste, un toque inicia la medición.
 4. Toca de nuevo para detener el cronómetro. La resolución válida se guarda con el scramble aplicado y se prepara el siguiente.
    Si el scramble se está preparando, espera a que esté listo para iniciar. Si la generación falla, toca **Reintentar**.
-5. Con el cronómetro detenido, desliza el dedo hacia abajo por el área de los dígitos para abrir las opciones **DNF**, **+2** y **Sin penalización**. La acción afecta al último tiempo de la sesión y está disponible cuando hay al menos una resolución.
+5. Para cambiar la penalización de una resolución, abre **Tiempos** y toca la fila correspondiente.
 
 Con el scramble visible, se muestran hasta cinco tiempos recientes debajo del cronómetro. Al tocar el bloque de resumen puedes ver los promedios rápidos **Mo3**, **Ao5**, **Ao12** y **Ao50**. Durante la inspección y la resolución se ocultan el scramble, los controles de navegación y los indicadores de sesión. La papelera del cronómetro pide confirmación para eliminar el último tiempo.
 
@@ -76,7 +76,7 @@ Activa **Inspección de 15 s** en Ajustes. Con el scramble listo, toca el cronó
 
 La lista muestra el resultado, la fecha y hora (`dd/MM/aa HH:mm`) y hasta dos líneas del scramble de cada resolución de la sesión activa. Empieza por los registros más recientes. El botón de orden permite alternar entre fecha, menor tiempo y mayor tiempo. El orden por tiempo usa el valor con **+2** aplicado y trata el **DNF** como peor que cualquier tiempo válido. La lista conserva el orden al registrar, borrar o penalizar y al volver a la pestaña.
 
-Mantén pulsada una fila para ver el tiempo, la fecha, el scramble completo y el diagrama. En el selector inferior, **DNF** invalida la resolución, **+2** suma dos segundos y el icono de verificación quita la penalización. Puedes borrar la resolución desde el mismo panel. Si era el resultado que mostraba el cronómetro, este vuelve a `0.00`. La papelera de la barra superior pide confirmación para vaciar el historial de la sesión activa.
+Toca una fila para ver el tiempo, la fecha, el scramble completo y el diagrama. En el selector inferior, **DNF** invalida la resolución, **+2** suma dos segundos y el icono de verificación quita la penalización. Puedes borrar la resolución desde el mismo panel. Si era el resultado que mostraba el cronómetro, este vuelve a `0.00`. La papelera de la barra superior pide confirmación para vaciar el historial de la sesión activa.
 
 ### Estadísticas
 
@@ -172,7 +172,7 @@ Los temas de Clásico son **Claro**, **Oscuro**, **Noche**, **Bosque**, **Atarde
 
 </details>
 
-Otros controles están visibles con alcance limitado. **Idioma** conserva su selección solo durante la ejecución y carece de integración con el resto de la app. **Sincronizar con iCloud**, **Exportar** e **Importar** muestran un aviso de disponibilidad futura. La pantalla de licencias en Ajustes es provisional y el inventario está en [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+**Idioma** conserva su selección durante la ejecución. **Importar tiempos** admite respaldos de csTimer y **Exportar tiempos** muestra un aviso de disponibilidad futura. La pantalla de licencias en Ajustes es provisional y el inventario está en [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 ## Arquitectura y recorrido de una resolución
 
@@ -289,7 +289,7 @@ El proyecto contiene el target de la app. Las capturas del informe se obtuvieron
 
 ## Alcance y limitaciones actuales
 
-- La app conserva los tiempos y ajustes en el dispositivo. iCloud, la transferencia JSON y el cambio de idioma están pendientes de integración.
+- La app conserva los tiempos y ajustes en el dispositivo. La exportación JSON y el cambio de idioma en toda la app están pendientes de integración.
 - La protección del historial ante un fallo de decodificación está pendiente. Si ocurre, el modelo carga sesiones iniciales y una escritura posterior puede reemplazar los datos ilegibles.
 - El cronómetro mide la duración con la hora del sistema. Cambiar esa hora durante una resolución puede alterar el resultado.
 - El criterio de orden de Tiempos se conserva durante la ejecución. Al volver a abrir la app, se inicia por fecha.

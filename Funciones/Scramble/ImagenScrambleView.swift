@@ -200,6 +200,7 @@ private struct DiagramaWeb: UIViewRepresentable {
             case "Megaminx": return "megaminx"
             case "Skewb": return "skewb"
             case "Square 1": return "square1"
+            case "FTO": return "fto"
             default: return nil
             }
         }

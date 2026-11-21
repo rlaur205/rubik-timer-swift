@@ -368,20 +368,15 @@ enum AjustesInicioCronometro {
 // MARK: - Estado local
 
 /// Estado exclusivamente local y en memoria de la pantalla de Ajustes.
-/// No se conecta al RubikViewModel ni escribe en disco, UserDefaults o iCloud.
 @Observable
 final class AjustesEstado {
 
     // Apariencia
     var idioma: IdiomaAjuste = .sistema
 
-    // Datos
-    var sincronizarICloud = false
-
     /// Restablece únicamente el estado de esta pantalla.
     func restablecer() {
         idioma = .sistema
-        sincronizarICloud = false
     }
 }
 

@@ -6,8 +6,8 @@ class Sesion: Codable, Identifiable, Equatable {
     var nombre: String
     var categoria: String
     
-    init(tiempos: [Tiempo], nombre: String, categoria: String) {
-        self.id = UUID()
+    init(id: UUID = UUID(), tiempos: [Tiempo], nombre: String, categoria: String) {
+        self.id = id
         self.tiempos = tiempos
         self.nombre = nombre
         self.categoria = categoria
@@ -22,7 +22,7 @@ class Sesion: Codable, Identifiable, Equatable {
     }
 }
 
-enum PenalizacionTiempo: String, Codable, CaseIterable, Identifiable {
+enum PenalizacionTiempo: String, Codable, CaseIterable, Identifiable, Sendable {
     case dnf
     case masDos
     case ninguna

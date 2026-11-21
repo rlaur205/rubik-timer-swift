@@ -1,19 +1,12 @@
 import SwiftUI
 
 struct DatosSeccion: View {
-    @Bindable var estado: AjustesEstado
+    let abrirImportador: () -> Void
     @Environment(\.temaApp) private var temaApp
     @State private var aviso: AjustesAviso?
 
     var body: some View {
         Section {
-            AjustesToggleFila(
-                titulo: "Sincronizar con iCloud",
-                subtitulo: "Guarda tus sesiones en tu cuenta",
-                estaActivo: activarICloud
-            )
-            .filaTema(temaApp)
-
             Button {
                 aviso = AjustesAviso(
                     titulo: "Función disponible próximamente",
@@ -37,12 +30,7 @@ struct DatosSeccion: View {
             .accessibilityHint("Muestra un aviso de función disponible próximamente")
             .filaTema(temaApp)
 
-            Button {
-                aviso = AjustesAviso(
-                    titulo: "Función disponible próximamente",
-                    mensaje: "Importar tiempos estará disponible en una próxima versión. Por ahora no se lee ningún archivo ni se modifican tus datos."
-                )
-            } label: {
+            Button(action: abrirImportador) {
                 HStack(spacing: 12) {
                     Text("Importar tiempos")
                         .foregroundStyle(temaApp.texto)
@@ -55,38 +43,18 @@ struct DatosSeccion: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityHint("Muestra un aviso de función disponible próximamente")
             .filaTema(temaApp)
         } header: {
             Text("DATOS")
-        } footer: {
-            Text("Al importar se combinan los tiempos sin borrar los actuales.")
-                .foregroundStyle(temaApp.texto.opacity(0.65))
         }
         .mostrarAviso($aviso)
-    }
-
-    /// El interruptor es solo visual: no hay cuenta, archivo ni sincronización real.
-    private var activarICloud: Binding<Bool> {
-        Binding(
-            get: { estado.sincronizarICloud },
-            set: { nuevoValor in
-                estado.sincronizarICloud = nuevoValor
-                if nuevoValor {
-                    aviso = AjustesAviso(
-                        titulo: "Función disponible próximamente",
-                        mensaje: "La sincronización con iCloud estará disponible en una próxima versión. Este interruptor no guarda ni sincroniza ningún dato."
-                    )
-                }
-            }
-        )
     }
 }
 
 #Preview {
     NavigationStack {
         List {
-            DatosSeccion(estado: AjustesEstado())
+            DatosSeccion(abrirImportador: {})
         }
         .listStyle(.insetGrouped)
         .navigationTitle("Ajustes")

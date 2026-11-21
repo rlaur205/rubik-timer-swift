@@ -4,12 +4,11 @@
 #
 #   cd ScrambleEngineBuild && npm install && ./build.sh
 #
-# Salida: TimeCuber/ScrambleEngine/viewer.js
+# Salidas: TimeCuber/ScrambleEngine/viewer.js y fto.js
 # (`viewer.html` se edita a mano y no lo toca este script.)
 #
-# Los scrambles NO se generan aquí: los genera TNoodle dentro del propio dispositivo
-# (framework nativo TNoodleLibNative). Este build solo empaqueta el visor del diagrama
-# 2D, que usa cubing.js (`TwistyPlayer`) para dibujar el estado del puzzle.
+# El visor usa cubing.js para dibujar los diagramas. FTO usa el solver de cubing.js
+# en JavaScriptCore. El resto de puzzles usa el framework nativo TNoodleLibNative.
 
 set -euo pipefail
 
@@ -25,6 +24,21 @@ npx esbuild src/viewer.js \
     --minify \
     --target=safari16 \
     --outfile="$OUT_DIR/viewer.js"
+
+echo "→ fto.js"
+shopt -s nullglob
+solver=(node_modules/cubing/dist/lib/cubing/chunks/search-dynamic-solve-fto-*.js)
+if [[ ${#solver[@]} -ne 1 ]]; then
+    echo "No se encontró el solver de FTO de cubing.js." >&2
+    exit 1
+fi
+npx esbuild src/fto.js \
+    --alias:fto-solver="./${solver[0]}" \
+    --bundle \
+    --format=iife \
+    --minify \
+    --target=safari16 \
+    --outfile="$OUT_DIR/fto.js"
 
 echo "✓ Listo"
 ls -lh "$OUT_DIR"

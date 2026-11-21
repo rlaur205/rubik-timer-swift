@@ -91,7 +91,7 @@
 1. Abre **Sesiones** y elige una existente o crea una con **+**.
 2. Lee el scramble en **Cronómetro**. El botón del cubo abre el diagrama.
 3. Mantén pulsado hasta que cambie el color, suelta para empezar y toca para detener. También puedes configurar el inicio por toque. Si activas la inspección, el primer toque inicia la cuenta y el siguiente toque o pulsación inicia la resolución, según el ajuste elegido.
-4. Desliza hacia abajo con el cronómetro detenido para penalizar el último tiempo. Desde **Tiempos**, mantén pulsada una fila para abrir sus detalles.
+4. En **Tiempos**, toca una fila para abrir sus detalles y cambiar la penalización.
 5. En **Ajustes → Apariencia → Diseño de la app**, toca la tarjeta **Clásico** o **Retro**. Ambos diseños usan tus mismas sesiones y tiempos.
 
 ## Compilar en Xcode

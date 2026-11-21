@@ -91,7 +91,6 @@ struct RetroTiempos: View {
         .cajaRetro()
         .contentShape(Rectangle())
         .onTapGesture { seleccionado = tiempo }
-        .onLongPressGesture { seleccionado = tiempo }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
         .accessibilityAction { seleccionado = tiempo }

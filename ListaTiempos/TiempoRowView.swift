@@ -6,6 +6,14 @@ struct TiempoRowView: View {
     @Environment(\.temaApp) private var temaApp
 
     var body: some View {
+        Button(action: abrirDetalle) {
+            contenido
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Abre los detalles del tiempo")
+    }
+
+    private var contenido: some View {
         VStack(alignment: .leading, spacing: 10) {
             ViewThatFits(in: .horizontal) {
                 HStack(alignment: .firstTextBaseline) {
@@ -25,9 +33,6 @@ struct TiempoRowView: View {
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
-        .onLongPressGesture(perform: abrirDetalle)
-        .accessibilityElement(children: .combine)
-        .accessibilityAction(named: Text("Ver detalle"), abrirDetalle)
     }
 
     private var valor: some View {

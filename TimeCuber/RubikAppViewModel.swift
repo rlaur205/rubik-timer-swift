@@ -28,8 +28,6 @@ class RubikViewModel: ObservableObject {
         return ultimo
     }
 
-    var puedePenalizarUltimoTiempo: Bool { sesionActual.tiempos.last?.esDNFDeInspeccion == false }
-
     @Published private(set) var timerState = TimerState()
     private var vencimientoInspeccion: Task<Void, Never>?
 
@@ -94,15 +92,18 @@ class RubikViewModel: ObservableObject {
     }
 
     private func guardarSesiones() {
-        let codificador = JSONEncoder()
-        codificador.dateEncodingStrategy = .iso8601
-
         do {
-            let datos = try codificador.encode(tiemposPrincipal)
-            UserDefaults.standard.set(datos, forKey: Self.claveHistorial)
+            try persistirSesiones(tiemposPrincipal)
         } catch {
             print("Error al guardar sesiones: \(error)")
         }
+    }
+
+    private func persistirSesiones(_ sesiones: [Sesion]) throws {
+        let codificador = JSONEncoder()
+        codificador.dateEncodingStrategy = .iso8601
+        let datos = try codificador.encode(sesiones)
+        UserDefaults.standard.set(datos, forKey: Self.claveHistorial)
     }
 
     private func actualizarTiempos() {
@@ -252,6 +253,27 @@ class RubikViewModel: ObservableObject {
         tiemposPrincipal.append(Sesion(tiempos: [], nombre: nombreLimpio, categoria: categoria))
         guardarSesiones()
         return true
+    }
+
+    func importarSesiones(_ sesiones: [ImportacionCSTimer.Sesion]) throws -> Int {
+        var ids = Set(tiemposPrincipal.map(\.id))
+        let nuevas = sesiones.filter { ids.insert($0.id).inserted }.map { sesion in
+            let tiempos = sesion.tiempos.map { registro in
+                Tiempo(
+                    tiempo: Double(registro.milisegundos) / 1000,
+                    scramble: registro.scramble,
+                    fecha: registro.fecha,
+                    categoria: sesion.categoria,
+                    penalizacion: registro.penalizacion
+                )
+            }
+            return Sesion(id: sesion.id, tiempos: tiempos, nombre: sesion.nombre, categoria: sesion.categoria)
+        }
+        guard !nuevas.isEmpty else { return 0 }
+        let historial = tiemposPrincipal + nuevas
+        try persistirSesiones(historial)
+        tiemposPrincipal = historial
+        return nuevas.count
     }
 
     func borrarCategoria(sesionAEliminar: Sesion) {

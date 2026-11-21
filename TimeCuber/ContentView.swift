@@ -55,7 +55,7 @@ struct ContentView: View {
                 .tabItem { Image(systemName: "archivebox") }
                 .tag(PestanaTimeCuber.sesiones)
 
-            AjustesView()
+            AjustesView(vm: vm)
                 .tabItem {
                     Image(systemName: "gearshape")
                         .accessibilityLabel("Ajustes")

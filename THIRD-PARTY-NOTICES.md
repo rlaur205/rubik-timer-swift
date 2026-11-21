@@ -35,14 +35,15 @@ generador de scrambles (por ejemplo, cubing.js, que es MPL-2.0).
 
 ## cubing.js (MPL-2.0)
 
-- **Qué es:** la librería de cubos que dibuja el diagrama 2D del scramble
-  (`TwistyPlayer`).
-- **Qué se incluye:** el bundle `TimeCuber/ScrambleEngine/viewer.js`, generado a partir
-  de `ScrambleEngineBuild/` con la versión fijada en `ScrambleEngineBuild/package.json`
-  (cubing `0.66.1`).
+- **Qué es:** la librería que dibuja los diagramas 2D (`TwistyPlayer`) y distribuye el
+  generador de FTO de Chen Shuang.
+- **Qué se incluye:** `TimeCuber/ScrambleEngine/viewer.js` y `fto.js`, generados desde
+  `ScrambleEngineBuild/` con cubing `0.66.1`.
 - **Origen:** [`cubing/cubing.js`](https://github.com/cubing/cubing.js).
 - **Licencia:** Mozilla Public License 2.0
-  ([texto](https://www.mozilla.org/en-US/MPL/2.0/)).
+  ([texto](https://www.mozilla.org/en-US/MPL/2.0/)). El
+  [solver de FTO](https://gist.github.com/cs0x7f/1579492aa43c794d529057386c489702)
+  tiene licencia MIT. Su aviso se incluye en `fto.js`.
 
 ### Obligaciones
 

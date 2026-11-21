@@ -1,14 +1,10 @@
 # ScrambleEngineBuild
 
-Proyecto npm que compila el bundle de **cubing.js** que se embebe en la app para el
-diagrama 2D del scramble.
+Proyecto npm que empaqueta **cubing.js** para los diagramas 2D y para generar scrambles
+de FTO. Los demás puzzles usan [TNoodle](https://github.com/thewca/tnoodle) a través
+del framework nativo `TNoodleLibNative.xcframework`.
 
-Los scrambles **no** se generan aquí: los genera
-[TNoodle](https://github.com/thewca/tnoodle) (el programa oficial de la WCA) dentro del
-propio dispositivo, a través del framework nativo `TNoodleLibNative.xcframework`. Este
-directorio solo empaqueta el visor que dibuja el estado del puzzle con `TwistyPlayer`.
-
-El fichero resultante se guarda en `TimeCuber/ScrambleEngine/` y se copia tal cual al
+Los ficheros resultantes se guardan en `TimeCuber/ScrambleEngine/` y se copian al
 bundle de la app (`TimerV3.app/ScrambleEngine/`).
 
 ## Compilar
@@ -24,6 +20,7 @@ Salida:
 |Fichero|Qué es|
 |---|---|
 |`../TimeCuber/ScrambleEngine/viewer.js`|Bundle del diagrama 2D; registra y configura el `TwistyPlayer`|
+|`../TimeCuber/ScrambleEngine/fto.js`|Solver para generar scrambles de FTO desde JavaScriptCore|
 
 `viewer.html` **no** lo genera este script: se edita a mano en
 `TimeCuber/ScrambleEngine/`.
@@ -46,6 +43,9 @@ El build ESM de cubing.js **no registra** el custom element `twisty-player` (eso
 lo hacen los bundles para navegador). Por eso `src/viewer.js` llama a
 `customElements.define` antes de crear el elemento.
 
+El build de FTO empaqueta el solver de la versión fijada de cubing.js. Swift lo ejecuta
+en un contexto de JavaScriptCore dedicado y reutiliza sus tablas entre scrambles.
+
 ## Licencia
 
 - **cubing.js** es **MPL-2.0**. El bundle `viewer.js` contiene código suyo, así que al
@@ -53,6 +53,7 @@ lo hacen los bundles para navegador). Por eso `src/viewer.js` llama a
   el código fuente (basta con este directorio, que ya está en el repositorio público,
   más la versión de cubing.js fijada en `package.json`). Al ser copyleft por fichero
   **no** obliga a liberar el resto de la app.
+- El solver de FTO es **MIT** y su aviso está incluido en `fto.js`.
 - **TNoodle** es **AGPL-3.0** y **sí se distribuye** dentro de la app como framework
   nativo (`Frameworks/TNoodleLibNative.xcframework`). Eso hace que distribuir la app
   obligue a publicar su código fuente bajo AGPL-3.0. Ver `THIRD-PARTY-NOTICES.md` en la

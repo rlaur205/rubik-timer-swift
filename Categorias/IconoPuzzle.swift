@@ -27,6 +27,7 @@ struct IconoPuzzle: View {
             case "Megaminx": trazado = Self.megaminx
             case "Skewb": trazado = Self.skewb
             case "Square 1": trazado = Self.square1
+            case "FTO": trazado = Self.fto
             default: trazado = Self.cuadricula(dimension)
             }
 
@@ -105,6 +106,30 @@ struct IconoPuzzle: View {
             trazado.linea(punto(avance, 0), punto(0, avance))
             trazado.linea(punto(avance, 0), punto(avance, 1 - avance))
             trazado.linea(punto(0, avance), punto(1 - avance, avance))
+        }
+    }
+
+    private static let fto = Path { trazado in
+        let superior = CGPoint(x: 50, y: 7)
+        let derecha = CGPoint(x: 91, y: 50)
+        let inferior = CGPoint(x: 50, y: 93)
+        let izquierda = CGPoint(x: 9, y: 50)
+        let centro = CGPoint(x: 50, y: 50)
+        trazado.poligono([superior, derecha, inferior, izquierda])
+        for vertice in [superior, derecha, inferior, izquierda] {
+            trazado.linea(centro, vertice)
+        }
+        for (a, b) in [(superior, derecha), (derecha, inferior), (inferior, izquierda), (izquierda, superior)] {
+            func punto(_ a: CGPoint, _ b: CGPoint, _ c: CGPoint, _ i: CGFloat, _ j: CGFloat) -> CGPoint {
+                CGPoint(x: a.x + (b.x - a.x) * i + (c.x - a.x) * j,
+                        y: a.y + (b.y - a.y) * i + (c.y - a.y) * j)
+            }
+            for division in [CGFloat(1) / 3, CGFloat(2) / 3] {
+                let resto = 1 - division
+                trazado.linea(punto(centro, a, b, division, 0), punto(centro, a, b, division, resto))
+                trazado.linea(punto(centro, a, b, 0, division), punto(centro, a, b, resto, division))
+                trazado.linea(punto(centro, a, b, division, 0), punto(centro, a, b, 0, division))
+            }
         }
     }
 

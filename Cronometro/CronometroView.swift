@@ -22,7 +22,6 @@ struct CronometroView: View {
     @Environment(\.temaApp) private var temaApp
     @State private var mostrarDiagrama = false
     @State private var mostrarPromedios = false
-    @State private var mostrarPenalizacion = false
     @State private var confirmarBorrado = false
 
     private var tamanoScrambleAjustado: CGFloat {
@@ -83,18 +82,6 @@ struct CronometroView: View {
             } message: { tiempo in
                 Text("Se eliminará el tiempo \(tiempo.texto(largo: true)) de esta sesión.")
             }
-            .confirmationDialog(
-                "Penalización del último tiempo",
-                isPresented: $mostrarPenalizacion,
-                titleVisibility: .hidden,
-                presenting: vm.sesionActual.tiempos.last
-            ) { tiempo in
-                ForEach(PenalizacionTiempo.allCases) { penalizacion in
-                    Button(penalizacion.titulo) {
-                        vm.establecerPenalizacion(penalizacion, tiempoID: tiempo.id)
-                    }
-                }
-            }
         }
     }
 
@@ -130,8 +117,7 @@ struct CronometroView: View {
                 tiempoEspera: AjustesInicioCronometro.esperaValida(tiempoEspera),
                 colorListo: colorListo.color,
                 tamanoTimer: AjustesInicioCronometro.tamanoTimerValido(tamanoTimer),
-                fuenteTimer: fuenteTimer,
-                abrirPenalizacion: vm.puedePenalizarUltimoTiempo ? { mostrarPenalizacion = true } : nil
+                fuenteTimer: fuenteTimer
             )
             .frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 240 : 140)
             .layoutPriority(1)

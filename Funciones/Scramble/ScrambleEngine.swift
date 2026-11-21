@@ -19,9 +19,8 @@ enum ScrambleEngineError: LocalizedError {
 
 /// Motor de scrambles de la Opción B.
 ///
-/// Los scrambles los genera **TNoodle**, el programa oficial de la WCA, compilado
-/// como librería nativa para iOS (igual que CubeTime). Todo ocurre en el
-/// dispositivo: no hace falta servidor ni conexión a internet.
+/// TNoodle genera los scrambles de los puzzles que admite la librería nativa.
+/// FTO usa el solver de cubing.js en JavaScriptCore. Ambos funcionan sin internet.
 ///
 /// Además mantiene el servidor HTTP local que sirve `viewer.html` y `viewer.js` al
 /// `WKWebView` del diagrama 2D. Hace falta porque WebKit no puede cargar módulos ES
@@ -39,6 +38,21 @@ final class ScrambleEngine {
 
     // MARK: - Scrambles
 
+    enum Puzzle {
+        case tnoodle(TNoodlePuzzle)
+        case fto
+
+        init?(categoria: String) {
+            if categoria == "FTO" {
+                self = .fto
+            } else if let puzzle = TNoodlePuzzle.paraCategoria(categoria) {
+                self = .tnoodle(puzzle)
+            } else {
+                return nil
+            }
+        }
+    }
+
     /// Calienta TNoodle con un scramble 2x2. No bloquea.
     func warmUp() {
         Task.detached(priority: .utility) {
@@ -47,10 +61,13 @@ final class ScrambleEngine {
     }
 
     /// Genera un scramble en segundo plano (TNoodle tarda sobre todo en 3x3 y 4x4).
-    func scramble(puzzle: TNoodlePuzzle) async throws -> String {
+    func scramble(puzzle: Puzzle) async throws -> String {
+        guard case .tnoodle(let puzzleNativo) = puzzle else {
+            return try await FTOScrambler.shared.scramble()
+        }
         do {
             return try await Task.detached(priority: .userInitiated) {
-                try TNoodleScrambler.shared.scramble(puzzle)
+                try TNoodleScrambler.shared.scramble(puzzleNativo)
             }.value
         } catch {
             throw ScrambleEngineError.generacion(error.localizedDescription)

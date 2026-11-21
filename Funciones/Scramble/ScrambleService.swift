@@ -28,7 +28,7 @@ final class ScrambleService {
 
     func siguiente(categoria: String) -> EstadoScramble {
         categoriaActiva = categoria
-        guard let puzzle = TNoodlePuzzle.paraCategoria(categoria) else { return .error }
+        guard let puzzle = ScrambleEngine.Puzzle(categoria: categoria) else { return .error }
 
         let siguiente: EstadoScramble
         if var cola = colas[categoria], !cola.isEmpty {
@@ -42,7 +42,7 @@ final class ScrambleService {
         return siguiente
     }
 
-    private func reponer(categoria: String, puzzle: TNoodlePuzzle) {
+    private func reponer(categoria: String, puzzle: ScrambleEngine.Puzzle) {
         guard (colas[categoria]?.count ?? 0) < objetivo,
               generando.insert(categoria).inserted else { return }
 

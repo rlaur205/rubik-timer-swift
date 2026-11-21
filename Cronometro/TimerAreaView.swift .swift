@@ -9,14 +9,12 @@ struct TimerAreaView: View {
     let colorListo: Color
     let tamanoTimer: Double
     var fuenteTimer: FuenteTimerAjuste = .predeterminado
-    let abrirPenalizacion: (() -> Void)?
 
     var body: some View {
         SuperficieCronometro(
             vm: vm,
             mantenerParaIniciar: mantenerParaIniciar,
-            tiempoEspera: tiempoEspera,
-            abrirPenalizacion: abrirPenalizacion
+            tiempoEspera: tiempoEspera
         ) { texto, listo in
             Text(texto)
                 .font(fuenteTimer.font(tamano: CGFloat(tamanoTimer), pesoPredeterminado: .bold))
@@ -45,7 +43,6 @@ struct SuperficieCronometro<Contenido: View>: View {
 
     let mantenerParaIniciar: Bool
     let tiempoEspera: TimeInterval
-    let abrirPenalizacion: (() -> Void)?
     @ViewBuilder var contenido: (String, Bool) -> Contenido
 
     var body: some View {
@@ -57,7 +54,7 @@ struct SuperficieCronometro<Contenido: View>: View {
             } else if !vm.scrambleListo {
                 area
             } else if mantenerParaIniciar {
-                area.gesture(gestoMantener(duranteInspeccion: false))
+                area.gesture(gestoMantener)
             } else {
                 area.onTapGesture { vm.iniciarResolucion(desdeInspeccion: false) }
             }
@@ -68,13 +65,6 @@ struct SuperficieCronometro<Contenido: View>: View {
             if !activo { limpiarContacto() }
         }
         .onDisappear { limpiarContacto() }
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 25)
-                .onEnded { arrastre in
-                    guard !vm.timerState.intentoActivo, esDeslizamientoHaciaAbajo(arrastre.translation) else { return }
-                    abrirPenalizacion?()
-                }
-        )
     }
 
     private var area: some View {
@@ -147,22 +137,16 @@ struct SuperficieCronometro<Contenido: View>: View {
         contactoPreparado = false
     }
 
-    private func gestoMantener(duranteInspeccion: Bool) -> some Gesture {
+    private var gestoMantener: some Gesture {
         LongPressGesture(minimumDuration: tiempoEspera)
             .sequenced(before: DragGesture(minimumDistance: 0))
             .updating($estaPreparado) { fase, preparado, _ in
                 if case .second(true, _) = fase { preparado = true }
             }
             .onEnded { fase in
-                guard case .second(true, let arrastre) = fase else { return }
-                if !duranteInspeccion, abrirPenalizacion != nil, let arrastre,
-                   esDeslizamientoHaciaAbajo(arrastre.translation) { return }
-                vm.iniciarResolucion(desdeInspeccion: duranteInspeccion)
+                guard case .second(true, _) = fase else { return }
+                vm.iniciarResolucion(desdeInspeccion: false)
             }
-    }
-
-    private func esDeslizamientoHaciaAbajo(_ desplazamiento: CGSize) -> Bool {
-        desplazamiento.height >= 50 && desplazamiento.height > abs(desplazamiento.width)
     }
 }
 

@@ -50,5 +50,8 @@ let puzzleList: [PuzzleOption] = [
     ]),
     PuzzleOption(id: "Square 1", display: "Square-1", eventos: [
         EventoOption(id: "Square 1", nombre: "Normal",    badge: "")
+    ]),
+    PuzzleOption(id: "FTO", display: "FTO", eventos: [
+        EventoOption(id: "FTO", nombre: "Normal", badge: "")
     ])
 ]

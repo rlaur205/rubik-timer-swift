@@ -62,7 +62,7 @@ struct RetroContenedor: View {
         case .tiempos: RetroTiempos(vm: vm)
         case .estadisticas: RetroEstadisticas(vm: vm)
         case .sesiones: RetroSesiones(vm: vm)
-        case .ajustes: RetroAjustes(estado: estadoAjustes)
+        case .ajustes: RetroAjustes(estado: estadoAjustes, vm: vm)
         }
     }
 

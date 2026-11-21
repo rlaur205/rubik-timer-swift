@@ -14,7 +14,6 @@ struct RetroCronometro: View {
     @AppStorage(AjustesInicioCronometro.claveFuenteTimer) private var fuenteTimer = AjustesInicioCronometro.fuenteTimerPredeterminada
     @AppStorage(AjustesInicioCronometro.claveFuenteScramble) private var fuenteScramble = AjustesInicioCronometro.fuenteScramblePredeterminada
     @State private var mostrarDiagrama = false
-    @State private var mostrarPenalizacion = false
     @State private var tiempoPorEliminar: Tiempo?
     @State private var expandido = false
 
@@ -31,19 +30,6 @@ struct RetroCronometro: View {
                 .scrollBounceBehavior(.basedOnSize)
             } else {
                 contenido
-            }
-        }
-        .sheet(isPresented: $mostrarPenalizacion) {
-            if let ultimo = tiempos.last {
-                PanelRetro(titulo: "Último tiempo") {
-                    Text(ultimo.texto(largo: true))
-                        .font(.system(.largeTitle, design: .monospaced, weight: .black))
-                    PenalizacionesRetro(seleccion: ultimo.penalizacion) { penalizacion in
-                        vm.establecerPenalizacion(penalizacion, tiempoID: ultimo.id)
-                        mostrarPenalizacion = false
-                    }
-                }
-                .presentationDetents(tipoDinamico.isAccessibilitySize ? [.large] : [.height(235)])
             }
         }
         .sheet(item: $tiempoPorEliminar) { tiempo in
@@ -159,8 +145,7 @@ struct RetroCronometro: View {
         SuperficieCronometro(
             vm: vm,
             mantenerParaIniciar: mantener,
-            tiempoEspera: AjustesInicioCronometro.esperaValida(espera),
-            abrirPenalizacion: vm.puedePenalizarUltimoTiempo ? { mostrarPenalizacion = true } : nil
+            tiempoEspera: AjustesInicioCronometro.esperaValida(espera)
         ) { valor, listo in
             Text(valor)
                 .font(fuenteTimer == .predeterminado

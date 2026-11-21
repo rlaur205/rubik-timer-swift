@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RetroAjustes: View {
     @Bindable var estado: AjustesEstado
+    let vm: RubikViewModel
     @Environment(\.retro) private var paleta
     @AppStorage("temaApp") private var temaElegido: TemaApp = .claro
     @AppStorage("temaDelSistema") private var temaDelSistema = true
@@ -154,14 +155,6 @@ struct RetroAjustes: View {
 
     private var datos: some View {
         SeccionRetro(titulo: "DATOS", color: paleta.menta) {
-            Toggle("Sincronizar con iCloud", isOn: Binding(
-                get: { estado.sincronizarICloud },
-                set: {
-                    estado.sincronizarICloud = $0
-                    if $0 { panel = .icloud }
-                }
-            ))
-            .toggleStyle(InterruptorRetro())
             botonFila("Exportar tiempos", detalle: "JSON") { panel = .exportar }
             botonFila("Importar tiempos") { panel = .importar }
         }
@@ -203,7 +196,9 @@ struct RetroAjustes: View {
                 Text("El listado de licencias estará disponible en una próxima versión.")
             }
             .presentationDetents([.medium, .large])
-        case .icloud, .exportar, .importar:
+        case .importar:
+            ImportarTiemposView(vm: vm, estiloRetro: true)
+        case .exportar:
             PanelRetro(titulo: panel.titulo) {
                 Text("Función disponible próximamente.")
             }
@@ -290,15 +285,13 @@ struct RetroAjustes: View {
     }
 
     private enum Panel: String, Identifiable {
-        case idioma, fuenteTimer, fuenteScramble, icloud, exportar, importar, licencias
+        case idioma, fuenteTimer, fuenteScramble, exportar, importar, licencias
 
         var id: Self { self }
 
         var titulo: String {
             switch self {
-            case .icloud: "Sincronizar con iCloud"
             case .exportar: "Exportar tiempos"
-            case .importar: "Importar tiempos"
             default: rawValue
             }
         }
