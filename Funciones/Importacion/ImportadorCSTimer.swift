@@ -1,25 +1,4 @@
-import CryptoKit
 import Foundation
-
-struct ImportacionCSTimer: Sendable {
-    struct Sesion: Identifiable, Sendable {
-        let id: UUID
-        let nombre: String
-        let categoria: String
-        let tiempos: [Registro]
-    }
-
-    struct Registro: Encodable, Sendable {
-        let milisegundos: Int
-        let fecha: Date
-        let scramble: String
-        let penalizacion: PenalizacionTiempo
-    }
-
-    let sesiones: [Sesion]
-    let sesionesOmitidas: Int
-    let tiemposOmitidos: Int
-}
 
 enum ImportadorCSTimer {
     enum ErrorLectura: LocalizedError {
@@ -34,13 +13,7 @@ enum ImportadorCSTimer {
         }
     }
 
-    static func leer(_ url: URL) throws -> ImportacionCSTimer {
-        let acceso = url.startAccessingSecurityScopedResource()
-        defer { if acceso { url.stopAccessingSecurityScopedResource() } }
-        return try interpretar(Data(contentsOf: url))
-    }
-
-    static func interpretar(_ datos: Data) throws -> ImportacionCSTimer {
+    static func interpretar(_ datos: Data) throws -> ImportacionTiempos {
         guard let raiz = try? JSONSerialization.jsonObject(with: datos) as? [String: Any],
               let propiedades = raiz["properties"] as? [String: Any] else {
             throw ErrorLectura.formato
@@ -67,11 +40,9 @@ enum ImportadorCSTimer {
         }
         guard !fuentes.isEmpty else { throw ErrorLectura.formato }
 
-        var sesiones: [ImportacionCSTimer.Sesion] = []
+        var sesiones: [ImportacionTiempos.Sesion] = []
         var sesionesOmitidas = 0
         var tiemposOmitidos = 0
-        let codificador = JSONEncoder()
-        codificador.outputFormatting = .sortedKeys
 
         for fuente in fuentes {
             try Task.checkCancellation()
@@ -86,23 +57,15 @@ enum ImportadorCSTimer {
             }
             let nombre = metadato?.name?.valor ?? String(fuente.numero)
             let tiempos = try filas.map { try registro($0, sesion: fuente.numero) }
-            // El número de origen distingue dos sesiones iguales dentro de un mismo respaldo.
-            var identidad = SHA256()
-            identidad.update(data: try codificador.encode(["csTimer", String(fuente.numero), nombre, categoria]))
-            identidad.update(data: try codificador.encode(tiempos))
-            let bytes = Array(identidad.finalize())
-            let id = UUID(uuid: (
-                bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5],
-                (bytes[6] & 0x0f) | 0x80, bytes[7], (bytes[8] & 0x3f) | 0x80,
-                bytes[9], bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]
+            sesiones.append(try .init(
+                fuente: .csTimer, indice: fuente.numero, nombre: nombre, categoria: categoria, tiempos: tiempos
             ))
-            sesiones.append(.init(id: id, nombre: nombre, categoria: categoria, tiempos: tiempos))
         }
 
-        return ImportacionCSTimer(sesiones: sesiones, sesionesOmitidas: sesionesOmitidas, tiemposOmitidos: tiemposOmitidos)
+        return ImportacionTiempos(sesiones: sesiones, sesionesOmitidas: sesionesOmitidas, tiemposOmitidos: tiemposOmitidos)
     }
 
-    private static func registro(_ fila: [Any], sesion: Int) throws -> ImportacionCSTimer.Registro {
+    private static func registro(_ fila: [Any], sesion: Int) throws -> ImportacionTiempos.Registro {
         guard fila.count >= 4,
               let valores = fila[0] as? [Int], valores.count >= 2,
               (0..<Int.max / 2).contains(valores[1]),

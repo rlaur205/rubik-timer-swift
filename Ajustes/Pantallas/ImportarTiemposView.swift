@@ -9,8 +9,9 @@ struct ImportarTiemposView: View {
     @Environment(\.temaApp) private var tema
     @Environment(\.retro) private var retro
     @State private var mostrarArchivos = false
+    @State private var fuente: FuenteImportacion = .csTimer
     @State private var archivo: URL?
-    @State private var importacion: ImportacionCSTimer?
+    @State private var importacion: ImportacionTiempos?
     @State private var leyendo = false
     @State private var error: String?
     @State private var sesionesCreadas: Int?
@@ -22,7 +23,7 @@ struct ImportarTiemposView: View {
         return error == nil ? .height(285) : .medium
     }
 
-    private var sesionesNuevas: [ImportacionCSTimer.Sesion] {
+    private var sesionesNuevas: [ImportacionTiempos.Sesion] {
         let ids = Set(vm.tiemposPrincipal.map(\.id))
         return importacion?.sesiones.filter { !ids.contains($0.id) } ?? []
     }
@@ -41,17 +42,9 @@ struct ImportarTiemposView: View {
                     ProgressView("Leyendo respaldo…")
                 } else {
                     Section("Importar desde") {
-                        Button {
-                            mostrarArchivos = true
-                        } label: {
-                            HStack {
-                                Text("csTimer")
-                                Spacer()
-                                Image(systemName: "folder").accessibilityHidden(true)
-                            }
-                        }
+                        botonFuente(.csTimer)
                         fuentePendiente("CubeTime")
-                        fuentePendiente("Twisty Timer")
+                        botonFuente(.twistyTimer)
                     }
                 }
                 if let error {
@@ -72,7 +65,10 @@ struct ImportarTiemposView: View {
         }
         .presentationDetents([alturaPanel])
         .presentationDragIndicator(.visible)
-        .fileImporter(isPresented: $mostrarArchivos, allowedContentTypes: [.plainText, .json]) { resultado in
+        .fileImporter(
+            isPresented: $mostrarArchivos,
+            allowedContentTypes: fuente == .csTimer ? [.plainText, .json] : [.plainText, .commaSeparatedText]
+        ) { resultado in
             switch resultado {
             case .success(let url):
                 error = nil
@@ -85,7 +81,20 @@ struct ImportarTiemposView: View {
         }
         .task(id: archivo) {
             guard let archivo else { return }
-            await leer(archivo)
+            await leer(archivo, desde: fuente)
+        }
+    }
+
+    private func botonFuente(_ opcion: FuenteImportacion) -> some View {
+        Button {
+            fuente = opcion
+            mostrarArchivos = true
+        } label: {
+            HStack {
+                Text(opcion.rawValue)
+                Spacer()
+                Image(systemName: "folder").accessibilityHidden(true)
+            }
         }
     }
 
@@ -99,13 +108,13 @@ struct ImportarTiemposView: View {
         .accessibilityElement(children: .combine)
     }
 
-    private func vistaPrevia(_ importacion: ImportacionCSTimer) -> some View {
+    private func vistaPrevia(_ importacion: ImportacionTiempos) -> some View {
         let nuevas = sesionesNuevas
         let repetidas = importacion.sesiones.count - nuevas.count
         let cantidad = nuevas.reduce(0) { $0 + $1.tiempos.count }
 
         return Group {
-            Section("Respaldo de csTimer") {
+            Section {
                 LabeledContent("Sesiones nuevas", value: nuevas.count.formatted())
                 LabeledContent("Tiempos a importar", value: cantidad.formatted())
                 if importacion.sesionesOmitidas > 0 {
@@ -125,6 +134,12 @@ struct ImportarTiemposView: View {
                 }
                 .disabled(nuevas.isEmpty)
                 Button("Elegir otro archivo") { mostrarArchivos = true }
+            } header: {
+                Text("Archivo de \(fuente.rawValue)")
+            } footer: {
+                if fuente == .twistyTimer && !nuevas.isEmpty {
+                    Text("Twisty Timer exporta los +2 incluidos en el tiempo final.")
+                }
             }
             if !nuevas.isEmpty {
                 Section("Sesiones") {
@@ -147,8 +162,8 @@ struct ImportarTiemposView: View {
         }
     }
 
-    private func leer(_ url: URL) async {
-        let lectura = Task.detached(priority: .userInitiated) { try ImportadorCSTimer.leer(url) }
+    private func leer(_ url: URL, desde fuente: FuenteImportacion) async {
+        let lectura = Task.detached(priority: .userInitiated) { try fuente.leer(url) }
         do {
             let resultado = try await withTaskCancellationHandler {
                 try await lectura.value

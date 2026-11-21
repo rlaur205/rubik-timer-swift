@@ -8,7 +8,7 @@ struct RetroSesiones: View {
 
     var body: some View {
         PantallaRetro {
-            EncabezadoRetro(titulo: "Sesiones") {
+            EncabezadoRetro(titulo: "Sesiones", contador: vm.tiemposPrincipal.count) {
                 IconoBotonRetro(titulo: "Nueva sesión", icono: "plus", relleno: paleta.lima) {
                     mostrarFormulario = true
                 }

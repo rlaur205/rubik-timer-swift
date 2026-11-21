@@ -108,6 +108,7 @@ struct SelloRetro: View {
     let texto: String
     var color: Color? = nil
     var destacado = false
+    var relieve = false
 
     var body: some View {
         Text(texto)
@@ -116,13 +117,15 @@ struct SelloRetro: View {
             .padding(.horizontal, 7)
             .padding(.vertical, 4)
             .foregroundStyle(color == nil ? paleta.texto : paleta.tinta)
-            .cajaRetro(color, relieve: false, radio: 7)
+            .cajaRetro(color, relieve: relieve, radio: 7)
     }
 }
 
 struct EncabezadoRetro<Acciones: View>: View {
+    @Environment(\.retro) private var paleta
     let titulo: String
     var contexto: String? = nil
+    var contador: Int? = nil
     @ViewBuilder var acciones: () -> Acciones
 
     var body: some View {
@@ -132,14 +135,36 @@ struct EncabezadoRetro<Acciones: View>: View {
                     Text(contexto)
                         .font(.system(.caption, design: .monospaced, weight: .bold))
                 }
-                Text(titulo)
-                    .font(.system(.largeTitle, design: .default, weight: .black))
-                    .tracking(-1.5)
-                    .accessibilityAddTraits(.isHeader)
+                if let contador {
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 8) {
+                            textoTitulo
+                            sello(contador)
+                        }
+                        VStack(alignment: .leading, spacing: 6) {
+                            textoTitulo
+                            sello(contador)
+                        }
+                    }
+                } else {
+                    textoTitulo
+                }
             }
             Spacer(minLength: 0)
             acciones()
         }
+    }
+
+    private var textoTitulo: some View {
+        Text(titulo)
+            .font(.system(.largeTitle, design: .default, weight: .black))
+            .tracking(-1.5)
+            .accessibilityAddTraits(.isHeader)
+    }
+
+    private func sello(_ cantidad: Int) -> some View {
+        SelloRetro(texto: cantidad.formatted(), color: paleta.amarillo, destacado: true, relieve: true)
+            .accessibilityLabel("Total de \(titulo.lowercased()), \(cantidad.formatted())")
     }
 }
 

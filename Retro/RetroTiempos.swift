@@ -3,14 +3,20 @@ import SwiftUI
 struct RetroTiempos: View {
     @ObservedObject var vm: RubikViewModel
     @Environment(\.retro) private var paleta
+    @AppStorage(VistaHistorialTiempo.claveCuadricula) private var mostrarCuadricula = false
     @State private var seleccionado: Tiempo?
     @State private var mostrarOrden = false
     @State private var confirmarBorrado = false
 
     var body: some View {
         PantallaRetro {
-            EncabezadoRetro(titulo: "Tiempos", contexto: vm.sesionActual.nombre) {
+            EncabezadoRetro(titulo: "Tiempos", contexto: vm.sesionActual.nombre, contador: vm.tiemposRecorrer.count) {
                 HStack(spacing: 6) {
+                    IconoBotonRetro(
+                        titulo: VistaHistorialTiempo.accion(muestraCuadricula: mostrarCuadricula),
+                        icono: VistaHistorialTiempo.icono(muestraCuadricula: mostrarCuadricula),
+                        relleno: paleta.amarillo
+                    ) { mostrarCuadricula.toggle() }
                     IconoBotonRetro(titulo: "Ordenar tiempos", icono: "arrow.up.arrow.down", relleno: paleta.lavanda) { mostrarOrden = true }
                     IconoBotonRetro(titulo: "Eliminar tiempos", icono: "trash", relleno: paleta.coral) { confirmarBorrado = true }
                         .disabled(vm.tiemposRecorrer.isEmpty)
@@ -19,6 +25,8 @@ struct RetroTiempos: View {
 
             if vm.tiemposRecorrer.isEmpty {
                 VacioRetro(icono: "stopwatch", titulo: "Aún no hay tiempos", mensaje: "Tus resoluciones aparecerán aquí.")
+            } else if mostrarCuadricula {
+                CuadriculaTiempos(tiempos: vm.tiemposRecorrer, estiloRetro: true) { seleccionado = $0 }
             } else {
                 ForEach(vm.tiemposRecorrer) { tiempo in
                     fila(tiempo)

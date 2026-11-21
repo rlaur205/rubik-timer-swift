@@ -60,7 +60,13 @@ class RubikViewModel: ObservableObject {
     private static func cargarSesiones() -> [Sesion]? {
         guard let datos = UserDefaults.standard.data(forKey: claveHistorial) else { return nil }
         let decodificador = JSONDecoder()
-        decodificador.dateDecodingStrategy = .iso8601
+        decodificador.dateDecodingStrategy = .custom { decoder in
+            let valor = try decoder.singleValueContainer()
+            if let segundos = try? valor.decode(Double.self) {
+                return Date(timeIntervalSinceReferenceDate: segundos)
+            }
+            return try Date.ISO8601FormatStyle().parse(valor.decode(String.self))
+        }
         return try? decodificador.decode([Sesion].self, from: datos)
     }
 
@@ -101,7 +107,16 @@ class RubikViewModel: ObservableObject {
 
     private func persistirSesiones(_ sesiones: [Sesion]) throws {
         let codificador = JSONEncoder()
-        codificador.dateEncodingStrategy = .iso8601
+        codificador.dateEncodingStrategy = .custom { fecha, encoder in
+            var valor = encoder.singleValueContainer()
+            let segundos = fecha.timeIntervalSinceReferenceDate
+            // Las fechas con fracciones se guardan como número para conservar su precisión.
+            if segundos.rounded(.towardZero) == segundos {
+                try valor.encode(Date.ISO8601FormatStyle().format(fecha))
+            } else {
+                try valor.encode(segundos)
+            }
+        }
         let datos = try codificador.encode(sesiones)
         UserDefaults.standard.set(datos, forKey: Self.claveHistorial)
     }
@@ -255,7 +270,7 @@ class RubikViewModel: ObservableObject {
         return true
     }
 
-    func importarSesiones(_ sesiones: [ImportacionCSTimer.Sesion]) throws -> Int {
+    func importarSesiones(_ sesiones: [ImportacionTiempos.Sesion]) throws -> Int {
         var ids = Set(tiemposPrincipal.map(\.id))
         let nuevas = sesiones.filter { ids.insert($0.id).inserted }.map { sesion in
             let tiempos = sesion.tiempos.map { registro in

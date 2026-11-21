@@ -172,7 +172,7 @@ Los temas de Clásico son **Claro**, **Oscuro**, **Noche**, **Bosque**, **Atarde
 
 </details>
 
-**Idioma** conserva su selección durante la ejecución. **Importar tiempos** admite respaldos de csTimer y **Exportar tiempos** muestra un aviso de disponibilidad futura. La pantalla de licencias en Ajustes es provisional y el inventario está en [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+**Idioma** conserva su selección durante la ejecución. **Importar tiempos** admite respaldos de csTimer y archivos de una sesión de Twisty Timer. Twisty Timer guarda el puzzle y la sesión en el nombre del archivo y exporta los +2 incluidos en el tiempo final. **Exportar tiempos** muestra un aviso de disponibilidad futura. La pantalla de licencias en Ajustes es provisional y el inventario está en [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 ## Arquitectura y recorrido de una resolución
 
