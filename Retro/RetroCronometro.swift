@@ -180,9 +180,11 @@ struct RetroCronometro: View {
     }
 
     private var recientes: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 5), count: tipoDinamico.isAccessibilitySize ? 2 : 5), spacing: 5) {
-            ForEach(Array(tiempos.suffix(5).reversed())) { tiempo in
+        let ultimos = Array(tiempos.suffix(5))
+        return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 5), count: tipoDinamico.isAccessibilitySize ? 2 : 5), spacing: 5) {
+            ForEach(ultimos.reversed()) { tiempo in
                 let muestraMinutos = (tiempo.segundosValidos ?? 0) >= 60
+                let estado = estadoTiempoReciente(tiempo, entre: ultimos)
                 Text(tiempo.texto(largo: false))
                     .font(.system(muestraMinutos ? .footnote : .subheadline, design: .monospaced, weight: muestraMinutos ? .bold : .heavy))
                     .lineLimit(1)
@@ -191,8 +193,8 @@ struct RetroCronometro: View {
                     .frame(maxWidth: .infinity, minHeight: alturaTiempoReciente)
                     .padding(.vertical, 7)
                     .padding(.horizontal, muestraMinutos ? 6 : 3)
-                    .foregroundStyle(tiempo.penalizacion == .ninguna ? paleta.texto : paleta.tinta)
-                    .cajaRetro(tiempo.penalizacion == .dnf ? paleta.coral : tiempo.penalizacion == .masDos ? paleta.amarillo : nil, relieve: false, radio: 8)
+                    .foregroundStyle(estado == .normal ? paleta.texto : paleta.tinta)
+                    .cajaRetro(estado == .mejor ? paleta.amarillo : estado == .peor ? paleta.coral : nil, relieve: false, radio: 8)
             }
         }
         .fixedSize(horizontal: false, vertical: true)
@@ -217,25 +219,21 @@ struct RetroCronometro: View {
         return Button {
             expandido.toggle()
         } label: {
-            VStack(alignment: .leading, spacing: 7) {
-                HStack {
-                    Text("RESUMEN").font(.system(.caption2, design: .monospaced, weight: .heavy))
-                    Spacer()
-                    Image(systemName: expandido ? "minus" : "plus").font(.caption.weight(.heavy))
-                }
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 5), count: tipoDinamico.isAccessibilitySize ? 2 : 4), spacing: 7) {
-                    ForEach(expandido ? metricas + promedios : metricas, id: \.0) { dato in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(dato.0).font(.caption2.weight(.semibold))
-                            Text(dato.1).font(.system(.headline, design: .monospaced, weight: .black))
-                                .lineLimit(1).minimumScaleFactor(0.6)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .accessibilityElement(children: .combine)
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 5), count: tipoDinamico.isAccessibilitySize ? 2 : 4), spacing: 7) {
+                ForEach(expandido ? metricas + promedios : metricas, id: \.0) { dato in
+                    VStack(spacing: 2) {
+                        Text(dato.0).font(.caption2.weight(.semibold))
+                        Text(dato.1).font(.system(.headline, design: .monospaced, weight: .black))
+                            .lineLimit(1).minimumScaleFactor(0.6)
                     }
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityElement(children: .combine)
                 }
             }
-            .padding(11)
+            .padding(.horizontal, 11)
+            .padding(.vertical, 10)
+            .contentShape(Rectangle())
             .foregroundStyle(paleta.tinta)
             .cajaRetro(paleta.menta)
         }

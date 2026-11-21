@@ -1,5 +1,20 @@
 import Foundation
 
+enum EstadoTiempoReciente {
+    case mejor
+    case peor
+    case normal
+}
+
+func estadoTiempoReciente(_ tiempo: Tiempo, entre tiempos: [Tiempo]) -> EstadoTiempoReciente {
+    guard let segundos = tiempo.segundosValidos else { return .peor }
+    let validos = tiempos.compactMap(\.segundosValidos)
+    guard let mejor = validos.min(), let peor = validos.max() else { return .normal }
+    if segundos == mejor { return .mejor }
+    if segundos == peor && !tiempos.contains(where: { $0.segundosValidos == nil }) { return .peor }
+    return .normal
+}
+
 func formatoTiempo(_ segundosTotales: Double) -> String {
     // Corrige el error de representación binaria al caer justo en un milisegundo.
     let milisegundos = Int((segundosTotales * 1000).nextUp)

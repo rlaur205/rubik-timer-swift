@@ -45,18 +45,18 @@ struct RetroSesiones: View {
                 IconoPuzzle(categoria: sesion.categoria, size: 30, multiplicadorTrazo: 1.55)
                     .foregroundStyle(paleta.tinta)
                     .frame(width: 50, height: 50)
-                    .cajaRetro(activa ? paleta.lima : paleta.lavanda, relieve: false, radio: 11)
+                    .cajaRetro(activa ? paleta.coral : paleta.lavanda, relieve: false, radio: 11)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(sesion.nombre).font(.title3.weight(.black))
-                    Text("\(sesion.categoria) · \(sesion.tiempos.count.formatted())")
-                        .font(.system(.caption, design: .monospaced, weight: .semibold))
-                        .foregroundStyle(paleta.secundario)
+                    Text("\(sesion.categoria) · \(sesion.tiempos.count.formatted()) solves")
+                        .font(.system(.subheadline, design: .monospaced, weight: .semibold))
+                        .foregroundStyle(paleta.texto)
                         .accessibilityLabel("\(sesion.categoria), \(sesion.tiempos.count) tiempos")
                 }
                 Spacer(minLength: 3)
                 if activa {
-                    SelloRetro(texto: "ACTIVA", color: paleta.lima)
+                    SelloRetro(texto: "ACTIVA", color: paleta.coral)
                 }
             }
             .padding(11)

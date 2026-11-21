@@ -16,8 +16,10 @@ struct SesionTimeView: View {
                     .foregroundStyle(seleccionada ? temaApp.acento : temaApp.texto.opacity(0.85))
                     .frame(width: 38)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(sesion.nombre).font(.headline).foregroundStyle(temaApp.texto)
-                    Text(sesion.categoria).font(.subheadline).foregroundStyle(temaApp.texto.opacity(0.65))
+                    Text(sesion.nombre).font(.system(.title3, weight: .semibold)).foregroundStyle(temaApp.texto)
+                    Text("\(sesion.categoria) · \(sesion.tiempos.count.formatted()) solves")
+                        .font(.body)
+                        .foregroundStyle(temaApp.texto.opacity(0.75))
                 }
                 Spacer(minLength: 8)
                 if seleccionada {

@@ -94,20 +94,13 @@ struct TiemposRecientesCronometro: View {
 
     private var ultimosTiempos: some View {
         let ultimos = Array(tiempos.suffix(5))
-        let validos = ultimos.compactMap(\.segundosValidos)
-        let mejorValido = validos.min()
-        let peorValido = validos.max()
 
         return HStack(spacing: 8) {
             ForEach(ultimos.reversed()) { tiempo in
                 Text(tiempo.texto(largo: false))
                     .font(.system(.title3, design: .rounded, weight: .bold).monospacedDigit())
                     .foregroundStyle(
-                        colorUltimoTiempo(
-                            tiempo,
-                            mejorValido: mejorValido,
-                            peorValido: peorValido
-                        )
+                        colorUltimoTiempo(tiempo, entre: ultimos)
                     )
                     .lineLimit(1)
                     .minimumScaleFactor(agrupados ? 0.6 : 0.7)
@@ -118,18 +111,12 @@ struct TiemposRecientesCronometro: View {
 
     private func colorUltimoTiempo(
         _ tiempo: Tiempo,
-        mejorValido: Double?,
-        peorValido: Double?
+        entre tiempos: [Tiempo]
     ) -> Color {
-        guard let segundos = tiempo.segundosValidos else {
-            return EstiloVisual.peligro
+        switch estadoTiempoReciente(tiempo, entre: tiempos) {
+        case .mejor: return EstiloVisual.mejor
+        case .peor: return EstiloVisual.peligro
+        case .normal: return temaApp.texto
         }
-        if segundos == peorValido {
-            return EstiloVisual.peligro
-        }
-        if segundos == mejorValido {
-            return EstiloVisual.mejor
-        }
-        return temaApp.texto
     }
 }
