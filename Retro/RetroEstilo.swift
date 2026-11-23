@@ -92,10 +92,11 @@ struct IconoBotonRetro: View {
     let titulo: String
     let icono: String
     var relleno: Color? = nil
+    var rol: ButtonRole? = nil
     let accion: () -> Void
 
     var body: some View {
-        Button(action: accion) {
+        Button(role: rol, action: accion) {
             Image(systemName: icono).frame(minWidth: 19)
         }
         .buttonStyle(BotonRetro(relleno: relleno))
@@ -124,31 +125,24 @@ struct SelloRetro: View {
 struct EncabezadoRetro<Acciones: View>: View {
     @Environment(\.retro) private var paleta
     let titulo: String
-    var contexto: String? = nil
     var contador: Int? = nil
     @ViewBuilder var acciones: () -> Acciones
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 8) {
-            VStack(alignment: .leading, spacing: 5) {
-                if let contexto {
-                    Text(contexto)
-                        .font(.system(.caption, design: .monospaced, weight: .bold))
-                }
-                if let contador {
-                    ViewThatFits(in: .horizontal) {
-                        HStack(spacing: 8) {
-                            textoTitulo
-                            sello(contador)
-                        }
-                        VStack(alignment: .leading, spacing: 6) {
-                            textoTitulo
-                            sello(contador)
-                        }
+            if let contador {
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 8) {
+                        textoTitulo
+                        sello(contador)
                     }
-                } else {
-                    textoTitulo
+                    VStack(alignment: .leading, spacing: 6) {
+                        textoTitulo
+                        sello(contador)
+                    }
                 }
+            } else {
+                textoTitulo
             }
             Spacer(minLength: 0)
             acciones()
@@ -170,6 +164,7 @@ struct EncabezadoRetro<Acciones: View>: View {
 
 struct PantallaRetro<Contenido: View>: View {
     @Environment(\.retro) private var paleta
+    var alturaContenido: Binding<CGFloat>? = nil
     @ViewBuilder var contenido: () -> Contenido
 
     var body: some View {
@@ -178,22 +173,38 @@ struct PantallaRetro<Contenido: View>: View {
                 .padding(.horizontal, 17)
                 .padding(.top, 12)
                 .padding(.bottom, 15)
+                .background {
+                    if let alturaContenido {
+                        Color.clear.onGeometryChange(for: CGFloat.self) { geometria in
+                            geometria.size.height.rounded(.up)
+                        } action: { altura in
+                            alturaContenido.wrappedValue = altura
+                        }
+                    }
+                }
         }
         .background(paleta.fondo)
         .scrollDismissesKeyboard(.interactively)
     }
 }
 
-struct PanelRetro<Contenido: View>: View {
+struct PanelRetro<Accesorios: View, Contenido: View>: View {
     @Environment(\.retro) private var paleta
-    let titulo: String
+    let titulo: String?
+    var alturaContenido: Binding<CGFloat>? = nil
+    @ViewBuilder var accesorios: () -> Accesorios
     @ViewBuilder var contenido: () -> Contenido
     @Environment(\.dismiss) private var cerrar
 
     var body: some View {
-        PantallaRetro {
-            EncabezadoRetro(titulo: titulo) {
-                IconoBotonRetro(titulo: "Cerrar", icono: "xmark", relleno: paleta.amarillo) { cerrar() }
+        PantallaRetro(alturaContenido: alturaContenido) {
+            if let titulo {
+                EncabezadoRetro(titulo: titulo) {
+                    HStack(spacing: 8) {
+                        accesorios()
+                        IconoBotonRetro(titulo: "Cerrar", icono: "xmark", relleno: paleta.amarillo) { cerrar() }
+                    }
+                }
             }
             contenido()
         }
@@ -201,6 +212,12 @@ struct PanelRetro<Contenido: View>: View {
         .foregroundStyle(paleta.texto)
         .background(paleta.fondo.ignoresSafeArea())
         .presentationBackground(paleta.fondo)
+    }
+}
+
+extension PanelRetro where Accesorios == EmptyView {
+    init(titulo: String?, alturaContenido: Binding<CGFloat>? = nil, @ViewBuilder contenido: @escaping () -> Contenido) {
+        self.init(titulo: titulo, alturaContenido: alturaContenido, accesorios: { EmptyView() }, contenido: contenido)
     }
 }
 

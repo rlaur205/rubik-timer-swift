@@ -11,7 +11,7 @@ struct RetroEstadisticas: View {
 
     var body: some View {
         PantallaRetro {
-            EncabezadoRetro(titulo: "Estadísticas", contexto: vm.sesionActual.nombre) {
+            EncabezadoRetro(titulo: "Estadísticas") {
                 SelloRetro(texto: vm.sesionActual.categoria, color: paleta.lavanda)
             }
             if tiempos.isEmpty {
@@ -24,27 +24,14 @@ struct RetroEstadisticas: View {
             }
         }
         .sheet(item: $seleccionado) { ventana in
-            PanelRetro(titulo: ventana.titulo) {
-                ForEach(Array(ventana.tiempos.reversed())) { tiempo in
-                    HStack {
-                        Text(tiempo.texto(largo: true))
-                            .font(.system(.headline, design: .monospaced, weight: .black))
-                        Spacer(minLength: 6)
-                        Text(formatoFecha(tiempo.fecha))
-                            .font(.system(.caption, design: .monospaced))
-                            .multilineTextAlignment(.trailing)
-                    }
-                    .padding(11)
-                    .cajaRetro(relieve: false)
-                }
-            }
+            RetroListaPromedio(vm: vm, titulo: ventana.titulo, tiempos: ventana.tiempos, esAo: ventana.esAo)
         }
     }
 
     private var resumen: some View {
         SeccionRetro(titulo: "RESUMEN", color: paleta.lima, tituloDestacado: true) {
             cuadricula {
-                metrica("Solves", valor: "\(tiempos.count)")
+                metrica("Solves", valor: "\(tiempos.count)", estiloValor: .title3)
                 metrica("Media", valor: EstiloVisual.promedio(mediaTotal(tiempos: tiempos)))
                 metrica("Mejor tiempo", valor: mejorTiempo(tiempos: tiempos)?.texto(largo: false) ?? "—")
                 metrica("Peor tiempo", valor: peorTiempo(tiempos: tiempos)?.texto(largo: false) ?? "—")
@@ -59,7 +46,7 @@ struct RetroEstadisticas: View {
                 ForEach(cantidades, id: \.self) { cantidad in
                     let resultado = cantidad == 3 ? mo3(tiempos: tiempos) : avg(tiempos: tiempos, cantidad: cantidad)
                     let ventana = tiempos.count >= cantidad ? Array(tiempos.suffix(cantidad)) : []
-                    promedio(cantidad, resultado: resultado, resoluciones: ventana, esRecord: false)
+                    promedio(cantidad, resultado: resultado, resoluciones: ventana)
                 }
             }
         }
@@ -70,7 +57,7 @@ struct RetroEstadisticas: View {
             cuadricula {
                 ForEach(cantidades, id: \.self) { cantidad in
                     let pb = cantidad == 3 ? PBmo3(tiempos: tiempos) : PBavg(tiempos: tiempos, cantidad: cantidad)
-                    promedio(cantidad, resultado: pb.resultado, resoluciones: pb.tiempos, esRecord: true)
+                    promedio(cantidad, resultado: pb.resultado, resoluciones: pb.tiempos)
                 }
                 metrica("Desviación", valor: desviacion(tiempos: tiempos))
             }
@@ -104,7 +91,7 @@ struct RetroEstadisticas: View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8, content: contenido)
     }
 
-    private func promedio(_ cantidad: Int, resultado: ResultadoPromedio, resoluciones: [Tiempo], esRecord: Bool) -> some View {
+    private func promedio(_ cantidad: Int, resultado: ResultadoPromedio, resoluciones: [Tiempo]) -> some View {
         let titulo = cantidad == 3 ? "Mo3" : "Ao\(cantidad)"
         let valor = EstiloVisual.promedio(resultado)
 
@@ -113,7 +100,7 @@ struct RetroEstadisticas: View {
                 metrica(titulo, valor: valor)
             } else {
                 Button {
-                    seleccionado = VentanaRetro(titulo: esRecord ? "Récord · \(titulo)" : "Tiempos · \(titulo)", tiempos: resoluciones)
+                    seleccionado = VentanaRetro(titulo: titulo, tiempos: resoluciones, esAo: cantidad != 3)
                 } label: {
                     metrica(titulo, valor: valor, detalle: true)
                 }
@@ -123,7 +110,9 @@ struct RetroEstadisticas: View {
         }
     }
 
-    private func metrica(_ titulo: String, valor: String, detalle: Bool = false) -> some View {
+    private func metrica(
+        _ titulo: String, valor: String, detalle: Bool = false, estiloValor: Font.TextStyle = .title
+    ) -> some View {
         let titulos = ["Solves", "Media", "Mejor tiempo", "Peor tiempo", "Último", "Mo3", "Ao5", "Ao12", "Ao25", "Ao50", "Ao100", "Ao200", "Ao500", "Ao1000", "Desviación"]
         let colores: [Color] = [
             paleta.lima, paleta.amarillo, paleta.menta, paleta.coral,
@@ -145,7 +134,7 @@ struct RetroEstadisticas: View {
                 }
             }
             Text(valor)
-                .font(.system(.title3, design: .monospaced, weight: .black))
+                .font(.system(estiloValor, design: .monospaced, weight: .black))
                 .lineLimit(1)
                 .minimumScaleFactor(0.55)
         }
@@ -160,5 +149,51 @@ struct RetroEstadisticas: View {
         var id: String { titulo }
         let titulo: String
         let tiempos: [Tiempo]
+        let esAo: Bool
+    }
+}
+
+
+private struct RetroListaPromedio: View {
+    let vm: RubikViewModel
+    let titulo: String
+    let tiempos: [Tiempo]
+    let esAo: Bool
+    @Environment(\.retro) private var paleta
+    @State private var seleccionado: Tiempo?
+
+    var body: some View {
+        PanelRetro(titulo: titulo) {
+            if esAo {
+                extremos
+            }
+        } contenido: {
+            ForEach(tiempos.reversed()) { tiempo in
+                RetroFilaTiempo(tiempo: tiempo) { seleccionado = tiempo }
+            }
+        }
+        .sheet(item: $seleccionado) { tiempo in
+            RetroDetalleTiempo(vm: vm, original: tiempo, soloLectura: true)
+        }
+    }
+
+    private var extremos: some View {
+        let peor = tiempos.first { $0.penalizacion == .dnf } ?? peorTiempo(tiempos: tiempos)
+        let mejor = mejorTiempo(tiempos: tiempos)
+        return ViewThatFits(in: .horizontal) {
+            HStack(spacing: 5) {
+                sello("Peor tiempo", tiempo: peor, color: paleta.coral)
+                sello("Mejor tiempo", tiempo: mejor, color: paleta.menta)
+            }
+            VStack(alignment: .trailing, spacing: 4) {
+                sello("Peor tiempo", tiempo: peor, color: paleta.coral)
+                sello("Mejor tiempo", tiempo: mejor, color: paleta.menta)
+            }
+        }
+    }
+
+    private func sello(_ titulo: String, tiempo: Tiempo?, color: Color) -> some View {
+        SelloRetro(texto: tiempo?.texto(largo: false) ?? "—", color: color, destacado: true)
+            .accessibilityLabel("\(titulo), \(tiempo?.texto(largo: true) ?? "sin tiempo válido")")
     }
 }

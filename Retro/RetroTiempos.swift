@@ -10,7 +10,7 @@ struct RetroTiempos: View {
 
     var body: some View {
         PantallaRetro {
-            EncabezadoRetro(titulo: "Tiempos", contexto: vm.sesionActual.nombre, contador: vm.tiemposRecorrer.count) {
+            EncabezadoRetro(titulo: "Tiempos", contador: vm.tiemposRecorrer.count) {
                 HStack(spacing: 6) {
                     IconoBotonRetro(
                         titulo: VistaHistorialTiempo.accion(muestraCuadricula: mostrarCuadricula),
@@ -29,7 +29,7 @@ struct RetroTiempos: View {
                 CuadriculaTiempos(tiempos: vm.tiemposRecorrer, estiloRetro: true) { seleccionado = $0 }
             } else {
                 ForEach(vm.tiemposRecorrer) { tiempo in
-                    fila(tiempo)
+                    RetroFilaTiempo(tiempo: tiempo) { seleccionado = tiempo }
                 }
             }
         }
@@ -63,8 +63,22 @@ struct RetroTiempos: View {
             )
         }
     }
+}
 
-    private func fila(_ tiempo: Tiempo) -> some View {
+struct RetroFilaTiempo: View {
+    let tiempo: Tiempo
+    let abrirDetalle: () -> Void
+    @Environment(\.retro) private var paleta
+
+    var body: some View {
+        Button(action: abrirDetalle) {
+            tarjeta
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Abre los detalles del tiempo")
+    }
+
+    private var tarjeta: some View {
         let colorTiempo = switch tiempo.penalizacion {
         case .ninguna: paleta.naranja
         case .masDos: paleta.amarillo
@@ -98,58 +112,87 @@ struct RetroTiempos: View {
         .padding(11)
         .cajaRetro()
         .contentShape(Rectangle())
-        .onTapGesture { seleccionado = tiempo }
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isButton)
-        .accessibilityAction { seleccionado = tiempo }
     }
 }
 
-private struct RetroDetalleTiempo: View {
+struct RetroDetalleTiempo: View {
     @ObservedObject var vm: RubikViewModel
     @Environment(\.retro) private var paleta
     @Environment(\.dismiss) private var cerrar
+    @State private var alturaContenido: CGFloat = 0
+    @ScaledMetric(relativeTo: .footnote) private var tamanoScramble = 15.6
     let original: Tiempo
+    var soloLectura = false
 
     private var tiempo: Tiempo {
         vm.sesionActual.tiempos.first { $0.id == original.id } ?? original
     }
 
     var body: some View {
-        PanelRetro(titulo: "Detalle del tiempo") {
-            VStack(alignment: .leading, spacing: 5) {
-                Text(tiempo.texto(largo: true))
-                    .font(.system(.largeTitle, design: .monospaced, weight: .black))
-                    .lineLimit(1).minimumScaleFactor(0.55)
-                Text(formatoFecha(tiempo.fecha)).font(.system(.caption, design: .monospaced))
-            }
-            .foregroundStyle(paleta.tinta)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(14)
-            .cajaRetro(paleta.amarillo)
+        PanelRetro(titulo: nil, alturaContenido: $alturaContenido) {
+            encabezado
 
             if !tiempo.scramble.isEmpty {
                 SeccionRetro(titulo: "SCRAMBLE", color: paleta.lavanda) {
                     Text(tiempo.scramble)
-                        .font(.system(.footnote, design: .monospaced))
+                        .font(.system(size: tamanoScramble, design: .monospaced))
+                        .fixedSize(horizontal: false, vertical: true)
                         .textSelection(.enabled)
                     ImagenScrambleView(scramble: tiempo.scramble, categoria: tiempo.categoria ?? vm.sesionActual.categoria)
                         .frame(height: 185)
                 }
             }
 
-            SeccionRetro(titulo: "PENALIZACIÓN", color: paleta.menta) {
-                PenalizacionesRetro(seleccion: tiempo.penalizacion) {
-                    vm.establecerPenalizacion($0, tiempoID: original.id)
-                }
-                .disabled(tiempo.esDNFDeInspeccion)
+            if !soloLectura {
+                accionesTiempo
             }
-            Button("Eliminar tiempo", role: .destructive) {
-                vm.eliminarTiempoSeleccionado(tiempo: original)
-                cerrar()
-            }
-            .buttonStyle(BotonRetro(relleno: paleta.coral))
         }
+        .presentationDetents([alturaContenido > 0 ? .height(alturaContenido + 12) : .medium])
+        .presentationDragIndicator(.visible)
+        .accessibilityAction(.escape) { cerrar() }
+    }
+
+    private var accionesTiempo: some View {
+        let anchoPapelera: CGFloat = 56
+        let separacion: CGFloat = 10
+
+        return VStack(alignment: .leading, spacing: 11) {
+            SelloRetro(texto: "PENALIZACIÓN", color: paleta.menta)
+                .accessibilityAddTraits(.isHeader)
+            PenalizacionesRetro(seleccion: tiempo.penalizacion) {
+                vm.establecerPenalizacion($0, tiempoID: original.id)
+            }
+            .disabled(tiempo.esDNFDeInspeccion)
+            .padding(13)
+            .cajaRetro()
+            .padding(.trailing, anchoPapelera + separacion)
+            .overlay(alignment: .trailing) {
+                Button(role: .destructive) {
+                    vm.eliminarTiempoSeleccionado(tiempo: original)
+                    cerrar()
+                } label: {
+                    Image(systemName: "trash")
+                        .scaleEffect(1.5)
+                        .frame(width: anchoPapelera - 24)
+                        .frame(maxHeight: .infinity)
+                }
+                .buttonStyle(BotonRetro(relleno: paleta.coral))
+                .accessibilityLabel("Eliminar tiempo")
+            }
+        }
+    }
+
+    private var encabezado: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(tiempo.texto(largo: true))
+                .font(.system(.largeTitle, design: .monospaced, weight: .black))
+                .lineLimit(1).minimumScaleFactor(0.55)
+            Text(formatoFecha(tiempo.fecha)).font(.system(.caption, design: .monospaced))
+        }
+        .foregroundStyle(paleta.tinta)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .cajaRetro(paleta.amarillo)
     }
 }
 
