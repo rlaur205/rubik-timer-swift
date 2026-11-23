@@ -27,27 +27,37 @@ struct MetricaConDetalle: View {
     }
 }
 
+enum TipoPromedioEstadistico: Identifiable, Equatable {
+    case mo3
+    case ao(Int)
+
+    var id: String { titulo }
+
+    var titulo: String {
+        switch self {
+        case .mo3: "Mo3"
+        case .ao(let cantidad): "Ao\(cantidad)"
+        }
+    }
+}
+
 struct DetalleTiemposSheet: View {
-    let titulo: String
+    let promedio: TipoPromedioEstadistico
+    let categoria: String
     let tiempos: [Tiempo]
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.temaApp) private var temaApp
+    @State private var seleccionado: Tiempo?
 
     var body: some View {
         NavigationStack {
             List {
                 Section {
-                    ForEach(tiempos.indices, id: \.self) { index in
-                        let reversedIndex = tiempos.count - index - 1
-                        LabeledContent {
-                            Text(tiempos[reversedIndex].texto(largo: true))
-                                .font(.title3.weight(.semibold).monospacedDigit())
-                                .foregroundStyle(temaApp.texto)
-                        } label: {
-                            Text("\(index + 1)").foregroundStyle(temaApp.texto.opacity(0.65))
-                        }
-                        .listRowBackground(temaApp.superficie)
-                        .listRowSeparatorTint(temaApp.linea)
+                    ForEach(tiempos.reversed()) { tiempo in
+                        TiempoRowView(tiempo: tiempo) { seleccionado = tiempo }
+                            .listRowBackground(temaApp.superficie)
+                            .listRowSeparatorTint(temaApp.linea)
                     }
                 }
             }
@@ -57,11 +67,16 @@ struct DetalleTiemposSheet: View {
             .scrollContentBackground(.hidden)
             .background(temaApp.fondo)
             .foregroundStyle(temaApp.texto)
-            .navigationTitle(titulo)
+            .navigationTitle(promedio.titulo)
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(temaApp.fondo, for: .navigationBar)
             .toolbarColorScheme(temaApp.colorScheme, for: .navigationBar)
             .toolbar {
+                if case .ao = promedio {
+                    ToolbarItem(placement: .principal) {
+                        encabezadoAo
+                    }
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Listo") { dismiss() }
                 }
@@ -70,5 +85,33 @@ struct DetalleTiemposSheet: View {
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
         .presentationBackground(temaApp.fondo)
+        .sheet(item: $seleccionado) { tiempo in
+            TiempoDetalleView(tiempo: tiempo, categoria: tiempo.categoria ?? categoria)
+        }
+    }
+
+    private var encabezadoAo: some View {
+        let extremos = extremosAo(tiempos: tiempos)
+
+        return HStack(spacing: 6) {
+            Text(promedio.titulo)
+                .font(.headline)
+                .foregroundStyle(temaApp.texto)
+                .accessibilityAddTraits(.isHeader)
+            insignia("Peor tiempo", tiempo: extremos.peor, color: EstiloVisual.peligro)
+            insignia("Mejor tiempo", tiempo: extremos.mejor, color: EstiloVisual.mejor)
+        }
+        .lineLimit(1)
+        .minimumScaleFactor(0.65)
+    }
+
+    private func insignia(_ titulo: String, tiempo: Tiempo?, color: Color) -> some View {
+        Text(tiempo?.texto(largo: false) ?? "—")
+            .font(.caption.weight(.semibold).monospacedDigit())
+            .foregroundStyle(color)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 4)
+            .background(color.opacity(0.14), in: Capsule())
+            .accessibilityLabel("\(titulo), \(tiempo?.texto(largo: true) ?? "sin tiempo válido")")
     }
 }

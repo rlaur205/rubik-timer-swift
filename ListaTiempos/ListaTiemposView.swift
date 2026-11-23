@@ -64,11 +64,14 @@ struct ListaTiemposView: View {
                 TiempoDetalleView(
                     tiempo: detalle.tiempo,
                     categoria: detalle.categoria,
-                    aplicarPenalizacion: { vm.establecerPenalizacion($0, tiempoID: detalle.id) }
-                ) {
-                    vm.eliminarTiempoSeleccionado(tiempo: detalle.tiempo)
-                    detalleSeleccionado = nil
-                }
+                    edicion: .init(
+                        aplicarPenalizacion: { vm.establecerPenalizacion($0, tiempoID: detalle.id) },
+                        eliminar: {
+                            vm.eliminarTiempoSeleccionado(tiempo: detalle.tiempo)
+                            detalleSeleccionado = nil
+                        }
+                    )
+                )
             }
         }
     }

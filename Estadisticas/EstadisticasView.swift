@@ -33,14 +33,14 @@ struct EstadisticasView: View {
                         EncabezadoBloqueEstadistico(titulo: "Resumen", sistema: "square.grid.2x2.fill", estilo: estiloResumen)
                     }
                     Section {
-                        TiemposActualesView(actual: actual)
+                        TiemposActualesView(actual: actual, categoria: vm.sesionActual.categoria)
                             .listRowBackground(FondoBloqueEstadistico(estilo: estiloPromedios))
                             .listRowSeparator(.hidden)
                     } header: {
                         EncabezadoBloqueEstadistico(titulo: "Promedios actuales", sistema: "chart.line.uptrend.xyaxis", estilo: estiloPromedios)
                     }
                     Section {
-                        TiemposPBView(actual: actual)
+                        TiemposPBView(actual: actual, categoria: vm.sesionActual.categoria)
                             .listRowBackground(FondoBloqueEstadistico(estilo: estiloRecords))
                             .listRowSeparator(.hidden)
                     } header: {

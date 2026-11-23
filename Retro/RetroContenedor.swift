@@ -47,13 +47,19 @@ struct RetroContenedor: View {
                     barra
                 }
             }
-            .padding(.bottom, vm.timerState.intentoActivo ? zonaInferior : max(8, zonaInferior - 14))
+            .padding(.bottom, zonaInferiorRetro(zonaInferior))
             .ignoresSafeArea(.container, edges: .bottom)
         }
+        .ignoresSafeArea(.container, edges: vm.timerState.estaCorriendo ? .all : [])
         .background(paleta.fondo.ignoresSafeArea())
         .foregroundStyle(paleta.texto)
         .tint(paleta.oscura ? paleta.lima : paleta.tinta)
         .environment(\.retro, paleta)
+    }
+
+    private func zonaInferiorRetro(_ segura: CGFloat) -> CGFloat {
+        if vm.timerState.estaCorriendo { return 0 }
+        return vm.timerState.intentoActivo ? segura : max(8, segura - 14)
     }
 
     @ViewBuilder private var pantalla: some View {

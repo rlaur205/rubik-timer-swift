@@ -19,10 +19,11 @@ struct RetroCronometro: View {
 
     private var tiempos: [Tiempo] { vm.sesionActual.tiempos }
     private var intentoActivo: Bool { vm.timerState.intentoActivo }
+    private var corriendo: Bool { vm.timerState.estaCorriendo }
 
     var body: some View {
         GeometryReader { espacio in
-            if tipoDinamico.isAccessibilitySize || espacio.size.height < 530 {
+            if !corriendo && (tipoDinamico.isAccessibilitySize || espacio.size.height < 530) {
                 ScrollView {
                     contenido.frame(minHeight: espacio.size.height)
                 }
@@ -60,9 +61,9 @@ struct RetroCronometro: View {
                 resumen
             }
         }
-        .padding(.horizontal, 17)
-        .padding(.top, 2)
-        .padding(.bottom, 10)
+        .padding(.horizontal, intentoActivo ? 0 : 17)
+        .padding(.top, intentoActivo ? 0 : 2)
+        .padding(.bottom, intentoActivo ? 0 : 10)
         .frame(maxHeight: .infinity)
     }
 
@@ -156,11 +157,15 @@ struct RetroCronometro: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.42)
                 .padding(.horizontal, 10)
-                .offset(y: -8)
+                .offset(y: intentoActivo ? 0 : -8)
                 .accessibilityIdentifier("timer-digitos")
         }
         .frame(minHeight: tipoDinamico.isAccessibilitySize ? 240 : 152, maxHeight: .infinity)
-        .cajaRetro(radio: 19)
+        .background {
+            if !intentoActivo {
+                Color.clear.cajaRetro(radio: 19)
+            }
+        }
         .layoutPriority(1)
     }
 

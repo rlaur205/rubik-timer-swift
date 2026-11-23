@@ -1,22 +1,9 @@
 import SwiftUI
 
-enum TipoRecordPB: Identifiable, Equatable {
-    case mo3
-    case ao(Int)
-
-    var id: String {
-        switch self {
-        case .mo3:
-            return "mo3"
-        case .ao(let cantidad):
-            return "ao\(cantidad)"
-        }
-    }
-}
-
 struct TiemposPBView: View {
     let actual: [Tiempo]
-    @State private var recordSeleccionado: TipoRecordPB?
+    let categoria: String
+    @State private var recordSeleccionado: TipoPromedioEstadistico?
 
     private var pbMo3: ResultadoPB { PBmo3(tiempos: actual) }
 
@@ -46,13 +33,14 @@ struct TiemposPBView: View {
         .padding(.vertical, 8)
         .sheet(item: $recordSeleccionado) { record in
             DetalleTiemposSheet(
-                titulo: "Tiempos del récord",
+                promedio: record,
+                categoria: categoria,
                 tiempos: detalleRecord(record)
             )
         }
     }
 
-    private func detalleRecord(_ record: TipoRecordPB) -> [Tiempo] {
+    private func detalleRecord(_ record: TipoPromedioEstadistico) -> [Tiempo] {
         switch record {
         case .mo3:
             return PBmo3(tiempos: actual).tiempos

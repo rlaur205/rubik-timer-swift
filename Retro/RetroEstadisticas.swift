@@ -178,8 +178,7 @@ private struct RetroListaPromedio: View {
     }
 
     private var extremos: some View {
-        let peor = tiempos.first { $0.penalizacion == .dnf } ?? peorTiempo(tiempos: tiempos)
-        let mejor = mejorTiempo(tiempos: tiempos)
+        let (mejor, peor) = extremosAo(tiempos: tiempos)
         return ViewThatFits(in: .horizontal) {
             HStack(spacing: 5) {
                 sello("Peor tiempo", tiempo: peor, color: paleta.coral)

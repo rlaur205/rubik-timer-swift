@@ -23,6 +23,11 @@ func peorTiempo(tiempos: [Tiempo]) -> Tiempo? {
         .max { ($0.segundosValidos ?? -.infinity) < ($1.segundosValidos ?? -.infinity) }
 }
 
+func extremosAo(tiempos: [Tiempo]) -> (mejor: Tiempo?, peor: Tiempo?) {
+    let peor = tiempos.first { $0.penalizacion == .dnf } ?? peorTiempo(tiempos: tiempos)
+    return (mejorTiempo(tiempos: tiempos), peor)
+}
+
 func mediaTotal(tiempos: [Tiempo]) -> ResultadoPromedio {
     let validos = tiempos.compactMap(\.segundosValidos)
     guard !validos.isEmpty else {

@@ -1,31 +1,9 @@
 import SwiftUI
 
-private enum TipoPromedioActual: Identifiable, Equatable {
-    case mo3
-    case ao(Int)
-
-    var id: String {
-        switch self {
-        case .mo3:
-            return "mo3"
-        case .ao(let cantidad):
-            return "ao\(cantidad)"
-        }
-    }
-
-    var tituloHoja: String {
-        switch self {
-        case .mo3:
-            return "Tiempos de Mo3"
-        case .ao(let cantidad):
-            return "Tiempos de Ao\(cantidad)"
-        }
-    }
-}
-
 struct TiemposActualesView: View {
     let actual: [Tiempo]
-    @State private var promedioSeleccionado: TipoPromedioActual?
+    let categoria: String
+    @State private var promedioSeleccionado: TipoPromedioEstadistico?
 
     var body: some View {
         LazyVGrid(columns: EstiloVisual.columnas, alignment: .leading, spacing: 22) {
@@ -55,13 +33,14 @@ struct TiemposActualesView: View {
         .padding(.vertical, 8)
         .sheet(item: $promedioSeleccionado) { promedio in
             DetalleTiemposSheet(
-                titulo: promedio.tituloHoja,
+                promedio: promedio,
+                categoria: categoria,
                 tiempos: detallePromedio(promedio)
             )
         }
     }
 
-    private func detallePromedio(_ promedio: TipoPromedioActual) -> [Tiempo] {
+    private func detallePromedio(_ promedio: TipoPromedioEstadistico) -> [Tiempo] {
         switch promedio {
         case .mo3:
             return actual.count >= 3 ? Array(actual.suffix(3)) : []
